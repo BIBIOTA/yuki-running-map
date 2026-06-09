@@ -125,46 +125,46 @@ doc_language: 繁體中文
   - status: not_started
 
 ## 7. Documentation
-- [ ] 7.1 Write `CLAUDE.md` (Claude Code entry point)
+- [x] 7.1 Write `CLAUDE.md` (Claude Code entry point)
   - Acceptance: WHEN 開啟 `CLAUDE.md` THEN 含一句話專案描述、顯眼提示「Read AGENTS.md before editing」、常用指令清單（dev/test/lint/db migrate/pmtiles update）、「不要做的事」清單、連結到 `AGENTS.md` `openspec/project.md` `docs/architecture.md`
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
-- [ ] 7.2 Write `AGENTS.md`
+  - status: passing
+- [x] 7.2 Write `AGENTS.md`
   - Acceptance: WHEN 開啟 `AGENTS.md` THEN 含 design.md §7「AGENTS.md 內容綱要」所有條目：對話/code 語言規則、tech stack 一覽（指向 `docs/architecture.md`）、code style（TS strict、禁 any）、folder boundaries、testing 規範、Conventional Commits、PR/openspec 對應、env vars 清單
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
-- [ ] 7.3 Write `openspec/project.md` (north star)
+  - status: passing
+- [x] 7.3 Write `openspec/project.md` (north star)
   - Acceptance: WHEN 開啟 THEN 含專案宗旨「個人跑步路線分享網站」、stakeholders（Yuki = owner + admin、訪客 = read-only）、long-term goals、non-goals（無評論/會員系統、無付費）
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
-- [ ] 7.4 Write `docs/architecture.md`
+  - status: passing
+- [x] 7.4 Write `docs/architecture.md`
   - Acceptance: WHEN 開啟 THEN 含 design.md §3 架構圖（ASCII 或 mermaid）、邊界說明（Edge vs Node、`features/*` 不互 import、`lib/*` 共用）
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
-- [ ] 7.5 Write `docs/data-model.md`
+  - status: passing
+- [x] 7.5 Write `docs/data-model.md`
   - Acceptance: WHEN 開啟 THEN 含 `routes` table 完整 schema、每個 index 的用途、「為何同時存 geojson 與 gpx_path」、「地圖搜尋 SQL 範例」、RLS policy 摘要
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
-- [ ] 7.6 Write `docs/runbooks/local-dev.md`
+  - status: passing
+- [x] 7.6 Write `docs/runbooks/local-dev.md`
   - Acceptance: WHEN 新 contributor 照著做 THEN 從 clone 到 `pnpm dev` 全部可成功；含 Supabase local emulator（或共用 dev 專案）說明、env 設定步驟、`pnpm db:migrate` 流程
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 - [ ] 7.7 Write `docs/runbooks/deploy.md`
   - Acceptance: WHEN 開啟 THEN 含 Vercel 專案連結步驟、env vars 設定清單、Supabase OAuth callback URL 對應、PMTiles bucket 設定、首次 deploy checklist
   - Depends on: 3.1, 3.2
   - Independence: parallel-safe
   - status: not_started
-- [ ] 7.8 Write `README.md`
+- [x] 7.8 Write `README.md`
   - Acceptance: WHEN 開啟 THEN 一段專案介紹、live URL placeholder、tech stack badge、quickstart 指向 `docs/runbooks/local-dev.md`、authorship。不重複 CLAUDE.md/AGENTS.md 內容
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## 8. CI & deployment
 - [x] 8.1 Set up GitHub Actions: lint + typecheck + test on PR

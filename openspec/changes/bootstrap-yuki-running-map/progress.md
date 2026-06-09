@@ -165,3 +165,38 @@ doc_language: 繁體中文
 - Tests: pnpm typecheck exit 0, pnpm lint exit 0, pnpm dev ready 2.9s.
 
 - Next action: Commit Wave A.6；接著最後一批 Wave A.4（docs：CLAUDE/AGENTS/README/openspec project + 4 docs/）。
+
+## Sessions 26–32 — 2026-06-09 17:00 — Wave A.4 documentation batch
+- Stage: main-agent
+- Note: 七個 independent docs tasks（7.1-7.6 + 7.8；7.7 deploy.md 屬 Wave C 待 Supabase 設定後寫）平行起草、單批 commit。每個 task 都跟著 not_started → in_progress → passing 流程，本 Session block 合併描述。
+
+### 7.1 CLAUDE.md
+- Files: CLAUDE.md
+- Evidence: 含一句話描述、顯眼「Read AGENTS.md before editing」、Pointers list、common commands table（dev/build/typecheck/lint/format/db:migrate/test/test:e2e）、Do not 清單、OpenSpec workflow 7 步驟。
+
+### 7.2 AGENTS.md
+- Files: AGENTS.md
+- Evidence: 含 language policy（繁中 conversation / English code）、tech stack one-liner、code style（TS strict / no any）、folder boundaries（features/* 不互 import）、testing matrix、Conventional Commits 範例、PR↔OpenSpec change correspondence、env vars table（含每個 var where used + how to obtain）。
+
+### 7.3 openspec/project.md
+- Files: openspec/project.md
+- Evidence: Purpose、Stakeholders（Owner=Yuki, Visitor=read-only）、Long-term goals (5)、Non-goals (8)、Sources of truth links。
+
+### 7.4 docs/architecture.md
+- Files: docs/architecture.md
+- Evidence: ASCII topology + 連到 component .puml、Runtime split (Edge vs Node) table、Trust boundaries table、Folder boundaries note、Visitor flow（7 步驟）、Admin upload flow（6 步驟）、「Why Supabase one-stack」決策歷史、See also。
+
+### 7.5 docs/data-model.md
+- Files: docs/data-model.md
+- Evidence: routes table full schema、Indexes table（GIST/GIN/btree/UNIQUE）、「為何同時存 geojson 與 gpx_path」、RLS SQL policies（anon read published + admin write）、Map search SQL example with performance notes、Future schema considerations。
+
+### 7.6 docs/runbooks/local-dev.md
+- Files: docs/runbooks/local-dev.md
+- Evidence: Prerequisites (Node 22 / pnpm 11.5.2 via corepack / git)、First-time setup commands、`pnpm dev` 描述、Useful commands、Environment variables table、Common gotchas (build scripts, lockfile warning, .next types, hot reload)、Where to go next links。
+
+### 7.8 README.md
+- Files: README.md
+- Evidence: 一段介紹（read-only website + admin GitHub OAuth）、Live URL placeholder、Tech stack table、Quickstart 4 行指令 + 指向 local-dev.md、Project structure & conventions links、License note。不重複 CLAUDE.md/AGENTS.md 內容。
+
+- Verifications: pnpm typecheck exit 0, pnpm lint exit 0, pnpm format applied to all docs。
+- Next action: Commit Wave A.4；本 change 的 Wave A（主代理 trivial 部分）完成 → 21/34 tasks passing；接著評估 Wave B 上 SDD 還是先停下來讓使用者完成 Wave C 外部 service 設定。

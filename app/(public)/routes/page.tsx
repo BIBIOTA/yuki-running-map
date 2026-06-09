@@ -46,9 +46,7 @@ export default function RoutesListPage() {
         <header className="flex items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">路線列表</h1>
-            <p className="text-sm text-muted-foreground">
-              搜尋、排序、地圖瀏覽 — 功能還在組裝中。
-            </p>
+            <p className="text-sm text-muted-foreground">搜尋、排序、地圖瀏覽 — 功能還在組裝中。</p>
           </div>
           <div className="font-mono text-xs text-muted-foreground">0 routes</div>
         </header>
