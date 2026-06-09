@@ -8,21 +8,21 @@ doc_language: 繁體中文
 > 本 change 的範圍是「專案骨架」，不實作 4 個功能頁的真實邏輯。所有頁面只交付 placeholder（routes 通、layout 通、保護機制通、有 smoke test）。功能實作將拆為後續獨立 changes。
 
 ## 1. Repo & Tooling
-- [ ] 1.1 Scaffold Next.js 15 (App Router) + TypeScript strict + pnpm
+- [x] 1.1 Scaffold Next.js 15 (App Router) + TypeScript strict + pnpm
   - Acceptance: WHEN run `pnpm install && pnpm dev` THEN dev server 啟動於 localhost:3000、root 路由回 200、TS `strict` 與 `noUncheckedIndexedAccess` 開啟、package manager 鎖定為 pnpm（packageManager 欄位 + `.npmrc`）
   - Depends on: -
   - Independence: serial
-  - status: not_started
-- [ ] 1.2 Set up ESLint flat config + Prettier + Tailwind plugin
+  - status: passing
+- [x] 1.2 Set up ESLint flat config + Prettier + Tailwind plugin
   - Acceptance: WHEN run `pnpm lint` 與 `pnpm format:check` THEN 對乾淨的 scaffold 0 errors、Tailwind class 自動排序、import 順序由 ESLint plugin enforce
   - Depends on: 1.1
   - Independence: serial
-  - status: not_started
-- [ ] 1.3 Add `.env.example` listing all required env vars
+  - status: passing
+- [x] 1.3 Add `.env.example` listing all required env vars
   - Acceptance: WHEN 開啟 `.env.example` THEN 列出 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`、`ADMIN_GITHUB_USERNAME`、`NEXT_PUBLIC_PMTILES_URL` 與用途註解、`.gitignore` 排除 `.env.local`
   - Depends on: 1.1
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## 2. Design system foundation
 - [ ] 2.1 Configure Tailwind CSS v4 with `@theme` design token slots in `app/globals.css`

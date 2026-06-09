@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+playwright-report/
+test-results/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+*.log
+.vercel/
+.eslintcache
+public/
+next-env.d.ts
+openspec/
