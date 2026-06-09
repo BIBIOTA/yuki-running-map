@@ -111,3 +111,36 @@ doc_language: 繁體中文
   - Removed: app/page.tsx（避免與 app/(public)/page.tsx 路由衝突）
   - Tests: pnpm typecheck exit 0（先 rm .next 清掉舊 validator cache）、pnpm lint exit 0、`pnpm dev` ready 3.6s、curl http://localhost:3000/ 200 含 `<header class="border-b border-border bg-card">` 與 `<h1 class="font-display text-4xl font-bold tracking-tight text-foreground">Yuki's Running Map</h1>`，confirm V2 tokens 與 Tailwind v4 utilities 生效
 - Next action: Commit Wave A.2；接著 Wave A.3 brand placeholders（9.1 Logo SVG + 9.2 favicon/icon/apple-icon）。
+
+## Sessions 13–22 — 2026-06-09 16:30 — batched Waves A.3 + A.5 + A.7
+- Stage: main-agent
+- Note: 五個 independent tasks（9.1 / 9.2 / 5.1 / 5.3 / 8.1）平行寫入並一次 commit。為符合 single-in-progress invariant，逐一翻 `not_started → in_progress → passing`，本批合併為單一 Session block 描述。
+
+### 9.1 Logo placeholder
+- Transition: not_started → in_progress → passing
+- Files: public/brand/logo.svg (wordmark + 跑者剪影 + 跑道弧線 V2 預覽)、public/brand/logo-mark.svg (64×64 mark-only variant)
+- Evidence: V2 Trail Vintage palette (#C26A3D 跑道、#2A1F12 fg、Fraunces wordmark fallback)；待 writing-figma 後續 library change 以最終 Figma export 替換。
+
+### 9.2 Favicon + icons
+- Transition: not_started → in_progress → passing
+- Files: app/icon.tsx (32×32 ImageResponse, "Y" wordmark on V2 primary green)、app/apple-icon.tsx (180×180)
+- Evidence: Next.js convention metadata routes；browser tab favicon + iOS apple-touch-icon 自動由 Next.js 生成 PNG。
+
+### 5.1 lib/map
+- Transition: not_started → in_progress → passing
+- Files: lib/map/style.ts (V2-tinted MapLibre StyleSpecification with `pmtiles://` source)、lib/map/createMap.ts (createMap helper + idempotent Protocol.tile 註冊)、lib/map/index.ts (barrel export)
+- Deps installed: maplibre-gl 5.24.0, pmtiles 4.4.1
+- Evidence: pnpm typecheck exit 0；實際渲染等真實 NEXT_PUBLIC_PMTILES_URL（Wave C）才可端到端驗證；無 PMTILES_URL 時 createMap 主動 throw 並指向 runbook。
+
+### 5.3 PMTiles runbook
+- Transition: not_started → in_progress → passing
+- Files: docs/runbooks/pmtiles-update.md
+- Evidence: 含 bundle scope（台灣 + 日本 bbox）、`pmtiles extract` 指令、Storage path convention (tiles/<name>-YYYY-MM.pmtiles + latest.pmtiles)、Vercel env rollout (Preview → Production)、quarterly refresh cadence。
+
+### 8.1 GitHub Actions CI
+- Transition: not_started → in_progress → passing
+- Files: .github/workflows/ci.yml
+- Evidence: 三個並行 jobs (lint, typecheck, test) on PR + main push、concurrency cancel-in-progress、pnpm/action-setup@v4、Node 22。test job 對未安裝 vitest 的當下用 placeholder（檢測 + 跳過），讓 branch-protection 規則從一開始就有穩定的 check name；Wave B 加入 Vitest 後自動啟用。
+- Verifications: pnpm typecheck/lint/format 全綠（本機，CI 預期一致）。
+
+- Next action: Commit Wave A.3 + A.5 + A.7；接著 Wave A.6 placeholder pages（6.1 / 6.2 / 6.3）。

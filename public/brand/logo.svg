@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 64" fill="none" role="img" aria-label="Yuki's Running Map">
+  <title>Yuki's Running Map</title>
+  <!-- Trail arc · V2 placeholder, to be replaced by Figma library export -->
+  <path d="M 8 48 C 22 22 42 22 56 48" stroke="#C26A3D" stroke-width="3" stroke-linecap="round" fill="none" />
+  <path d="M 12 50 C 24 30 40 30 52 50" stroke="#C26A3D" stroke-opacity="0.4" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 4" fill="none" />
+  <!-- Runner silhouette -->
+  <circle cx="32" cy="22" r="4" fill="#2A1F12" />
+  <rect x="30" y="28" width="3.5" height="14" rx="1.5" fill="#2A1F12" />
+  <rect x="25" y="40" width="3" height="12" rx="1.5" fill="#2A1F12" transform="rotate(20 26.5 46)" />
+  <rect x="36" y="40" width="3" height="12" rx="1.5" fill="#2A1F12" transform="rotate(-20 37.5 46)" />
+  <rect x="22" y="30" width="2.5" height="9" rx="1.2" fill="#2A1F12" transform="rotate(30 23 34.5)" />
+  <rect x="40" y="30" width="2.5" height="9" rx="1.2" fill="#2A1F12" transform="rotate(-30 41 34.5)" />
+  <!-- Wordmark -->
+  <text x="76" y="40" font-family="Fraunces, Georgia, serif" font-size="22" font-weight="700" fill="#2A1F12">Yuki&#x27;s Running Map</text>
+</svg>

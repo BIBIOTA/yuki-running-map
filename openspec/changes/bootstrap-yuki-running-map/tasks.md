@@ -81,21 +81,21 @@ doc_language: 繁體中文
   - status: not_started
 
 ## 5. Map & GPX libraries (skeletons + units)
-- [ ] 5.1 Create `lib/map/` PMTiles loader + MapLibre style helper
+- [x] 5.1 Create `lib/map/` PMTiles loader + MapLibre style helper
   - Acceptance: WHEN Client Component 呼叫 `createMap(container, { center, zoom })` THEN 載入 PMTiles 並繪出底圖、style 從 `lib/map/style.ts` 匯出常數
   - Depends on: 1.1
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 - [ ] 5.2 Implement `lib/gpx/` parse + simplify + metadata extraction
   - Acceptance: WHEN 餵給 `parseGpx(buffer)` 一個 fixture GPX THEN 回 `{ geojson, distanceM, elevationGainM, bbox, startPoint, recordedAt }`；WHEN `simplifyLineString(coords, tolerance=0.0001)` THEN 回傳點數介於 100–500、首尾點不變；Vitest 覆蓋率對 `lib/gpx/*` ≥ 80%
   - Depends on: 1.1
   - Independence: parallel-safe
   - status: not_started
-- [ ] 5.3 Write `docs/runbooks/pmtiles-update.md`
+- [x] 5.3 Write `docs/runbooks/pmtiles-update.md`
   - Acceptance: WHEN 開啟此 runbook THEN 包含「打包範圍（台灣 + 常去國家）」「使用 `pmtiles extract` 指令」「上傳到 Supabase Storage 的 path 慣例」「更新 `NEXT_PUBLIC_PMTILES_URL` 流程」
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## 6. Placeholder pages
 - [ ] 6.1 `/` (public home) placeholder with hero + 「精選路線」section skeleton
@@ -167,11 +167,11 @@ doc_language: 繁體中文
   - status: not_started
 
 ## 8. CI & deployment
-- [ ] 8.1 Set up GitHub Actions: lint + typecheck + test on PR
+- [x] 8.1 Set up GitHub Actions: lint + typecheck + test on PR
   - Acceptance: WHEN PR 開啟 THEN `lint`、`typecheck`、`test` 三個 job 並行跑、任一失敗 PR 顯示紅 X、main 分支需綠燈才能 merge（branch protection 由 owner 後續設定，本 task 只交付 workflow 檔）
   - Depends on: 1.2, 5.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 - [ ] 8.2 Connect Vercel project + configure Preview Deployment
   - Acceptance: WHEN PR 推上 GitHub THEN Vercel bot 留言 preview URL、preview 上的 root 與 4 個頁面皆 200、env vars（含 Supabase keys、PMTILES_URL）已設定 Production + Preview
   - Depends on: 3.1, 3.2, 6.1, 6.2, 6.3, 6.4, 6.5
@@ -189,11 +189,11 @@ doc_language: 繁體中文
   - Depends on: -
   - Independence: parallel-safe
   - status: not_started
-- [ ] 9.2 Add placeholder `favicon.ico` + `app/icon.tsx` + `app/apple-icon.tsx`
+- [x] 9.2 Add placeholder `favicon.ico` + `app/icon.tsx` + `app/apple-icon.tsx`
   - Acceptance: WHEN browser 載入任一頁 THEN 顯示 placeholder favicon、無 404 console error
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## Optional artifacts
 - [x] PlantUML diagrams:
