@@ -63,3 +63,51 @@ doc_language: 繁體中文
   - Vars listed: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, ADMIN_GITHUB_USERNAME, NEXT_PUBLIC_PMTILES_URL — each with purpose comment
   - .gitignore already excludes `.env.local` and `.env*.local`
 - Next action: Commit Wave A.1（tasks 1.1+1.2+1.3）；接著 Wave A.2（design system + layouts）。
+
+## Session 7 — 2026-06-09 16:10
+- Stage: main-agent
+- Task: 2.1 Tailwind v4 @theme V2 tokens
+- Transition: not_started → in_progress
+- Next action: 改寫 app/globals.css 載入 V2 Trail Vintage tokens（shadcn 命名規範 + 自訂 --map-* tokens），更新 app/layout.tsx 用 next/font/google 載 Fraunces + Inter + IBM Plex Mono。
+
+## Session 8 — 2026-06-09 16:14
+- Stage: main-agent
+- Task: 2.1 Tailwind v4 @theme V2 tokens
+- Transition: in_progress → passing
+- Evidence:
+  - Files: app/globals.css（含 :root V2 hex + @theme inline shadcn mapping + 自訂 --color-map-*）、app/layout.tsx（next/font Google fonts）
+  - Spec adjustment: project-foundation/spec.md Scenario「Color tokens resolve to V2」更新為 shadcn 命名（bg-background / bg-primary / 等），記錄理由「貼齊 shadcn ecosystem」
+  - Tests: pnpm typecheck exit 0, pnpm lint exit 0
+- Next action: Task 2.2 shadcn primitives 安裝。
+
+## Session 9 — 2026-06-09 16:14
+- Stage: main-agent
+- Task: 2.2 shadcn/ui base primitives
+- Transition: not_started → in_progress
+- Next action: pnpm add 安裝 cva/clsx/tailwind-merge/lucide/sonner/@radix-ui/*；寫 lib/utils.ts cn + components.json，pnpm dlx shadcn@latest add 7 個 primitive。
+
+## Session 10 — 2026-06-09 16:17
+- Stage: main-agent
+- Task: 2.2 shadcn/ui base primitives
+- Transition: in_progress → passing
+- Evidence:
+  - Deps: class-variance-authority 0.7.1, clsx 2.1.1, tailwind-merge 3.6.0, lucide-react 1.17.0, sonner 2.0.7, @radix-ui/react-{slot,dialog,dropdown-menu,tabs}, tw-animate-css 1.4.0
+  - Files: lib/utils.ts (cn helper), components.json (shadcn config style=new-york baseColor=stone cssVariables=true), components/ui/{button,input,card,dialog,dropdown-menu,tabs,sonner}.tsx
+  - Tests: pnpm typecheck exit 0, pnpm lint exit 0, pnpm format exit 0
+- Next action: Task 2.3 layouts。
+
+## Session 11 — 2026-06-09 16:18
+- Stage: main-agent
+- Task: 2.3 (public)/(admin) route group layouts
+- Transition: not_started → in_progress
+- Next action: 寫 app/(public)/layout.tsx + app/(public)/page.tsx（搬移 home）+ app/(admin)/layout.tsx；移除 app/page.tsx 避免路由衝突；dev server 驗證 GET / 仍回 200。
+
+## Session 12 — 2026-06-09 16:25
+- Stage: main-agent
+- Task: 2.3 (public)/(admin) route group layouts
+- Transition: in_progress → passing
+- Evidence:
+  - Files: app/(public)/layout.tsx（header + nav + footer，使用 bg-background / text-foreground / bg-card / border-border）、app/(public)/page.tsx（hero + 「瀏覽路線」CTA Button asChild Link）、app/(admin)/layout.tsx（admin header + disabled Sign out 按鈕，待 3.6/6.4 wire 入 Supabase signOut）
+  - Removed: app/page.tsx（避免與 app/(public)/page.tsx 路由衝突）
+  - Tests: pnpm typecheck exit 0（先 rm .next 清掉舊 validator cache）、pnpm lint exit 0、`pnpm dev` ready 3.6s、curl http://localhost:3000/ 200 含 `<header class="border-b border-border bg-card">` 與 `<h1 class="font-display text-4xl font-bold tracking-tight text-foreground">Yuki's Running Map</h1>`，confirm V2 tokens 與 Tailwind v4 utilities 生效
+- Next action: Commit Wave A.2；接著 Wave A.3 brand placeholders（9.1 Logo SVG + 9.2 favicon/icon/apple-icon）。

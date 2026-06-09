@@ -25,21 +25,21 @@ doc_language: 繁體中文
   - status: passing
 
 ## 2. Design system foundation
-- [ ] 2.1 Configure Tailwind CSS v4 with `@theme` design token slots in `app/globals.css`
+- [x] 2.1 Configure Tailwind CSS v4 with `@theme` design token slots in `app/globals.css`
   - Acceptance: WHEN 開啟 `globals.css` THEN 內含 design.md §6 所列所有 token slot（color/typography/spacing/radius/shadow/motion）但具體值留空或填 placeholder neutral 值、tailwind 設定編譯通過
   - Depends on: 1.2
   - Independence: serial
-  - status: not_started
-- [ ] 2.2 Install shadcn/ui base primitives (button / input / card / dialog / dropdown-menu / tabs / sonner)
+  - status: passing
+- [x] 2.2 Install shadcn/ui base primitives (button / input / card / dialog / dropdown-menu / tabs / sonner)
   - Acceptance: WHEN 引入這些 component 到任意頁面 THEN render 成功、Lucide icons 可用、Radix peer deps 正確安裝
   - Depends on: 2.1
   - Independence: serial
-  - status: not_started
-- [ ] 2.3 Create `(public)` 與 `(admin)` route groups with shared layouts
+  - status: passing
+- [x] 2.3 Create `(public)` 與 `(admin)` route groups with shared layouts
   - Acceptance: WHEN 訪客存取 `(public)` 任一頁 THEN 顯示 public layout（含 header/footer placeholder）；WHEN admin 存取 `(admin)` 任一頁 THEN 顯示 admin layout（含 sign-out 按鈕 placeholder）、兩個 layout 共用 root layout 的 fonts + globals.css
   - Depends on: 2.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 3. Supabase backend foundation
 - [ ] 3.1 Provision Supabase project, enable PostGIS extension, create `gpx` storage bucket

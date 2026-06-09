@@ -30,8 +30,9 @@ The system SHALL enforce code style via ESLint flat config + Prettier with the T
 The system SHALL load `app/globals.css` with a Tailwind v4 `@theme` block whose color, typography, spacing, radius, shadow, and motion tokens carry the V2 Trail Vintage values from `design.md` §6.
 
 #### Scenario: Color tokens resolve to V2 Trail Vintage values
-- **WHEN** a Server Component uses `bg-bg`, `text-fg`, `bg-brand`, `text-brand-fg`, `bg-accent`, or `border-border`
-- **THEN** the computed CSS variable equals the hex declared in `design.md` §6 (`--color-bg: #F8F1E0`, `--color-brand: #2F5D3A`, `--color-accent: #C26A3D`, etc.)
+- **WHEN** a Server Component uses shadcn-convention Tailwind utility classes (`bg-background`, `text-foreground`, `bg-primary`, `text-primary-foreground`, `bg-accent`, or `border-border`)
+- **THEN** the computed CSS variable values match design.md §6 V2 hex (background = `#F8F1E0`, primary = `#2F5D3A`, accent = `#C26A3D`, etc.)
+- **AND** map-specific tokens (`bg-map-route-line`, `text-map-elevation`) are exposed under the `--color-map-*` namespace so they do not collide with shadcn primitives
 
 #### Scenario: Typography stack matches V2 selection
 - **WHEN** `font-display`, `font-sans`, or `font-mono` Tailwind utilities are applied

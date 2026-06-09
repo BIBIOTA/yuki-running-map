@@ -1,1 +1,147 @@
 @import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Design tokens · V2 Trail Vintage
+   Source of truth: openspec/changes/bootstrap-yuki-running-map/design.md §6
+   Figma file: https://www.figma.com/design/Yx9G0efBQq3amHPEyeVSDc
+
+   Token naming follows the shadcn/ui convention for compatibility
+   with `pnpm dlx shadcn add` and the broader Tailwind v4 ecosystem.
+   The V2 semantic mapping (design.md §6 slot → shadcn token) is:
+     bg            → background
+     surface       → card / popover
+     surface-muted → secondary / muted
+     fg            → foreground
+     fg-muted      → muted-foreground
+     border        → border / input
+     brand         → primary
+     brand-fg      → primary-foreground
+     accent        → accent
+     accent-fg     → accent-foreground (white)
+     danger        → destructive
+   Map-specific tokens (route-line, elevation) remain app-namespaced
+   under --map-* so they do not collide with shadcn primitives.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  /* Surface / text */
+  --background: #f8f1e0;
+  --foreground: #2a1f12;
+  --card: #fffaec;
+  --card-foreground: #2a1f12;
+  --popover: #fffaec;
+  --popover-foreground: #2a1f12;
+  /* Brand */
+  --primary: #2f5d3a;
+  --primary-foreground: #ffffff;
+  /* Secondary / muted */
+  --secondary: #ece0c4;
+  --secondary-foreground: #2a1f12;
+  --muted: #ece0c4;
+  --muted-foreground: #6b5638;
+  /* Accent */
+  --accent: #c26a3d;
+  --accent-foreground: #ffffff;
+  /* Status */
+  --destructive: #a6473d;
+  --destructive-foreground: #ffffff;
+  --success: #4e8d5a;
+  --warning: #c28a3d;
+  /* Borders / focus */
+  --border: #d9c9a4;
+  --input: #d9c9a4;
+  --ring: #2f5d3a;
+  /* App-specific (map, elevation, route line) */
+  --map-route-line: #c26a3d;
+  --map-route-line-glow: rgb(194 106 61 / 0.4);
+  --map-elevation: #bfa77a;
+  /* Radius */
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  /* Map shadcn primitives' utility classes (bg-background, text-foreground, ...) to the :root values above. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  /* App-specific exposed as Tailwind utilities (bg-map-route-line, text-map-elevation, ...) */
+  --color-map-route-line: var(--map-route-line);
+  --color-map-route-line-glow: var(--map-route-line-glow);
+  --color-map-elevation: var(--map-elevation);
+
+  /* Radius scale (shadcn convention) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Typography — font families resolve via next/font CSS variables set in app/layout.tsx */
+  --font-display: var(--font-fraunces), "Noto Serif TC", Georgia, serif;
+  --font-sans: var(--font-inter), "Noto Sans TC", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "JetBrains Mono", monospace;
+
+  /* Fluid type scale via clamp(min, fluid, max) */
+  --text-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+  --text-sm: clamp(0.8125rem, 0.78rem + 0.18vw, 0.875rem);
+  --text-base: clamp(0.9375rem, 0.9rem + 0.22vw, 1rem);
+  --text-lg: clamp(1.0625rem, 1.02rem + 0.28vw, 1.1875rem);
+  --text-xl: clamp(1.25rem, 1.18rem + 0.4vw, 1.4375rem);
+  --text-2xl: clamp(1.5rem, 1.4rem + 0.55vw, 1.75rem);
+  --text-3xl: clamp(1.875rem, 1.7rem + 0.85vw, 2.25rem);
+  --text-4xl: clamp(2.25rem, 2rem + 1.2vw, 3rem);
+
+  /* Shadow */
+  --shadow-card: 0 1px 2px rgb(42 31 18 / 0.05), 0 4px 12px rgb(42 31 18 / 0.06);
+  --shadow-popover: 0 8px 24px rgb(42 31 18 / 0.12);
+  --shadow-map: 0 2px 8px rgb(42 31 18 / 0.18);
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-duration-quick: 120ms;
+  --animate-duration-base: 220ms;
+  --animate-duration-slow: 360ms;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    line-height: 1.15;
+    color: var(--foreground);
+  }
+}
