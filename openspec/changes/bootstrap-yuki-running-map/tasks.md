@@ -184,11 +184,11 @@ doc_language: 繁體中文
   - status: not_started
 
 ## 9. Logo & favicon placeholder
-- [ ] 9.1 Add placeholder Logo SVG + wordmark in `public/brand/`
+- [x] 9.1 Add placeholder Logo SVG + wordmark in `public/brand/`
   - Acceptance: WHEN 存取 `/brand/logo.svg` THEN 取得 placeholder SVG（暫用 monogram 「Y」）、CLAUDE.md 註明「待 writing-figma 階段以使用者選定版本替換」
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 - [x] 9.2 Add placeholder `favicon.ico` + `app/icon.tsx` + `app/apple-icon.tsx`
   - Acceptance: WHEN browser 載入任一頁 THEN 顯示 placeholder favicon、無 404 console error
   - Depends on: -
