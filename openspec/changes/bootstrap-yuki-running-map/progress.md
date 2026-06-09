@@ -144,3 +144,24 @@ doc_language: 繁體中文
 - Verifications: pnpm typecheck/lint/format 全綠（本機，CI 預期一致）。
 
 - Next action: Commit Wave A.3 + A.5 + A.7；接著 Wave A.6 placeholder pages（6.1 / 6.2 / 6.3）。
+
+## Sessions 23–25 — 2026-06-09 16:50 — Wave A.6 placeholder pages
+- Stage: main-agent
+
+### 6.1 / home page
+- Transition: not_started → in_progress → passing
+- Status: implementation landed earlier in commit 6618f69 (Wave A.2 layouts) — app/(public)/page.tsx contains the V2 hero with h1 "Yuki's Running Map" and Button asChild Link href="/routes"; this Session just records the bookkeeping flip.
+- Evidence: curl http://localhost:3000/ returns 200; HTML contains `<h1 class="font-display text-4xl font-bold tracking-tight text-foreground">Yuki's Running Map</h1>` plus `<a href="/routes">瀏覽路線</a>`.
+
+### 6.2 /routes list placeholder
+- Transition: not_started → in_progress → passing
+- Files: app/(public)/routes/page.tsx
+- Evidence: curl http://localhost:3000/routes returns 200; HTML contains left-column filter (disabled Input + 6 region buttons), header h1 "路線列表" + "0 routes" counter, dashed-border Card with MapPinned icon + "目前無路線" empty state. No DB query (page is pure render — no Supabase client imported).
+
+### 6.3 /routes/[slug] detail placeholder
+- Transition: not_started → in_progress → passing
+- Files: app/(public)/routes/[slug]/page.tsx
+- Evidence: curl http://localhost:3000/routes/example-route returns 200 with "Coming soon" + back link; curl http://localhost:3000/routes/totally-fake-slug also returns 200 with the same placeholder (confirms real not_found logic is correctly deferred to the follow-up route-detail change).
+- Tests: pnpm typecheck exit 0, pnpm lint exit 0, pnpm dev ready 2.9s.
+
+- Next action: Commit Wave A.6；接著最後一批 Wave A.4（docs：CLAUDE/AGENTS/README/openspec project + 4 docs/）。

@@ -98,21 +98,21 @@ doc_language: 繁體中文
   - status: passing
 
 ## 6. Placeholder pages
-- [ ] 6.1 `/` (public home) placeholder with hero + 「精選路線」section skeleton
+- [x] 6.1 `/` (public home) placeholder with hero + 「精選路線」section skeleton
   - Acceptance: WHEN 訪客 GET `/` THEN 返回 200、`<h1>` 含 "Yuki's Running Map"、含「瀏覽路線」CTA 連到 `/routes`
   - Depends on: 2.3
   - Independence: parallel-safe
-  - status: not_started
-- [ ] 6.2 `/routes` (route list) placeholder shell
+  - status: passing
+- [x] 6.2 `/routes` (route list) placeholder shell
   - Acceptance: WHEN 訪客 GET `/routes` THEN 返回 200、含左欄篩選 region 與 toolbar placeholder、含「目前無路線」empty state、不發 DB query
   - Depends on: 2.3
   - Independence: parallel-safe
-  - status: not_started
-- [ ] 6.3 `/routes/[slug]` (route detail) placeholder
+  - status: passing
+- [x] 6.3 `/routes/[slug]` (route detail) placeholder
   - Acceptance: WHEN 訪客 GET `/routes/example-route` THEN 返回 200 並顯示「Coming soon」placeholder；WHEN 訪客 GET `/routes/unknown` THEN 同樣返回 200 placeholder（真實 not_found 邏輯留待後續 change）
   - Depends on: 2.3
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 - [ ] 6.4 `/admin/login` placeholder with functional GitHub OAuth button
   - Acceptance: WHEN 未登入訪客 GET `/admin/login` THEN 返回 200 並顯示「以 GitHub 登入」按鈕；WHEN 點擊 THEN 觸發 Supabase OAuth flow 並 redirect 回 `/admin/upload`（或 from 參數指定的 path）
   - Depends on: 2.3, 3.6
