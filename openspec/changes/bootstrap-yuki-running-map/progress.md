@@ -200,3 +200,11 @@ doc_language: 繁體中文
 
 - Verifications: pnpm typecheck exit 0, pnpm lint exit 0, pnpm format applied to all docs。
 - Next action: Commit Wave A.4；本 change 的 Wave A（主代理 trivial 部分）完成 → 21/34 tasks passing；接著評估 Wave B 上 SDD 還是先停下來讓使用者完成 Wave C 外部 service 設定。
+
+## Session 33 — 2026-06-09 17:10 — 7.7 deploy runbook (early, doubles as Wave C onboarding)
+- Stage: main-agent
+- Task: 7.7 docs/runbooks/deploy.md
+- Transition: not_started → in_progress → passing
+- Files: docs/runbooks/deploy.md（依使用者「先寫 onboarding runbook，再雙線跑 Wave B SDD」決策提前寫出）
+- Evidence: 6 個 sections —— (1) Supabase project + PostGIS + buckets, (2) GitHub OAuth App, (3) Supabase Auth GitHub provider hookup, (4) PMTiles upload, (5) Vercel project + env vars (5 個) + first deploy, (6) First-time smoke checklist (5 routes + OAuth round-trip)；加 Maintenance + Troubleshooting 表。Wave C 8 個 tasks 全部對應到此 runbook 的某個 step。
+- Next action: Yuki 異步依此 runbook 完成 Wave C 外部設定；同時我啟動 Wave B SDD，從 task 5.2（GPX lib，完全獨立）開始。

@@ -155,11 +155,12 @@ doc_language: 繁體中文
   - Depends on: -
   - Independence: parallel-safe
   - status: passing
-- [ ] 7.7 Write `docs/runbooks/deploy.md`
+- [x] 7.7 Write `docs/runbooks/deploy.md`
   - Acceptance: WHEN 開啟 THEN 含 Vercel 專案連結步驟、env vars 設定清單、Supabase OAuth callback URL 對應、PMTiles bucket 設定、首次 deploy checklist
   - Depends on: 3.1, 3.2
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
+  - Note: 寫於 Wave C 之前，故同時擔任 Wave C onboarding runbook（Yuki 照著做 Supabase + OAuth + Vercel 設定）
 - [x] 7.8 Write `README.md`
   - Acceptance: WHEN 開啟 THEN 一段專案介紹、live URL placeholder、tech stack badge、quickstart 指向 `docs/runbooks/local-dev.md`、authorship。不重複 CLAUDE.md/AGENTS.md 內容
   - Depends on: -
