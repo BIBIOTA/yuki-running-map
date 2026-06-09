@@ -355,3 +355,11 @@ run-map/
 3. **GPX 上傳大小上限**：建議 10MB（涵蓋多日 ultra），需確認。
 4. **路線「published=false」的草稿狀態**：admin 是否需要單獨「草稿列表」？本 change 預設「先存 unpublished，待 admin 在詳情頁 toggle published」，相關 UI 留到實作 change 決定。
 5. **每個路線是否需要多張圖片**：目前只設一張 `cover_image`。若要相簿，需新增 `route_images` table。
+
+---
+
+## 12. Diagrams
+
+- [Component: System Architecture](./diagrams/01-component-system-architecture.puml) — 系統架構：Vercel/Next.js（含 Edge vs Node runtime 切分、`(public)` 與 `(admin)` route groups、middleware、Server Actions、Client Components）、Supabase（Postgres + PostGIS、Storage 的 `gpx` 與 `tiles` bucket、Auth）、GitHub OAuth、訪客與管理員流向。對應 §3 系統架構文字描述。
+
+> Database ER diagram 暫不在 bootstrap 範圍內，待功能頁面實作 change 啟動時再規劃。`routes` table 的欄位、index、RLS 設計仍以 §4 文字描述為準。

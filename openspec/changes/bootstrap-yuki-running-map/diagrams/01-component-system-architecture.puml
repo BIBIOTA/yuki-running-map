@@ -1,0 +1,98 @@
+@startuml 01-component-system-architecture
+' Yuki's Running Map — 系統架構（Component Diagram）
+' Source of truth: openspec/changes/bootstrap-yuki-running-map/design.md §3
+
+left to right direction
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam roundCorner 8
+skinparam defaultFontName "Sans-Serif"
+skinparam wrapWidth 200
+skinparam linetype ortho
+skinparam ranksep 50
+skinparam nodesep 40
+
+skinparam component {
+  BackgroundColor<<edge>>   #E8F1FF
+  BorderColor<<edge>>       #4A7DBE
+  BackgroundColor<<node>>   #FFF1E0
+  BorderColor<<node>>       #C68A3E
+  BackgroundColor<<client>> #EAFBEE
+  BorderColor<<client>>     #4C9A5E
+  BackgroundColor<<db>>     #F4E8FF
+  BorderColor<<db>>         #7E5AB4
+  BackgroundColor<<store>>  #F4E8FF
+  BorderColor<<store>>      #7E5AB4
+  BackgroundColor<<auth>>   #F4E8FF
+  BorderColor<<auth>>       #7E5AB4
+  BackgroundColor<<ext>>    #ECECEC
+  BorderColor<<ext>>        #6B6B6B
+}
+
+actor "訪客\n(Visitor)" as visitor
+actor "管理員\n(Yuki / Admin)" as admin
+
+package "Vercel" as vercel {
+
+  package "Next.js 15 App Router" as nextjs {
+
+    package "(public) route group · Edge runtime + ISR" as pubGroup {
+      component "GET /\n首頁"                as pubHome   <<edge>>
+      component "GET /routes\n列表"          as pubList   <<edge>>
+      component "GET /routes/:slug\n詳情"    as pubDetail <<edge>>
+    }
+
+    package "(admin) route group · Node runtime" as adminGroup {
+      component "GET /admin/login"           as adminLogin  <<node>>
+      component "GET /admin/upload"          as adminUpload <<node>>
+      component "Server Actions\nGPX 解析 / 寫入" as actions  <<node>>
+    }
+
+    component "middleware.ts\nadmin guard · Edge" as middleware <<edge>>
+
+    component "Client Components\nMapLibre 互動" as mapClient <<client>>
+  }
+}
+
+package "Supabase" as supabase {
+  component "Auth\nGitHub OAuth" as authSvc <<auth>>
+  database "Postgres + PostGIS\nroutes table · RLS" as pg <<db>>
+  folder "Storage" as storage {
+    component "gpx bucket\n原始 GPX"             as gpxBucket   <<store>>
+    component "tiles bucket\nProtomaps PMTiles"  as tilesBucket <<store>>
+  }
+}
+
+cloud "GitHub OAuth" as github <<ext>>
+
+' Layout hints: keep Auth on top of Supabase column, storage at the bottom
+authSvc -[hidden]down- pg
+pg      -[hidden]down- storage
+
+' ── 訪客流 ─────────────────────────────
+visitor --> pubHome   : HTTPS
+visitor --> pubList   : HTTPS
+visitor --> pubDetail : HTTPS
+
+pubList   ..> pg          : SELECT published\n+ ST_Intersects(bbox)
+pubDetail ..> pg          : SELECT by slug
+pubDetail ..> gpxBucket   : signed URL (24h)\n→ 訪客下載 GPX
+pubList   --> mapClient   : hydrate
+pubDetail --> mapClient   : hydrate
+mapClient ..> tilesBucket : PMTiles range request
+
+' ── Admin 流 ───────────────────────────
+admin --> middleware : HTTPS  /admin/*
+middleware ..> authSvc : verify session\n+ check user_name == ADMIN
+middleware --> adminLogin  : unauth → redirect
+middleware --> adminUpload : authorized
+
+adminLogin  ..> authSvc  : OAuth start / callback
+authSvc     ..> github   : OAuth 2.0 flow
+adminUpload --> actions  : form submit
+actions     ..> gpxBucket : upload GPX
+actions     ..> pg        : INSERT route
+actions     ..> pg        : revalidatePath
+
+@enduml

@@ -196,5 +196,7 @@ doc_language: 繁體中文
   - status: not_started
 
 ## Optional artifacts
-- [x] PlantUML diagrams (spec-driven-dev:writing-uml) — required types: component (system architecture — Next.js / Supabase / Protomaps boundaries & runtime split), entity-relationship (database schema for `routes` table with PostGIS columns / indexes / RLS notes)
+- [x] PlantUML diagrams:
+  - [01-component-system-architecture.puml](./diagrams/01-component-system-architecture.puml) — 系統架構（Next.js / Supabase / Protomaps / GitHub OAuth 邊界與 runtime 切分）
+  - _ER diagram deferred — 待功能頁面實作 change 時再規劃 `routes` schema 視覺化_
 - [x] Figma designs (spec-driven-dev:writing-figma) — required: 3 version design system (V1 Topo Minimal / V2 Trail Vintage / V3 Sport Mono) + Logo set (4 variants per version: light/dark/mono/favicon)
