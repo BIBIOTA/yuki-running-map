@@ -182,36 +182,45 @@ WHERE published = true
 
 ## 6. UI 設計系統
 
-### Design tokens 骨架（Tailwind v4 `@theme` + CSS variables）
+> **選定方向：V2 Trail Vintage**（2026-06-09 由 Yuki 決定，三版並陳於 Figma 後挑選）。完整 Figma 探索記錄見 [./designs/figma.md](./designs/figma.md)。
+
+### Design tokens（Tailwind v4 `@theme` + CSS variables）
 
 ```css
 @theme {
-  /* — Color tokens（具體值待 Figma 確定）— */
-  --color-bg
-  --color-surface
-  --color-surface-muted
-  --color-fg
-  --color-fg-muted
-  --color-border
-  --color-brand
-  --color-brand-fg
-  --color-accent
-  --color-route-line
-  --color-route-line-glow
-  --color-elevation
-  --color-success / --color-warning / --color-danger
+  /* — Color tokens · V2 Trail Vintage — */
+  --color-bg:            #F8F1E0;  /* 米黃 */
+  --color-surface:       #FFFAEC;  /* 米白 */
+  --color-surface-muted: #ECE0C4;
+  --color-border:        #D9C9A4;
+  --color-fg:            #2A1F12;  /* 深咖 */
+  --color-fg-muted:      #6B5638;
+  --color-brand:         #2F5D3A;  /* 森綠 */
+  --color-brand-fg:      #FFFFFF;
+  --color-accent:        #C26A3D;  /* 鏽橘 */
+  --color-route-line:    #C26A3D;
+  --color-route-line-glow: rgb(194 106 61 / 0.4);
+  --color-elevation:     #BFA77A;
+  --color-success:       #4E8D5A;
+  --color-warning:       #C28A3D;
+  --color-danger:        #A6473D;
 
   /* — Typography — */
-  --font-display       /* Logo + h1 */
-  --font-sans          /* body */
-  --font-mono          /* 數字統計（距離/爬升 chips） */
-  --text-xs / --text-sm / --text-base / --text-lg / --text-xl / --text-2xl / --text-3xl   /* fluid type scale via clamp() */
+  --font-display:        "Fraunces", "Noto Serif TC", Georgia, serif;
+  --font-sans:           "Inter", "Noto Sans TC", system-ui, sans-serif;
+  --font-mono:           "IBM Plex Mono", ui-monospace, "JetBrains Mono", monospace;
 
-  /* — Spacing scale — */
-  --space-1 ... --space-12             /* 4px base */
+  /* fluid type scale via clamp() — 實際值在 globals.css 給出 */
+  --text-xs / --text-sm / --text-base / --text-lg / --text-xl / --text-2xl / --text-3xl
+
+  /* — Spacing scale — 4px base */
+  --space-1 ... --space-12
 
   /* — Radius — */
-  --radius-sm / --radius-md / --radius-lg / --radius-pill
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+  --radius-pill: 999px;
 
   /* — Shadow — */
   --shadow-card / --shadow-popover / --shadow-map
@@ -222,18 +231,16 @@ WHERE published = true
 }
 ```
 
-### 三個 Figma 設計方向（writing-figma 階段並陳）
+### 視覺方向
 
-| Version | Mood | 色系起點 | Display 字 | Body 字 | Logo 方向 |
-|---|---|---|---|---|---|
-| V1 Topo Minimal | 戶外地圖、克制 | 冰白 / 墨藍 / 苔綠強調 | Geist / Space Grotesk | Inter | 地形等高線環抱「Y」 |
-| V2 Trail Vintage | 溫暖、手繪、跡跡感 | 米黃 / 森綠 / 鏽橘 | Fraunces / Recoleta | Source Serif / Inter | 跑者剪影 + 跑道弧線 + 手寫「Yuki's」 |
-| V3 Sport Mono | 高對比、Strava 風 | 純黑 + 螢光萊姆/橘 | Geist Mono / Söhne | Inter | 粗體 wordmark + 箭頭 |
+- **Mood**：溫暖、手繪感、跡跡感、跑道與山林的復古地誌
+- **Logo 方向**：跑者剪影 + 跑道弧線（已於 Figma mockup 實作）
+- **Wordmark**：Fraunces 為主；hero / favicon 等關鍵點綴可考慮加入手寫元素（見 [./designs/figma.md](./designs/figma.md) Open Question #4）
+- **Logo variants**：Light / Dark / Monochrome / Favicon 各一
 
-每個 Logo 將 export light / dark / 單色 / favicon 共 4 個 variant。
+### 決策歷史
 
-### 為何不在本 change 直接定色
-使用者明確表達想在 Figma 比較三個版本後再決定。本 change 提供 token slot；`writing-figma` 階段選定後再回填具體 hex 值，這樣 design.md → Figma → 程式碼的單向流不會被「反覆改 token」打斷。
+V1 Topo Minimal（冷調極簡）與 V3 Sport Mono（高對比運動）皆已於同一個 Figma file 內保留，作為決策痕跡參考，不再作為實作備選方案。
 
 ---
 
@@ -363,3 +370,9 @@ run-map/
 - [Component: System Architecture](./diagrams/01-component-system-architecture.puml) — 系統架構：Vercel/Next.js（含 Edge vs Node runtime 切分、`(public)` 與 `(admin)` route groups、middleware、Server Actions、Client Components）、Supabase（Postgres + PostGIS、Storage 的 `gpx` 與 `tiles` bucket、Auth）、GitHub OAuth、訪客與管理員流向。對應 §3 系統架構文字描述。
 
 > Database ER diagram 暫不在 bootstrap 範圍內，待功能頁面實作 change 啟動時再規劃。`routes` table 的欄位、index、RLS 設計仍以 §4 文字描述為準。
+
+---
+
+## 13. Designs
+
+- [Figma Designs](./designs/figma.md) — Yuki's Running Map · Design System file（[Figma 連結](https://www.figma.com/design/Yx9G0efBQq3amHPEyeVSDc)）。三版 mockup 並陳，已於 2026-06-09 選定 **V2 Trail Vintage** 為實作方向。圖檔含色票、Typography、Logo 4 variants、Components、Header/Footer，並附 4 張 screenshot 於 [./designs/screenshots/](./designs/screenshots/)。
