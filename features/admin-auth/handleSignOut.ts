@@ -3,6 +3,10 @@ interface SignOutDeps {
   push: (href: string) => void;
 }
 
-export async function handleSignOut(_deps: SignOutDeps): Promise<void> {
-  throw new Error("not implemented");
+export async function handleSignOut({
+  signOut,
+  push,
+}: SignOutDeps): Promise<void> {
+  await signOut();
+  push("/");
 }

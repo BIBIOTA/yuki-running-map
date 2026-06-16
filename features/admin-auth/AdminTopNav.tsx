@@ -1,18 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { createBrowserClient } from "@/lib/supabase/browser";
 
+import { handleSignOut } from "./handleSignOut";
 import { shouldHideAdminNav } from "./shouldHideAdminNav";
 
 export function AdminTopNav() {
   const pathname = usePathname();
+  const router = useRouter();
 
   if (shouldHideAdminNav(pathname)) {
     return null;
   }
+
+  const onSignOut = () => {
+    const supabase = createBrowserClient();
+    void handleSignOut({
+      signOut: () => supabase.auth.signOut(),
+      push: (href) => router.push(href),
+    });
+  };
 
   return (
     <header className="border-b border-border bg-card">
@@ -23,8 +34,7 @@ export function AdminTopNav() {
         >
           Yuki&apos;s Running Map · Admin
         </Link>
-        {/* Sign out wires up in task 6.5. */}
-        <Button variant="ghost" size="sm" disabled>
+        <Button onClick={onSignOut} variant="ghost" size="sm">
           Sign out
         </Button>
       </div>
