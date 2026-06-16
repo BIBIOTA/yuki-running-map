@@ -51,3 +51,21 @@ doc_language: 繁體中文
     - 同 spec "RLS policies enforce admin and public access" Requirement：加入 ALTER DATABASE 描述 + 新 Scenario `app.admin_github_username GUC is set at the database level`
   - Validation: `openspec validate wave-c-supabase-rls-auth --strict` exit 0
 - Next action: 下一 session resume 後，先以 `spec-driven-dev:resume-change` 確認目前 in-flight state（tasks 6.6 + 3.3 passing、其餘 not_started），再啟動 task 3.6（lib/supabase/ factories）；其後依序推 4.1 (middleware) → 6.4 (/admin/login) → 6.5 (/admin/upload)。external setup（3.1 / 3.2 / 8.2）與 migration tasks（3.4 / 3.5）等 Yuki 完成 Supabase + GitHub OAuth + Vercel dashboard 設定後再 dispatch。
+
+## Session 6 — 2026-06-16 20:00
+- Stage: TDD
+- Task: 3.6 `lib/supabase/` factories
+- Transition: not_started → in_progress
+- Next action: 寫 Vitest module mock failing tests（對應 spec.md `data-and-auth-infrastructure` "Supabase client factories are exported from lib/supabase" Requirement 三個 Scenarios：browser callable / server wraps @supabase/ssr with next/headers cookies / middleware round-trips cookies），先確認測試以「找不到 lib/supabase/{browser,server,middleware}」失敗後 commit `test: red - 3.6 supabase factories`
+
+## Session 7 — 2026-06-16 20:25
+- Stage: TDD
+- Task: 3.6 `lib/supabase/` factories
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: `3be80f7` test(wave-c): red - 3.6 lib/supabase factories; `3376421` feat(wave-c): green - 3.6 lib/supabase factories
+  - Tests: `pnpm exec vitest run lib/supabase` → 1 Test File / 3 Tests pass；全 suite 5 Test Files / 15 Tests pass；typecheck + lint exit 0
+  - No refactor 需求（factories 已乾淨）
+  - Diagram coverage: 對應 sequence diagram (01-sequence-admin-oauth-flow.puml) 的 cookies 路由——test 已斷言 next/headers cookies + req/res cookies 兩條 path 都正確接入 @supabase/ssr。
+  - Red strategy: skeleton modules throw "not implemented" 讓 typecheck/lint 不破，test 以行為原因 fail。
+- Next action: 啟動 task 4.1（root `middleware.ts` admin guard）——使用 3.6 的 createMiddlewareClient + ADMIN_GITHUB_USERNAME env match。test 用 vi.mock 把 `@/lib/supabase/middleware` 與 `next/server` 的 NextResponse 一起 stub。

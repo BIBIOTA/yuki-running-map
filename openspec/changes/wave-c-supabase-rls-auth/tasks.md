@@ -41,11 +41,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: not_started
 
-- [ ] 3.6 `lib/supabase/` factories：`browser.ts` / `server.ts` / `middleware.ts`
+- [x] 3.6 `lib/supabase/` factories：`browser.ts` / `server.ts` / `middleware.ts`
   - Acceptance: WHEN import `createBrowserClient` from `lib/supabase/browser` 並呼叫 THEN 回傳 Supabase client 可在 "use client" component 使用；AND import `createServerClient` from `lib/supabase/server` 並呼叫 THEN 回傳 client 且正確 wrap `@supabase/ssr` createServerClient + next/headers cookies 雙向讀寫（無需手動 SET LOCAL，admin username 來自 task 3.5 設定的 cluster-level GUC）；AND `lib/supabase/middleware.ts` 匯出 `createMiddlewareClient({ req, res })` helper 處理 cookie 雙向寫；AND `pnpm typecheck` exit 0
   - Depends on: 3.1
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## 4. Auth & Middleware
 
