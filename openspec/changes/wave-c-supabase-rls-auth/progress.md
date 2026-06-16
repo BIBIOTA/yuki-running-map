@@ -69,3 +69,21 @@ doc_language: 繁體中文
   - Diagram coverage: 對應 sequence diagram (01-sequence-admin-oauth-flow.puml) 的 cookies 路由——test 已斷言 next/headers cookies + req/res cookies 兩條 path 都正確接入 @supabase/ssr。
   - Red strategy: skeleton modules throw "not implemented" 讓 typecheck/lint 不破，test 以行為原因 fail。
 - Next action: 啟動 task 4.1（root `middleware.ts` admin guard）——使用 3.6 的 createMiddlewareClient + ADMIN_GITHUB_USERNAME env match。test 用 vi.mock 把 `@/lib/supabase/middleware` 與 `next/server` 的 NextResponse 一起 stub。
+
+## Session 8 — 2026-06-16 20:30
+- Stage: TDD
+- Task: 4.1 `middleware.ts` admin guard
+- Transition: not_started → in_progress
+- Next action: 寫純函式 `lib/auth/admin-guard.ts#decideAdminGuard` 的 5 個 failing tests（對應 spec.md `data-and-auth-infrastructure` "middleware.ts guards admin routes" Requirement 五個 Scenarios：/admin/login bypass / unauthenticated redirect / admin reaches /admin/upload / non-admin sign-out + flash / missing env blocks everyone），先 skeleton stub throw "not implemented" 保持 typecheck+lint 綠燈，commit `test: red - 4.1 admin guard decision`
+
+## Session 9 — 2026-06-16 20:40
+- Stage: TDD
+- Task: 4.1 `middleware.ts` admin guard
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: `d35b588` test(wave-c): red - 4.1 admin guard decision; `58f8e3d` feat(wave-c): green - 4.1 middleware.ts admin guard
+  - Tests: `pnpm exec vitest run lib/auth` → 1 Test File / 5 Tests pass；全 suite 6 Test Files / 20 Tests pass；typecheck + lint exit 0
+  - 無 refactor 需求（admin-guard 為簡單 if-else cascade、middleware.ts 為 thin switch wiring）
+  - Diagram coverage: sequence diagram (01-sequence-admin-oauth-flow.puml) §5 alt 分支兩條（admin 放行 / 非 admin sign-out + redirect /?auth_error=not_admin）皆由 decideAdminGuard 5 個 unit tests 斷言；middleware.ts NextResponse + signOut 接線由 task 8.3 E2E 驗證
+  - 設計亮點: /admin/login bypass 早 return 在 createMiddlewareClient + auth.getUser() 之前，符合 spec scenario 1「middleware does not call auth.getUser()」要求
+- Next action: 啟動 task 6.4（/admin/login GitHub OAuth button Client Component）——使用 createBrowserClient + supabase.auth.signInWithOAuth provider=github。test 把 createBrowserClient mock 起來、斷言 button click 觸發正確 signInWithOAuth args。

@@ -49,11 +49,11 @@ doc_language: 繁體中文
 
 ## 4. Auth & Middleware
 
-- [ ] 4.1 `middleware.ts` admin guard
+- [x] 4.1 `middleware.ts` admin guard
   - Acceptance: WHEN root `middleware.ts` 存在且 `config.matcher = ['/admin/:path*']` THEN edge runtime 攔截所有 `/admin/*` request；AND 對 `/admin/login` bypass guard 直接 `NextResponse.next()`；AND 對其他 `/admin/*` 未登入 THEN redirect `/admin/login`；AND 登入但 `user_metadata.user_name !== ADMIN_GITHUB_USERNAME` THEN `supabase.auth.signOut()` + redirect `/?auth_error=not_admin`；AND ENV 未設 `ADMIN_GITHUB_USERNAME` THEN fallback「無人是 admin」（fail-closed）
   - Depends on: 3.6
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 6. Admin pages + flash toast
 
