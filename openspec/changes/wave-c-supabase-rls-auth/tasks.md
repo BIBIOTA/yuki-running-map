@@ -69,11 +69,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: not_started
 
-- [ ] 6.6 `/` flash toast handler for `?auth_error=not_admin`
+- [x] 6.6 `/` flash toast handler for `?auth_error=not_admin`
   - Acceptance: WHEN 訪客 GET `/?auth_error=not_admin` THEN 頁面 mount 時用 sonner 顯示 toast「您不是 admin，已登出」；AND toast 顯示後 client 端 `router.replace('/')` 清除 query param；AND `/` 無 query param 時不顯示 toast
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## 7. Documentation updates
 
