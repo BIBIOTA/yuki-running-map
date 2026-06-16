@@ -80,6 +80,46 @@ Detailed in [AGENTS.md](../AGENTS.md#folder-boundaries). One sentence:
 6. SSR renders metadata + chips + map placeholder. MapLibre hydrates on the client, fetches PMTiles range requests directly from Supabase Storage.
 7. "下載 GPX" button → request signed URL for the `gpx/<...>.gpx` object (24 h TTL).
 
+## Admin auth flow (Edge middleware → Supabase Auth → Postgres GUC)
+
+When Yuki opens any `/admin/*` route, edge middleware intercepts before the route's Node runtime renders:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Yuki as Yuki (admin)
+  participant Browser
+  participant MW as middleware.ts<br/>(Edge runtime)
+  participant Auth as Supabase Auth
+  participant Page as /admin/upload<br/>(Node runtime)
+  participant PG as Postgres + PostGIS<br/>(GUC: app.admin_github_username)
+
+  Yuki->>Browser: click /admin/upload
+  Browser->>MW: GET /admin/upload (cookie: sb-..auth-token)
+  Note over MW: Edge runtime intercepts /admin/:path*<br/>(except /admin/login bypass)
+  MW->>Auth: createMiddlewareClient + auth.getUser()
+  Auth-->>MW: { user_metadata: { user_name } }
+  Note over MW: compare user_name === ADMIN_GITHUB_USERNAME (env)
+
+  alt Match (放行)
+    MW-->>Browser: NextResponse.next()
+    Browser->>Page: render /admin/upload
+    Page->>PG: SELECT routes WHERE ... (subject to RLS)
+    Note over PG: RLS evaluates auth.jwt() vs<br/>current_setting('app.admin_github_username')<br/>(GUC set at migration via ALTER DATABASE,<br/>NOT per-request SET LOCAL)
+    PG-->>Page: rows allowed by admin_full_access policy
+    Page-->>Browser: HTML
+  else Mismatch (擋下)
+    MW->>Auth: signOut()
+    MW-->>Browser: 302 → /?auth_error=not_admin
+  end
+```
+
+Key boundaries:
+
+- **Edge runtime**: `middleware.ts` runs on every `/admin/*` request (matcher) but bypasses `/admin/login` itself. It uses `createMiddlewareClient` from `lib/supabase/middleware.ts` and reads the session cookie to call `auth.getUser()` — cheap network roundtrip to Supabase Auth.
+- **Node runtime**: `/admin/upload` page is rendered Node-side (matches Server Action runtime). DB calls from the page use `lib/supabase/server.ts` (`createServerClient` with `next/headers` cookies).
+- **Postgres GUC**: `app.admin_github_username` is **NOT** set per-request via `SET LOCAL`. It is set once at migration time via `ALTER DATABASE postgres SET app.admin_github_username = '<env>'`, and every PostgREST connection in the pool inherits it. Changing admin requires re-running the ALTER (single-admin personal project trade-off). RLS policies reference `current_setting('app.admin_github_username', true)` for fail-closed comparison.
+
 ## Admin upload flow
 
 1. Yuki visits `/admin/upload`.

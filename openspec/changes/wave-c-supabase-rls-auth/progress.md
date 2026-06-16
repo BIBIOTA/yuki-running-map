@@ -138,3 +138,15 @@ doc_language: 繁體中文
   - §`gpx_path`：從「signed URL」改為「published 直接 public URL；草稿 policy 過濾」
   - Grep verify：6 個 policy 名稱 + ALTER DATABASE 段落 + 草稿描述全部出現
 - Next action: 啟動 task 7.2（docs/architecture.md 新增 middleware → Supabase mermaid）
+
+## Session 15 — 2026-06-16 21:25
+- Stage: implementation (docs)
+- Task: 7.2 Update `docs/architecture.md`
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - 新增 `## Admin auth flow (Edge middleware → Supabase Auth → Postgres GUC)` 段落
+  - Mermaid sequenceDiagram 涵蓋 6 個 participant（Yuki/Browser/MW/Auth/Page/PG）+ alt 分支（放行 vs 擋下 sign-out + redirect）
+  - Notes 標明 Edge runtime / Node runtime boundary 與 ALTER DATABASE GUC（取代原 SET LOCAL）
+  - 後續 prose 列出 3 個 boundary：Edge / Node / Postgres GUC
+  - Grep verify：sequenceDiagram + Edge runtime + Node runtime + ADMIN_GITHUB_USERNAME + ALTER DATABASE + app.admin_github_username 全部存在
+- Next action: 啟動 task 7.3（docs/runbooks/deploy.md 新增 OAuth callback 驗證 + RLS 手動測試 SQL）

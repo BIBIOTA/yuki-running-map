@@ -83,11 +83,12 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [ ] 7.2 Update `docs/architecture.md`：補上 Edge Middleware → Supabase Auth → Postgres `current_setting` 流程圖
+- [x] 7.2 Update `docs/architecture.md`：補上 Edge Middleware → Supabase Auth → Postgres `current_setting` 流程圖
   - Acceptance: WHEN 開啟 `docs/architecture.md` THEN 含一段 mermaid sequenceDiagram 描述 admin 點 `/admin/upload` → middleware 抓 session → 比對 `ADMIN_GITHUB_USERNAME` → Postgres SET LOCAL → RLS 放行的順序；AND 圖中清楚標示 Edge runtime vs Node runtime 邊界
   - Depends on: 4.1
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
+  - Note: 「Postgres SET LOCAL」依 design pivot (Session 5) 改寫為「migration ALTER DATABASE GUC、policies 用 `current_setting`」；mermaid 與 prose 雙寫明 pivot 後的真實實作
 
 - [ ] 7.3 Update `docs/runbooks/deploy.md`：新增 OAuth callback 驗證步驟 + RLS 手動測試 SQL
   - Acceptance: WHEN 開啟 `docs/runbooks/deploy.md` THEN 含「OAuth callback 驗證」章節指出測試命令（`curl supabase.co/auth/v1/callback`）與預期 302 redirect；AND 含「RLS 手動測試 SQL」章節列出三條 sanity SQL（anon select 應 0、service role insert 應成功、anon select 仍 0 因 published=false）
