@@ -1,0 +1,9 @@
+{
+  "_doc": "Expected metadata for sample.gpx. Recomputed independently from the raw fixture trackpoints (Haversine + cumulative positive elevation delta + bbox extrema) so the test asserts behaviour against a known-good baseline, not against parseGpx's own output. If sample.gpx is regenerated, regenerate this file alongside it.",
+  "trackPointCount": 1200,
+  "distanceM": 12108.567,
+  "elevationGainM": 28.4,
+  "bbox": [121.4404, 25.1717739, 121.5003562, 25.1739261],
+  "startPoint": [121.4404, 25.1727],
+  "recordedAt": "2026-05-11T06:30:00.000Z"
+}

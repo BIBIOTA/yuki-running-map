@@ -36,15 +36,19 @@
     "@eslint/eslintrc": "^3.2.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.4.0",
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.0",
+    "fast-xml-parser": "^5.8.0",
     "postcss": "^8.4.49",
     "prettier": "^3.4.0",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.8"
   }
 }
