@@ -1,3 +1,3 @@
-export function shouldHideAdminNav(_pathname: string): boolean {
-  throw new Error("not implemented");
+export function shouldHideAdminNav(pathname: string): boolean {
+  return pathname === "/admin/login";
 }

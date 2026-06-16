@@ -6,6 +6,12 @@ interface SignInDeps {
   origin: string;
 }
 
-export async function handleGithubSignIn(_deps: SignInDeps): Promise<void> {
-  throw new Error("not implemented");
+export async function handleGithubSignIn({
+  signInWithOAuth,
+  origin,
+}: SignInDeps): Promise<void> {
+  await signInWithOAuth({
+    provider: "github",
+    options: { redirectTo: `${origin}/admin/upload` },
+  });
 }
