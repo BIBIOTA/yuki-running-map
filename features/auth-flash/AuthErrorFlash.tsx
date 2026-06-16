@@ -14,14 +14,10 @@ export function AuthErrorFlash() {
   useEffect(() => {
     handleAuthErrorFlash({
       authError,
-      toast: (message) => {
-        toast(message);
-      },
-      replace: (href) => {
-        router.replace(href);
-      },
+      toast,
+      replace: router.replace,
     });
-  }, [authError, router]);
+  }, [authError, router.replace]);
 
   return null;
 }
