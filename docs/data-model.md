@@ -41,41 +41,71 @@ updated_at      timestamptz NOT NULL DEFAULT now()
 
 兩個欄位看起來重複，但承擔不同責任：
 
-- **`gpx_path`**：原始 GPX 檔，存在 Supabase Storage（`gpx/{yyyy}/{uuid}.gpx`）。下載按鈕直接給 signed URL；高精度繪圖時 client 也可拉這個。
+- **`gpx_path`**：原始 GPX 檔，存在 Supabase Storage（`gpx/{yyyy}/{uuid}.gpx`）。`gpx` bucket 設 `public=true`，但 RLS policy 限定「`published=true` 的 row 對應的 path 才可被任何人讀取」，所以 published route 的下載按鈕可直接給 public URL；草稿（`published=false`）的 GPX path 因 policy 過濾而不公開，僅 admin token 可列出。
 - **`geojson`**：簡化後的 `LineString`（容差 0.0001°，~100–500 個點），存在 Postgres jsonb。列表頁批次畫 N 條軌跡縮圖時，**不能**每張縮圖都去 Storage 拉原始 GPX 解析——這會把 GPX 拉爆。
 
 實作邏輯：上傳 Server Action 同步寫兩個——原檔上 Storage、簡化後寫 DB。
 
 ## Row Level Security (RLS)
 
-`routes` table policies:
+`routes` table policies（兩條）：
 
 ```sql
+ALTER TABLE routes ENABLE ROW LEVEL SECURITY;
+
 -- Anonymous SELECT: 只能看 published rows
 CREATE POLICY anon_read_published ON routes
 FOR SELECT
 USING (published = true);
 
--- Admin (matching ADMIN_GITHUB_USERNAME) full write access
-CREATE POLICY admin_write ON routes
+-- Admin (matching ADMIN_GITHUB_USERNAME) full CRUD access
+CREATE POLICY admin_full_access ON routes
 FOR ALL
 USING (
   (auth.jwt()->'user_metadata'->>'user_name') = current_setting('app.admin_github_username', true)
 );
 ```
 
-> `current_setting('app.admin_github_username')` 由 server connection 在 session 初始化時 `SET LOCAL` 灌入，避免硬寫死。具體實作於 `lib/supabase/server.ts`（Wave B）。
+> `current_setting('app.admin_github_username')` 來自 **DB-level cluster setting**：migration 中以 `ALTER DATABASE postgres SET app.admin_github_username = '<ADMIN_GITHUB_USERNAME>'` 一次性設定，所有 PostgREST connection pool 內的 connection 自動繼承。改 admin username 需重跑該 ALTER（單一 admin 的個人專案可接受）。env 未設時 `current_setting(..., true)` 回 NULL，policy 比對任何 jwt user_name 皆 false，fail-closed。
 
 Storage RLS（`gpx` bucket）：
 
+bucket 設 `public=true`，但 SELECT 仍受 RLS policy 過濾——只有「對應到 `published=true` 的 row」的 path 才會被放行。Admin 透過 jwt + GUC 比對取得寫入權。
+
 ```sql
--- Public read disabled at bucket level; 改用 signed URL
--- Admin write only:
-CREATE POLICY admin_write_storage ON storage.objects
-FOR INSERT, UPDATE, DELETE
+-- Public read with conditional policy
+CREATE POLICY gpx_public_select_published ON storage.objects
+FOR SELECT
 USING (
   bucket_id = 'gpx'
-  AND (auth.jwt()->'user_metadata'->>'user_name') = current_setting('app.admin_github_username', true)
+  AND EXISTS (
+    SELECT 1 FROM routes
+    WHERE gpx_path = storage.objects.name
+      AND published = true
+  )
+);
+
+-- Admin write
+CREATE POLICY gpx_admin_write ON storage.objects
+FOR INSERT
+WITH CHECK (
+  bucket_id = 'gpx'
+  AND (auth.jwt()->'user_metadata'->>'user_name')
+      = current_setting('app.admin_github_username', true)
+);
+
+CREATE POLICY gpx_admin_modify ON storage.objects
+FOR UPDATE USING (
+  bucket_id = 'gpx'
+  AND (auth.jwt()->'user_metadata'->>'user_name')
+      = current_setting('app.admin_github_username', true)
+);
+
+CREATE POLICY gpx_admin_delete ON storage.objects
+FOR DELETE USING (
+  bucket_id = 'gpx'
+  AND (auth.jwt()->'user_metadata'->>'user_name')
+      = current_setting('app.admin_github_username', true)
 );
 ```
 

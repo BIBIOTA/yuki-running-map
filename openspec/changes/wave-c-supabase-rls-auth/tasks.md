@@ -77,11 +77,11 @@ doc_language: 繁體中文
 
 ## 7. Documentation updates
 
-- [ ] 7.1 Update `docs/data-model.md` §RLS / §Storage RLS / §`gpx_path`
+- [x] 7.1 Update `docs/data-model.md` §RLS / §Storage RLS / §`gpx_path`
   - Acceptance: WHEN 開啟 `docs/data-model.md` THEN §RLS 對齊 design.md §3 的 `anon_read_published` + `admin_full_access` SQL；AND §Storage RLS 從「Public read disabled, signed URL only」改為「bucket public + policy 限 published」並含 4 條 storage policy SQL；AND §`gpx_path` 描述從「下載按鈕直接給 signed URL」改為「published row 直接給 public URL；草稿不公開」
   - Depends on: 3.5
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 - [ ] 7.2 Update `docs/architecture.md`：補上 Edge Middleware → Supabase Auth → Postgres `current_setting` 流程圖
   - Acceptance: WHEN 開啟 `docs/architecture.md` THEN 含一段 mermaid sequenceDiagram 描述 admin 點 `/admin/upload` → middleware 抓 session → 比對 `ADMIN_GITHUB_USERNAME` → Postgres SET LOCAL → RLS 放行的順序；AND 圖中清楚標示 Edge runtime vs Node runtime 邊界

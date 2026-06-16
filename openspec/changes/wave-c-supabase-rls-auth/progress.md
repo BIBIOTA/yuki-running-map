@@ -127,3 +127,14 @@ doc_language: 繁體中文
   - Scenario "Authenticated admin sees the placeholder" 標 `verification-pending: e2e`（need external setup + task 8.3 OAuth mock fixture 才能 end-to-end 驗證）
   - Diagram coverage: sequence diagram (01-sequence-admin-oauth-flow.puml) §6「(選用) Sign out → supabase.signOut() → cookie cleared, 302 → /」由 handleSignOut 單元測試斷言
 - Next action: 5 個 code-only tasks 全部 passing（6.6 / 3.3 / 3.6 / 4.1 / 6.4 / 6.5），剩餘 12 個 tasks 等 external setup：3.1 / 3.2 / 8.2（Yuki Supabase + Vercel dashboard 手動）、3.4 / 3.5 / 7.1 / 7.2 / 7.3 / 7.4 / 7.5（migration + docs，需 Supabase live）、8.3 / 8.4（E2E + CI，需所有 env 就緒）。Session 收尾建議：等 Yuki 完成 deploy runbook 後 resume 跑剩餘 tasks。
+
+## Session 14 — 2026-06-16 21:15
+- Stage: implementation (docs — non-TDD)
+- Task: 7.1 Update `docs/data-model.md`
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - §RLS 對齊 design.md §3：`anon_read_published` + `admin_full_access`、ALTER DATABASE GUC 段落
+  - §Storage RLS：4 條 policy SQL（`gpx_public_select_published` / `gpx_admin_write` / `gpx_admin_modify` / `gpx_admin_delete`）
+  - §`gpx_path`：從「signed URL」改為「published 直接 public URL；草稿 policy 過濾」
+  - Grep verify：6 個 policy 名稱 + ALTER DATABASE 段落 + 草稿描述全部出現
+- Next action: 啟動 task 7.2（docs/architecture.md 新增 middleware → Supabase mermaid）
