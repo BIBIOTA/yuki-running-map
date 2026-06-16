@@ -129,7 +129,9 @@ CREATE POLICY admin_full_access ON routes
   );
 ```
 
-`current_setting('app.admin_github_username')` 由 `lib/supabase/server.ts` 的 `createServerClient` factory 在每個 request 的 session 初始化時 `SET LOCAL` 灌入；若 env 未設則為 NULL，policy fallback 為「無人是 admin」（fail-closed）。
+`current_setting('app.admin_github_username')` 取自 **DB-level cluster setting**：在 migration 中以 `ALTER DATABASE postgres SET app.admin_github_username = '<ADMIN_GITHUB_USERNAME>'` 一次性設定，PostgREST connection pool 內每個 connection 都會繼承此值。改 admin 需重跑此 ALTER（個人專案可接受）。若 env 未設則 policy `current_setting(..., true)` 回 NULL，比對任何 jwt user_name 皆 false，fallback 為「無人是 admin」（fail-closed）。
+
+> **設計取捨**：原 design 想用 per-request `SET LOCAL` 灌入，但 Supabase JS client 走 PostgREST connection pool，無法直接 SET LOCAL；改用 cluster-level setting 後 `lib/supabase/server.ts` factory 變簡單（只 wrap `@supabase/ssr` createServerClient + cookie handling）。代價：改 admin username 需重跑 ALTER DATABASE。
 
 ### `gpx` bucket（public + conditional SELECT）
 

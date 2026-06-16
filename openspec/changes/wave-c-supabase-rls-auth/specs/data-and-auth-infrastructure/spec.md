@@ -61,7 +61,7 @@ The system SHALL include a Drizzle migration that, when applied to a clean Supab
 > See: ../../diagrams/02-er-routes-schema.puml
 
 ### Requirement: RLS policies enforce admin and public access
-The system SHALL enable Row Level Security on the `routes` table with two policies (`anon_read_published`, `admin_full_access`), and SHALL apply four storage.objects policies on the `gpx` bucket (`gpx_public_select_published`, `gpx_admin_write`, `gpx_admin_modify`, `gpx_admin_delete`). The admin identity is determined by matching `jwt.user_metadata.user_name` against `current_setting('app.admin_github_username')`.
+The system SHALL enable Row Level Security on the `routes` table with two policies (`anon_read_published`, `admin_full_access`), and SHALL apply four storage.objects policies on the `gpx` bucket (`gpx_public_select_published`, `gpx_admin_write`, `gpx_admin_modify`, `gpx_admin_delete`). The admin identity is determined by matching `jwt.user_metadata.user_name` against `current_setting('app.admin_github_username', true)`. The migration SHALL set this GUC at the database level via `ALTER DATABASE postgres SET app.admin_github_username = '<value-from-ADMIN_GITHUB_USERNAME-env>'`, so every PostgREST connection inherits it without per-request SET LOCAL.
 
 #### Scenario: routes table has RLS enabled with two policies
 - **WHEN** an operator opens Supabase Dashboard → Database → Tables → routes
@@ -76,18 +76,24 @@ The system SHALL enable Row Level Security on the `routes` table with two polici
 - **WHEN** the routes table is empty and an anonymous client issues `SELECT count(*) FROM routes`
 - **THEN** the result is 0
 
+#### Scenario: app.admin_github_username GUC is set at the database level
+- **WHEN** a reviewer queries `SHOW app.admin_github_username` on any new PostgREST-bound session after migration
+- **THEN** the result equals the value of the `ADMIN_GITHUB_USERNAME` env supplied at migration time
+- **AND** no client code issues `SET LOCAL app.admin_github_username` per request
+
 > See: ../../diagrams/02-er-routes-schema.puml
 
 ### Requirement: Supabase client factories are exported from lib/supabase
-The system SHALL export three Supabase client factories from `lib/supabase/`: `createBrowserClient` in `browser.ts` for client components, `createServerClient` in `server.ts` for server components and server actions (and which SETs `app.admin_github_username` for every request), and `createMiddlewareClient` in `middleware.ts` for edge middleware cookie management.
+The system SHALL export three Supabase client factories from `lib/supabase/`: `createBrowserClient` in `browser.ts` for client components, `createServerClient` in `server.ts` for server components and server actions (wrapping `@supabase/ssr` with `next/headers` cookie integration), and `createMiddlewareClient` in `middleware.ts` for edge middleware cookie management. The admin identity is established by a cluster-level Postgres GUC `app.admin_github_username` set during migration (see the RLS Requirement), not by per-request `SET LOCAL`.
 
 #### Scenario: createBrowserClient is callable from "use client" code
 - **WHEN** a Client Component imports `createBrowserClient` from `lib/supabase/browser` and calls it
 - **THEN** it returns a Supabase client object exposing `auth.signInWithOAuth`, `auth.signOut`, and `from`
 
-#### Scenario: createServerClient sets app.admin_github_username
-- **WHEN** `createServerClient` is invoked inside a request handler
-- **THEN** the underlying Postgres connection executes `SET LOCAL app.admin_github_username = '<env>'` (or empty string if env is unset) before any user-supplied query runs
+#### Scenario: createServerClient wraps @supabase/ssr with next/headers cookies
+- **WHEN** `createServerClient` is invoked inside a Server Component or Server Action
+- **THEN** it delegates to `@supabase/ssr`'s `createServerClient` with `next/headers` cookies bound for read and write
+- **AND** the returned client surfaces `auth.getUser`, `auth.signOut`, and `from`
 
 #### Scenario: createMiddlewareClient round-trips cookies
 - **WHEN** `createMiddlewareClient({ req, res })` is invoked inside middleware

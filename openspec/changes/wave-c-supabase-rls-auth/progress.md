@@ -38,3 +38,16 @@ doc_language: 繁體中文
   - No refactor 需求（schema 已自洽）
   - Diagram coverage: ER diagram (02-er-routes-schema.puml) 的 20 個欄位 / bbox geometry(Polygon,4326) / start_point geometry(Point,4326) / difficulty enum 全部由 schema-shape test 斷言到
 - Next action: 啟動 task 3.6（lib/supabase/ factories）——也是 pure code、可 mock Supabase client 做單元測試
+
+## Session 5 — 2026-06-16 19:15
+- Stage: design pivot（無 task transition）
+- Decision: 把 admin username 從「per-request SET LOCAL」改為「DB-level `ALTER DATABASE postgres SET app.admin_github_username = ...`」
+  - Why: Supabase JS client 走 PostgREST connection pool，無法 per-request SET LOCAL
+  - Updated artifacts:
+    - design.md §3：RLS 段落改寫 + 加上 "設計取捨" 註記
+    - tasks.md task 3.5：acceptance 加入 `ALTER DATABASE` 條款
+    - tasks.md task 3.6：acceptance 移除「SET LOCAL 灌入 session」條款，改為「wrap @supabase/ssr + cookies」
+    - specs/data-and-auth-infrastructure/spec.md "Supabase client factories" Requirement：Scenario `createServerClient sets app.admin_github_username` 換成 `createServerClient wraps @supabase/ssr with next/headers cookies`
+    - 同 spec "RLS policies enforce admin and public access" Requirement：加入 ALTER DATABASE 描述 + 新 Scenario `app.admin_github_username GUC is set at the database level`
+  - Validation: `openspec validate wave-c-supabase-rls-auth --strict` exit 0
+- Next action: 下一 session resume 後，先以 `spec-driven-dev:resume-change` 確認目前 in-flight state（tasks 6.6 + 3.3 passing、其餘 not_started），再啟動 task 3.6（lib/supabase/ factories）；其後依序推 4.1 (middleware) → 6.4 (/admin/login) → 6.5 (/admin/upload)。external setup（3.1 / 3.2 / 8.2）與 migration tasks（3.4 / 3.5）等 Yuki 完成 Supabase + GitHub OAuth + Vercel dashboard 設定後再 dispatch。

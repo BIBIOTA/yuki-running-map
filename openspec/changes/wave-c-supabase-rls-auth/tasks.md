@@ -35,14 +35,14 @@ doc_language: 繁體中文
   - Independence: serial
   - status: not_started
 
-- [ ] 3.5 RLS policies on `routes` + `gpx` bucket（同一個 migration SQL）
-  - Acceptance: WHEN 執行 `pnpm db:migrate` 後檢查 Supabase Dashboard → Database → Tables → routes THEN Row Level Security = enabled；AND Policies 上有 `anon_read_published`（FOR SELECT, USING published = true）與 `admin_full_access`（FOR ALL, USING jwt user_name = current_setting）兩條 policy；AND `storage.objects` 上有 `gpx_public_select_published`（含 EXISTS published row 條件）、`gpx_admin_write`、`gpx_admin_modify`、`gpx_admin_delete` 四條 policy；AND 以 anon key 查 `SELECT count(*) FROM routes` 回 0（表初始空 + RLS 任一情形皆應為 0）；NOTE: 完整 RLS 行為驗證（anon 看不見 unpublished row）需要 seed 資料、推到 `feat-admin-gpx-upload`
+- [ ] 3.5 RLS policies on `routes` + `gpx` bucket + DB-level admin username（同一個 migration SQL）
+  - Acceptance: WHEN 執行 `pnpm db:migrate` 後檢查 Supabase Dashboard → Database → Tables → routes THEN Row Level Security = enabled；AND Policies 上有 `anon_read_published`（FOR SELECT, USING published = true）與 `admin_full_access`（FOR ALL, USING jwt user_name = `current_setting('app.admin_github_username', true)`）兩條 policy；AND `storage.objects` 上有 `gpx_public_select_published`（含 EXISTS published row 條件）、`gpx_admin_write`、`gpx_admin_modify`、`gpx_admin_delete` 四條 policy；AND migration 含 `ALTER DATABASE postgres SET app.admin_github_username = '<value-from-ADMIN_GITHUB_USERNAME-env>'`，使 `current_setting('app.admin_github_username', true)` 在每個 PostgREST connection 中皆 resolve 為該值；AND 以 anon key 查 `SELECT count(*) FROM routes` 回 0（表初始空 + RLS 任一情形皆應為 0）；NOTE: 完整 RLS 行為驗證（anon 看不見 unpublished row）需要 seed 資料、推到 `feat-admin-gpx-upload`
   - Depends on: 3.4
   - Independence: serial
   - status: not_started
 
 - [ ] 3.6 `lib/supabase/` factories：`browser.ts` / `server.ts` / `middleware.ts`
-  - Acceptance: WHEN import `createBrowserClient` from `lib/supabase/browser` 並呼叫 THEN 回傳 Supabase client 可在 "use client" component 使用；AND import `createServerClient` from `lib/supabase/server` 並呼叫 THEN 回傳 client 且在每次 request 內以 `SET LOCAL app.admin_github_username = '<env>'` 灌入 session（若 env 未設則 SET 為空字串）；AND `lib/supabase/middleware.ts` 匯出 `createMiddlewareClient({ req, res })` helper 處理 cookie 雙向寫；AND `pnpm typecheck` exit 0
+  - Acceptance: WHEN import `createBrowserClient` from `lib/supabase/browser` 並呼叫 THEN 回傳 Supabase client 可在 "use client" component 使用；AND import `createServerClient` from `lib/supabase/server` 並呼叫 THEN 回傳 client 且正確 wrap `@supabase/ssr` createServerClient + next/headers cookies 雙向讀寫（無需手動 SET LOCAL，admin username 來自 task 3.5 設定的 cluster-level GUC）；AND `lib/supabase/middleware.ts` 匯出 `createMiddlewareClient({ req, res })` helper 處理 cookie 雙向寫；AND `pnpm typecheck` exit 0
   - Depends on: 3.1
   - Independence: parallel-safe
   - status: not_started
