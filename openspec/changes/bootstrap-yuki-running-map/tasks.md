@@ -5,7 +5,7 @@ doc_language: 繁體中文
 
 # Tasks: bootstrap-yuki-running-map
 
-> 本 change 的範圍是「專案骨架」，不實作 4 個功能頁的真實邏輯。所有頁面只交付 placeholder（routes 通、layout 通、保護機制通、有 smoke test）。功能實作將拆為後續獨立 changes。
+> 本 change 的範圍是「**不被外部服務阻塞**的專案骨架」：repo + tooling、design system、map/GPX libraries、public placeholder pages、docs、GitHub Actions。所有 Supabase / GitHub OAuth / Vercel / middleware / admin pages / E2E 全部移到後續 change `wave-c-supabase-rls-auth`，待 Yuki 依 `docs/runbooks/deploy.md` 完成外部設定後再實作。原 4 個功能頁的真實邏輯則拆為更後續的 changes。
 
 ## 1. Repo & Tooling
 - [x] 1.1 Scaffold Next.js 15 (App Router) + TypeScript strict + pnpm
@@ -41,56 +41,17 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing
 
-## 3. Supabase backend foundation
-- [ ] 3.1 Provision Supabase project, enable PostGIS extension, create `gpx` storage bucket
-  - Acceptance: WHEN 連線到 Supabase dashboard THEN PostGIS extension 已啟用（`select postgis_version()` 回非空）、`gpx` bucket 存在且 public read disabled、setup 步驟寫入 `docs/runbooks/deploy.md`
-  - Depends on: -
-  - Independence: parallel-safe
-  - status: not_started
-- [ ] 3.2 Configure Supabase Auth GitHub OAuth provider
-  - Acceptance: WHEN 從 `/admin/login` placeholder 觸發 OAuth flow THEN Supabase 重導至 GitHub authorize 頁、callback 取得 session、setup 步驟寫入 `docs/runbooks/deploy.md`
-  - Depends on: 3.1
-  - Independence: serial
-  - status: not_started
-- [ ] 3.3 Define Drizzle schema for `routes` table with PostGIS columns and enums
-  - Acceptance: WHEN 執行 `pnpm drizzle-kit generate` THEN 產生 migration SQL 涵蓋 design.md §4 所有欄位（含 `geometry(Polygon,4326)` `bbox`、`geometry(Point,4326)` `start_point`、`difficulty` enum、`tags text[]`）、schema 檔位於 `lib/db/schema.ts`
-  - Depends on: 1.1, 3.1
-  - Independence: parallel-safe
-  - status: not_started
-- [ ] 3.4 Add Drizzle migration creating indexes (GIST on bbox/start_point, btree on recorded_at, GIN on tags)
-  - Acceptance: WHEN 執行 `pnpm db:migrate` 完成 THEN `\d routes` 顯示所有 design.md §4 列出的 index、PostGIS GIST index 真正建立（用 `pg_indexes` 驗證）
-  - Depends on: 3.3
-  - Independence: serial
-  - status: not_started
-- [ ] 3.5 Apply RLS policies for `routes` table and `gpx` storage bucket
-  - Acceptance: WHEN 以匿名 client 嘗試 SELECT THEN 只回傳 `published=true` 的 row；WHEN 匿名嘗試 INSERT/UPDATE/DELETE THEN 被拒；WHEN 非 `ADMIN_GITHUB_USERNAME` 的登入 user 嘗試寫入 THEN 被拒；WHEN ADMIN user 嘗試寫入 `gpx` bucket THEN 成功
-  - Depends on: 3.2, 3.4
-  - Independence: serial
-  - status: not_started
-- [ ] 3.6 Create Supabase client helpers in `lib/supabase/` (browser, server, middleware variants)
-  - Acceptance: WHEN Server Component 呼叫 `createServerClient()` THEN 拿到讀寫 cookie 的 client；WHEN Client Component 呼叫 `createBrowserClient()` THEN 拿到 browser singleton；WHEN middleware 呼叫 `createMiddlewareClient(req,res)` THEN 拿到能更新 session cookie 的 client；皆使用 `@supabase/ssr` v1
-  - Depends on: 3.2
-  - Independence: parallel-safe
-  - status: not_started
-
-## 4. Admin route protection
-- [ ] 4.1 Implement `middleware.ts` to guard `(admin)/*`
-  - Acceptance: WHEN 未登入訪客存取 `/admin/upload` THEN redirect 到 `/admin/login?from=/admin/upload`；WHEN 已登入但 `user.user_metadata.user_name !== ADMIN_GITHUB_USERNAME` THEN 立即 `signOut()` 並 redirect 到 `/admin/login?error=unauthorized`；WHEN 合法 admin 存取 THEN 直接通過
-  - Depends on: 3.6
-  - Independence: serial
-  - status: not_started
-
 ## 5. Map & GPX libraries (skeletons + units)
 - [x] 5.1 Create `lib/map/` PMTiles loader + MapLibre style helper
   - Acceptance: WHEN Client Component 呼叫 `createMap(container, { center, zoom })` THEN 載入 PMTiles 並繪出底圖、style 從 `lib/map/style.ts` 匯出常數
   - Depends on: 1.1
   - Independence: parallel-safe
   - status: passing
-- [ ] 5.2 Implement `lib/gpx/` parse + simplify + metadata extraction
+- [x] 5.2 Implement `lib/gpx/` parse + simplify + metadata extraction
   - Acceptance: WHEN 餵給 `parseGpx(buffer)` 一個 fixture GPX THEN 回 `{ geojson, distanceM, elevationGainM, bbox, startPoint, recordedAt }`；WHEN `simplifyLineString(coords, tolerance=0.0001)` THEN 回傳點數介於 100–500、首尾點不變；Vitest 覆蓋率對 `lib/gpx/*` ≥ 80%
   - Depends on: 1.1
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 - [x] 5.3 Write `docs/runbooks/pmtiles-update.md`
   - Acceptance: WHEN 開啟此 runbook THEN 包含「打包範圍（台灣 + 常去國家）」「使用 `pmtiles extract` 指令」「上傳到 Supabase Storage 的 path 慣例」「更新 `NEXT_PUBLIC_PMTILES_URL` 流程」
   - Depends on: -
@@ -113,16 +74,6 @@ doc_language: 繁體中文
   - Depends on: 2.3
   - Independence: parallel-safe
   - status: passing
-- [ ] 6.4 `/admin/login` placeholder with functional GitHub OAuth button
-  - Acceptance: WHEN 未登入訪客 GET `/admin/login` THEN 返回 200 並顯示「以 GitHub 登入」按鈕；WHEN 點擊 THEN 觸發 Supabase OAuth flow 並 redirect 回 `/admin/upload`（或 from 參數指定的 path）
-  - Depends on: 2.3, 3.6
-  - Independence: serial
-  - status: not_started
-- [ ] 6.5 `/admin/upload` placeholder protected by middleware
-  - Acceptance: WHEN 未登入訪客 GET `/admin/upload` THEN 被 middleware redirect；WHEN 合法 admin GET THEN 返回 200 並顯示「Upload form coming soon」placeholder + sign-out 按鈕
-  - Depends on: 2.3, 4.1
-  - Independence: serial
-  - status: not_started
 
 ## 7. Documentation
 - [x] 7.1 Write `CLAUDE.md` (Claude Code entry point)
@@ -173,16 +124,6 @@ doc_language: 繁體中文
   - Depends on: 1.2, 5.2
   - Independence: serial
   - status: passing
-- [ ] 8.2 Connect Vercel project + configure Preview Deployment
-  - Acceptance: WHEN PR 推上 GitHub THEN Vercel bot 留言 preview URL、preview 上的 root 與 4 個頁面皆 200、env vars（含 Supabase keys、PMTILES_URL）已設定 Production + Preview
-  - Depends on: 3.1, 3.2, 6.1, 6.2, 6.3, 6.4, 6.5
-  - Independence: serial
-  - status: not_started
-- [ ] 8.3 Playwright smoke tests for 5 placeholder routes
-  - Acceptance: WHEN 執行 `pnpm test:e2e` THEN 5 個測試（`/`、`/routes`、`/routes/example-route`、`/admin/login`、未登入存取 `/admin/upload` redirect）全部 pass
-  - Depends on: 6.1, 6.2, 6.3, 6.4, 6.5
-  - Independence: serial
-  - status: not_started
 
 ## 9. Logo & favicon placeholder
 - [x] 9.1 Add placeholder Logo SVG + wordmark in `public/brand/`

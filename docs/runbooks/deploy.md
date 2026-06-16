@@ -37,11 +37,11 @@ Estimated time: 45–60 minutes the first time. Subsequent deploys are zero-touc
    - `tiles` — **Public bucket: ON** (PMTiles needs unrestricted range requests)
 6. **Copy three keys** (left sidebar → **Project Settings** → **API**):
 
-   | Key | Where it goes |
-   |---|---|
-   | Project URL | `NEXT_PUBLIC_SUPABASE_URL` (Vercel) |
-   | anon (public) key | `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Vercel) |
-   | service_role key | `SUPABASE_SERVICE_ROLE_KEY` (Vercel server-only) |
+   | Key               | Where it goes                                    |
+   | ----------------- | ------------------------------------------------ |
+   | Project URL       | `NEXT_PUBLIC_SUPABASE_URL` (Vercel)              |
+   | anon (public) key | `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Vercel)         |
+   | service_role key  | `SUPABASE_SERVICE_ROLE_KEY` (Vercel server-only) |
 
    Keep `service_role` secret — it bypasses RLS.
 
@@ -56,10 +56,10 @@ Estimated time: 45–60 minutes the first time. Subsequent deploys are zero-touc
 3. Register the application.
 4. On the resulting page, click **Generate a new client secret** and copy:
 
-   | GitHub value | Where it goes (next step) |
-   |---|---|
-   | Client ID | Supabase → Authentication → Providers → GitHub |
-   | Client secret | same |
+   | GitHub value  | Where it goes (next step)                      |
+   | ------------- | ---------------------------------------------- |
+   | Client ID     | Supabase → Authentication → Providers → GitHub |
+   | Client secret | same                                           |
 
 ## 3. Hook OAuth into Supabase Auth
 
@@ -88,13 +88,13 @@ This is the value for `NEXT_PUBLIC_PMTILES_URL` in the next step.
 4. **Root Directory**: leave as `.`
 5. **Environment Variables** — add **all five** to **both** Production and Preview environments:
 
-   | Name | Value source |
-   |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | Step 1.6 |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Step 1.6 |
-   | `SUPABASE_SERVICE_ROLE_KEY` | Step 1.6 — **mark "Sensitive"** |
-   | `ADMIN_GITHUB_USERNAME` | Yuki's GitHub username (e.g. `bibiota`) |
-   | `NEXT_PUBLIC_PMTILES_URL` | Step 4 |
+   | Name                            | Value source                            |
+   | ------------------------------- | --------------------------------------- |
+   | `NEXT_PUBLIC_SUPABASE_URL`      | Step 1.6                                |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Step 1.6                                |
+   | `SUPABASE_SERVICE_ROLE_KEY`     | Step 1.6 — **mark "Sensitive"**         |
+   | `ADMIN_GITHUB_USERNAME`         | Yuki's GitHub username (e.g. `bibiota`) |
+   | `NEXT_PUBLIC_PMTILES_URL`       | Step 4                                  |
 
 6. Click **Deploy**.
 7. Once Vercel assigns a domain (e.g. `run-map.vercel.app`):
@@ -132,13 +132,13 @@ If any check fails, see [Troubleshooting](#troubleshooting).
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| OAuth redirect 404 | Callback URL mismatch | Check GitHub OAuth App callback URL matches `https://<project>.supabase.co/auth/v1/callback` exactly |
-| `/admin/upload` redirects in a loop | `ADMIN_GITHUB_USERNAME` mismatch | Compare with `auth.users.user_metadata.user_name` in Supabase → Authentication → Users |
-| Map shows blank tile grid | `NEXT_PUBLIC_PMTILES_URL` wrong or `tiles` bucket private | Verify the URL with `pmtiles show <url>` locally; confirm bucket is Public |
-| `Sign out` button on admin shell does nothing | Sign-out wired in Wave C (task 6.5); confirm `lib/supabase` clients are present (Wave B) | Re-run latest deploy |
-| RLS blocks admin writes after OAuth login | Missing/incorrect `auth.jwt()->user_metadata->>user_name` value in RLS policy | Re-apply RLS migrations; verify session JWT shape via Supabase Auth → Users → row → "User metadata" |
+| Symptom                                       | Likely cause                                                                             | Fix                                                                                                  |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| OAuth redirect 404                            | Callback URL mismatch                                                                    | Check GitHub OAuth App callback URL matches `https://<project>.supabase.co/auth/v1/callback` exactly |
+| `/admin/upload` redirects in a loop           | `ADMIN_GITHUB_USERNAME` mismatch                                                         | Compare with `auth.users.user_metadata.user_name` in Supabase → Authentication → Users               |
+| Map shows blank tile grid                     | `NEXT_PUBLIC_PMTILES_URL` wrong or `tiles` bucket private                                | Verify the URL with `pmtiles show <url>` locally; confirm bucket is Public                           |
+| `Sign out` button on admin shell does nothing | Sign-out wired in Wave C (task 6.5); confirm `lib/supabase` clients are present (Wave B) | Re-run latest deploy                                                                                 |
+| RLS blocks admin writes after OAuth login     | Missing/incorrect `auth.jwt()->user_metadata->>user_name` value in RLS policy            | Re-apply RLS migrations; verify session JWT shape via Supabase Auth → Users → row → "User metadata"  |
 
 ## See also
 

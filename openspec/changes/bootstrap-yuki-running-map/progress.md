@@ -208,3 +208,39 @@ doc_language: 繁體中文
 - Files: docs/runbooks/deploy.md（依使用者「先寫 onboarding runbook，再雙線跑 Wave B SDD」決策提前寫出）
 - Evidence: 6 個 sections —— (1) Supabase project + PostGIS + buckets, (2) GitHub OAuth App, (3) Supabase Auth GitHub provider hookup, (4) PMTiles upload, (5) Vercel project + env vars (5 個) + first deploy, (6) First-time smoke checklist (5 routes + OAuth round-trip)；加 Maintenance + Troubleshooting 表。Wave C 8 個 tasks 全部對應到此 runbook 的某個 step。
 - Next action: Yuki 異步依此 runbook 完成 Wave C 外部設定；同時我啟動 Wave B SDD，從 task 5.2（GPX lib，完全獨立）開始。
+
+## Session 34 — 2026-06-09 17:15
+- Stage: SDD
+- Task: 5.2 lib/gpx/ parse + simplify + metadata extraction
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent（general-purpose）with context bundle 含 task 5.2 acceptance（3 scenarios from data-and-auth-infrastructure/spec.md）+ Requirement excerpt「GPX helper module parses, simplifies, and extracts metadata」；無 diagram/figma 引用。預期 implementer 會選 GPX parser dep（建議 @tmcw/togeojson + xml2js 或 fast-xml-parser）、選 simplifier（@turf/simplify or simplify-js）、安裝 Vitest、寫 fixture GPX、寫測試、commit。
+
+## Session 35 — 2026-06-16 15:43
+- Stage: SDD
+- Task: 5.2 lib/gpx/ parse + simplify + metadata extraction
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 6777663 feat(bootstrap): Wave B.1 task 5.2 lib/gpx parse + simplify
+  - Implementer chose: fast-xml-parser（avoids XML DOM deps）、self-written RDP simplifier（避免 @turf 整包重量）、Vitest 4.1.8 + @vitest/coverage-v8
+  - Pre-review fix（per user YAGNI decision）: 上一輪 implementer 自加 2 個 extreme-tolerance robustness 測試（tolerance=10 / tolerance=1e-12）超出 spec 範圍且失敗；本輪 implementer 依使用者決策刪除該 2 測試 + 收回 simplify.ts JSDoc 對「任意 tolerance」的承諾，保留 spec 必需的 adaptive loop（spec scenario 自身需要 tolerance=0.0001 + >1000 coords 收斂到 [100, 500]）
+  - Tests: `pnpm exec vitest run --coverage` 8/8 pass; statement coverage 93.33%、branch 82.75%、functions 100%、lines 97.82%（gate 80/70/80/80 全過）
+  - Lint/typecheck/format: `pnpm typecheck` exit 0、`pnpm lint` exit 0、`pnpm format` exit 0
+  - Spec-reviewer: ✅ Spec compliant — 3/3 scenarios 對應到 parse.test.ts:25 / simplify.test.ts:24 / vitest.config.ts coverage gate；無 extras
+  - Code-quality-reviewer: ✅ Approved — no Critical/Important issues；3 個 Minor（parse.ts:190-193 redundant guard 被 noUncheckedIndexedAccess 逼出來、simplify.ts:32 narrative comment、parse.ts:13 EARTH_RADIUS_M JSDoc 提到「±5 m fixture tolerance」輕度耦合測試常數），非阻塞
+- Next action: 評估下一個 Wave B SDD task。可選候選：3.3 Drizzle schema（acceptance 是 `pnpm drizzle-kit generate` 產生 SQL，schema 定義本身不需要 live Supabase，可在 Wave C 外部設定完成前先寫）；3.4-3.6 + 4.1 + 6.4/6.5 + 8.2/8.3 全部 transitively depend on Wave C 外部服務，需等 Yuki 完成 docs/runbooks/deploy.md 流程後才能進入。建議下一個 session 與使用者確認：先做 3.3 schema-only、還是暫停 Wave B 等 Wave C 設定。
+
+## Session 36 — 2026-06-16 15:50
+- Stage: updating-spec
+- Decision: scope-down bootstrap-yuki-running-map；剩餘 not_started tasks（3.1-3.6, 4.1, 6.4, 6.5, 8.2, 8.3 共 11 個）全部移到後續 change `wave-c-supabase-rls-auth`（待創）。Bootstrap 以「不被外部服務阻塞」的進度收尾 archive。
+- Rationale: 11 個 not_started tasks 全部 transitively depend on Wave C 外部服務（Supabase + GitHub OAuth + Vercel）。Yuki 需依 `docs/runbooks/deploy.md` 完成外部設定後才能執行；在外部設定完成前持續阻塞 bootstrap change 沒有意義。讓 bootstrap 以目前 21 個 passing tasks 收尾 archive，使 main 分支隨時可獨立 deploy 與 develop，並讓後續 change 享有乾淨的 baseline。
+- Artifacts updated:
+  - `specs/data-and-auth-infrastructure/spec.md` — 移除 7 個 Requirements（Supabase provisioning、OAuth、Drizzle schema、Indexes、RLS、client helpers、admin middleware）；保留 Map + GPX helpers 2 個 Reqs
+  - `specs/placeholder-pages/spec.md` — 移除 admin login + admin upload 2 個 Reqs；保留 home + routes list + route detail 3 個 Reqs
+  - `specs/docs-and-ci-pipeline/spec.md` — 移除 Vercel Preview + Playwright 2 個 Reqs；保留 docs + GH Actions 7 個 Reqs
+  - `specs/project-foundation/spec.md` — 無變動
+  - `tasks.md` — 移除 §3 Supabase backend foundation、§4 Admin route protection 全部；§6 移除 6.4/6.5；§8 移除 8.2/8.3；header 改成「**不被外部服務阻塞**的專案骨架」描述
+  - `proposal.md` — Why / What Changes / Impact / Related Artifacts 改寫對齊縮減後的 scope；新增「Deferred to wave-c-supabase-rls-auth」清單
+  - `design.md` — 頂部加 "Scope narrowed mid-implementation" 註記，原文保留作架構參考
+- Diagram / Figma references 檢查: `diagrams/01-component-system-architecture.puml` 仍被 project-foundation（2x）與 docs-and-ci-pipeline（1x）的保留 Reqs 引用；`designs/figma.md` 仍被 project-foundation 的 V2 tokens + Logo Reqs 引用。無 orphan artifact。
+- Validation: `openspec validate bootstrap-yuki-running-map --strict` 待跑
+- Next action: 跑 `openspec validate --strict` 確認；通過後 invoke `spec-driven-dev:verification-before-completion` 跑五階段驗證；最後 archive bootstrap。`wave-c-supabase-rls-auth` 由使用者另起 `/brainstorming` flow。

@@ -5,6 +5,8 @@ doc_language: 繁體中文
 
 # Design: Bootstrap Yuki's Running Map
 
+> **Scope narrowed mid-implementation (2026-06-16)** — 原 design 涵蓋 Supabase backend、GitHub OAuth、Drizzle schema、RLS、admin middleware、admin pages、Vercel Preview、Playwright E2E 等需要外部服務的 tasks，但這些 tasks 全部 transitively 依賴 Yuki 完成 `docs/runbooks/deploy.md` 描述的 Supabase + GitHub OAuth + Vercel 設定，無法在 Bootstrap change 內完成。經使用者決策，這些 scope 移到後續 change `wave-c-supabase-rls-auth`（待創）。本 design 文件原文保留作為**完整架構參考**，但只有 Wave A 與 Wave B 的 `lib/map` + `lib/gpx` + 3 個 public placeholder routes 屬於本 change 的實作範圍。詳見 `progress.md` Session 36 與 `proposal.md` Scope narrowed 段落。
+
 ## 1. 目的與範圍
 
 ### 目的
