@@ -23,11 +23,11 @@ doc_language: 繁體中文
   - Independence: external (manual)
   - status: not_started
 
-- [ ] 3.3 Drizzle schema for `routes` table（含 `lib/db/postgis.ts` customType helpers）
+- [x] 3.3 Drizzle schema for `routes` table（含 `lib/db/postgis.ts` customType helpers）
   - Acceptance: WHEN 開啟 `lib/db/schema.ts` THEN 含 `routes` table 定義且每個欄位對齊 `docs/data-model.md` §`routes` table；AND `bbox` 與 `start_point` 透過 `lib/db/postgis.ts` 的 `customType` 封裝為 `geometry(Polygon, 4326)` / `geometry(Point, 4326)`；AND `difficulty` 為 pgEnum `('easy', 'medium', 'hard')`；AND `pnpm typecheck` exit 0
   - Depends on: 3.1
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 - [ ] 3.4 Drizzle migration: routes table + 4 個 indexes
   - Acceptance: WHEN 執行 `pnpm db:migrate` THEN migration SQL 套用到 Supabase 且 `routes` table 出現含 design.md §3 所列全部欄位；AND 4 個 indexes（`routes_bbox_gist` / `routes_start_point_gist` / `routes_recorded_at_desc` / `routes_tags_gin`）皆建立；AND migration file commit 在 `lib/db/migrations/`
