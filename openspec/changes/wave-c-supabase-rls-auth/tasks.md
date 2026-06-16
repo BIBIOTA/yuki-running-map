@@ -129,5 +129,7 @@ doc_language: 繁體中文
 
 ## Optional artifacts
 
-- [x] PlantUML diagrams (spec-driven-dev:writing-uml) — required types: sequence (admin OAuth flow), ER (routes table schema)
+- [x] PlantUML diagrams:
+  - [01-sequence-admin-oauth-flow.puml](./diagrams/01-sequence-admin-oauth-flow.puml) — admin OAuth flow（含 middleware mismatch alt 分支）
+  - [02-er-routes-schema.puml](./diagrams/02-er-routes-schema.puml) — `routes` table + indexes + RLS + `gpx` bucket logical FK
 - [ ] Figma designs (spec-driven-dev:writing-figma)

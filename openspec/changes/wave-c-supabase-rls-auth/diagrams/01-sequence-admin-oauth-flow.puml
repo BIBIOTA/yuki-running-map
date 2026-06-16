@@ -1,0 +1,80 @@
+@startuml 01-sequence-admin-oauth-flow
+' wave-c-supabase-rls-auth — Admin OAuth Flow (Sequence Diagram)
+' Source of truth: openspec/changes/wave-c-supabase-rls-auth/design.md §4
+
+skinparam shadowing false
+skinparam roundCorner 8
+skinparam defaultFontName "Sans-Serif"
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowThickness 1.4
+
+skinparam sequence {
+  ParticipantBackgroundColor #FFFAEC
+  ParticipantBorderColor     #6B5638
+  ActorBackgroundColor       #ECE0C4
+  ActorBorderColor           #2A1F12
+  LifeLineBackgroundColor    #D9C9A4
+  LifeLineBorderColor        #6B5638
+  GroupBackgroundColor       #F8F1E0
+  GroupBorderColor           #6B5638
+}
+
+actor "Yuki\n(admin candidate)" as user
+participant "Browser" as browser
+participant "/admin/login\n(Client Component)" as loginPage
+participant "Supabase Auth\n(OAuth handler)" as supaAuth
+participant "github.com\n(OAuth consent)" as github
+participant "middleware.ts\n(Edge)" as mw
+participant "/admin/upload\n(protected)" as uploadPage
+participant "/ (home)\n(flash toast handler)" as home
+
+== 1. 進入登入頁 ==
+user -> browser: 點「Admin 登入」連結
+browser -> loginPage: GET /admin/login
+note right of mw
+  middleware bypass：
+  pathname === "/admin/login"
+  → NextResponse.next()
+end note
+loginPage --> browser: render Card + GitHub OAuth Button
+
+== 2. 觸發 OAuth ==
+user -> browser: 按下「以 GitHub 登入」
+browser -> supaAuth: signInWithOAuth\n({ provider: 'github',\n   redirectTo: <origin>/admin/upload })
+supaAuth --> browser: 302 → github.com/login/oauth/authorize
+
+== 3. GitHub 同意授權 ==
+browser -> github: GET /login/oauth/authorize
+user -> github: 確認授權
+github --> browser: 302 → supabase.co/auth/v1/callback?code=...
+
+== 4. Supabase callback 換 session ==
+browser -> supaAuth: GET /auth/v1/callback?code=...
+supaAuth -> github: POST /login/oauth/access_token
+github --> supaAuth: access_token + user_metadata.user_name
+supaAuth --> browser: Set-Cookie: sb-<ref>-auth-token\n302 → /admin/upload
+
+== 5. middleware 比對 admin ==
+browser -> mw: GET /admin/upload\n(Cookie: sb-<ref>-auth-token)
+mw -> supaAuth: getUser(session)
+supaAuth --> mw: { user_metadata: { user_name } }
+
+alt user_name === ADMIN_GITHUB_USERNAME (放行)
+  mw --> browser: NextResponse.next()
+  browser -> uploadPage: render protected route
+  uploadPage --> browser: 「Coming soon · GPX 上傳開發中」+ Sign out button
+
+else user_name !== ADMIN_GITHUB_USERNAME (擋下)
+  mw -> supaAuth: signOut()
+  supaAuth --> mw: ok (cookie cleared)
+  mw --> browser: 302 → /?auth_error=not_admin
+  browser -> home: GET /?auth_error=not_admin
+  home --> browser: render home + sonner toast「您不是 admin，已登出」\n+ router.replace('/') 清 query
+end
+
+== 6. (選用) Sign out ==
+user -> browser: 按「Sign out」
+browser -> supaAuth: signOut()
+supaAuth --> browser: cookie cleared, 302 → /
+
+@enduml

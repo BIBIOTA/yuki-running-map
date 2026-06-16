@@ -393,3 +393,10 @@ e2e:
 - 非 admin GitHub user 登入 → redirect `/?auth_error=not_admin` + flash toast
 - 5 個 Playwright spec 全 pass on local + CI
 - Vercel preview 在 PR 自動建立、production deploy 綠燈
+
+---
+
+## Diagrams
+
+- [Sequence: Admin OAuth Flow](./diagrams/01-sequence-admin-oauth-flow.puml) — 訪客點 `/admin/login` → GitHub OAuth → Supabase callback → middleware 比對 `ADMIN_GITHUB_USERNAME` 後分支放行或 sign-out + redirect `/?auth_error=not_admin`；對應 §4 Auth + Middleware + Admin pages。
+- [ER: routes Table Schema](./diagrams/02-er-routes-schema.puml) — `routes` 完整欄位 + 4 個 indexes + 2 條 RLS policies；標示與 Storage `gpx` bucket 的 logical FK (`gpx_path → storage.objects.name`) 與 `auth.users` 的 admin identity gating；對應 §3 DB & Storage。

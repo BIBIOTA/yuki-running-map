@@ -1,0 +1,117 @@
+@startuml 02-er-routes-schema
+' wave-c-supabase-rls-auth — routes table schema (ER Diagram)
+' Source of truth: openspec/changes/wave-c-supabase-rls-auth/design.md §3
+'                  + docs/data-model.md §routes table
+
+skinparam shadowing false
+skinparam roundCorner 8
+skinparam defaultFontName "Sans-Serif"
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 40
+
+skinparam class {
+  BackgroundColor<<table>>    #FFFAEC
+  BorderColor<<table>>        #2A1F12
+  HeaderBackgroundColor<<table>> #ECE0C4
+  BackgroundColor<<bucket>>   #F4E8FF
+  BorderColor<<bucket>>       #7E5AB4
+  BackgroundColor<<authsrc>>  #EAFBEE
+  BorderColor<<authsrc>>      #4C9A5E
+  BackgroundColor<<index>>    #F8F1E0
+  BorderColor<<index>>        #6B5638
+  BackgroundColor<<rls>>      #FFF1E0
+  BorderColor<<rls>>          #C68A3E
+}
+
+' ── Main entity ──────────────────────────────────
+entity "routes" as routes <<table>> {
+  + id : uuid <<PK>>
+  --
+  slug : text <<unique, not null>>
+  title : text <<not null>>
+  description : text <<nullable>>
+  --
+  distance_m : integer <<not null>>
+  elevation_gain_m : integer <<not null>>
+  duration_s : integer <<nullable>>
+  recorded_at : timestamptz <<not null>>
+  --
+  location_name : text <<nullable>>
+  region : text <<nullable>>
+  tags : text[] <<not null, default '{}'>>
+  difficulty : enum(easy|medium|hard) <<not null>>
+  --
+  gpx_path : text <<not null>>
+  geojson : jsonb <<not null>>
+  bbox : geometry(Polygon, 4326) <<not null, PostGIS>>
+  start_point : geometry(Point, 4326) <<not null, PostGIS>>
+  --
+  cover_image : text <<nullable>>
+  published : boolean <<not null, default false>>
+  created_at : timestamptz <<default now()>>
+  updated_at : timestamptz <<default now()>>
+}
+
+' ── Indexes ──────────────────────────────────────
+note as routes_indexes <<index>>
+  **Indexes**
+  GIST(bbox)             — viewport 框選 (ST_Intersects)
+  GIST(start_point)      — 「距我最近」(KNN)
+  btree(recorded_at DESC) — 列表預設排序
+  GIN(tags)              — tag 篩選 (&&)
+  UNIQUE(slug)           — SEO URL 對應
+end note
+
+' ── RLS policies ─────────────────────────────────
+note as routes_rls <<rls>>
+  **RLS on routes**
+  anon_read_published
+    FOR SELECT
+    USING published = true
+  admin_full_access
+    FOR ALL
+    USING jwt.user_metadata.user_name
+        = current_setting('app.admin_github_username')
+end note
+
+' ── External entities (logical relations) ────────
+entity "Supabase Storage\nbucket: gpx" as gpx <<bucket>> {
+  + name : text <<PK>>
+  --
+  bucket_id = 'gpx' (public)
+  ── files ──
+  gpx/{yyyy}/{uuid}.gpx
+}
+
+note as gpx_rls <<rls>>
+  **RLS on storage.objects (bucket=gpx)**
+  gpx_public_select_published
+    FOR SELECT
+    USING EXISTS (
+      SELECT 1 FROM routes
+      WHERE gpx_path = storage.objects.name
+        AND published = true
+    )
+  gpx_admin_write / _modify / _delete
+    USING jwt.user_metadata.user_name
+        = current_setting('app.admin_github_username')
+end note
+
+entity "auth.users\n(Supabase managed)" as users <<authsrc>> {
+  + id : uuid <<PK>>
+  --
+  user_metadata.user_name : text
+  ── (admin = match ENV) ──
+}
+
+' ── Relationships ────────────────────────────────
+routes ||--o{ gpx : "gpx_path (logical FK)\nname"
+users  ||..o{ routes : "admin identity gates writes\nvia RLS jwt + SET LOCAL"
+
+' Layout hints
+routes -[hidden]down- routes_indexes
+routes_indexes -[hidden]down- routes_rls
+gpx -[hidden]down- gpx_rls
+
+@enduml
