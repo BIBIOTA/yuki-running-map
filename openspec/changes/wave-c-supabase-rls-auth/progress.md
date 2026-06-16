@@ -87,3 +87,25 @@ doc_language: 繁體中文
   - Diagram coverage: sequence diagram (01-sequence-admin-oauth-flow.puml) §5 alt 分支兩條（admin 放行 / 非 admin sign-out + redirect /?auth_error=not_admin）皆由 decideAdminGuard 5 個 unit tests 斷言；middleware.ts NextResponse + signOut 接線由 task 8.3 E2E 驗證
   - 設計亮點: /admin/login bypass 早 return 在 createMiddlewareClient + auth.getUser() 之前，符合 spec scenario 1「middleware does not call auth.getUser()」要求
 - Next action: 啟動 task 6.4（/admin/login GitHub OAuth button Client Component）——使用 createBrowserClient + supabase.auth.signInWithOAuth provider=github。test 把 createBrowserClient mock 起來、斷言 button click 觸發正確 signInWithOAuth args。
+
+## Session 10 — 2026-06-16 20:50
+- Stage: TDD
+- Task: 6.4 `/admin/login` GitHub OAuth button
+- Transition: not_started → in_progress
+- Next action: 寫純函式 failing tests（對應 placeholder-pages ADDED Requirement "/admin/login authenticates admin via GitHub OAuth" 兩個 Scenarios：Visitor opens login page / Clicking the button starts OAuth flow），抽 helpers `handleGithubSignIn`（OAuth call）與 `shouldHideAdminNav`（pathname 規則）到 features/admin-auth/，skeleton throw "not implemented"，commit `test: red - 6.4 admin login`
+
+## Session 11 — 2026-06-16 20:50
+- Stage: TDD
+- Task: 6.4 `/admin/login` GitHub OAuth button
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: `f3a6453` test(wave-c): red - 6.4 admin login OAuth + nav suppression; `6b76626` feat(wave-c): green - 6.4 /admin/login GitHub OAuth + nav suppression
+  - Tests: 全 suite 7 Test Files / 22 Tests pass；typecheck + lint exit 0
+  - Smoke：dev server 上 `/admin/login` HTTP 200 含 "Admin 登入" Card + "使用 GitHub 帳號" description + "以 GitHub 登入" button；admin top-nav 不顯示（無 "Sign out" / "Yuki's Running Map · Admin" 文字）；`/admin/upload` HTTP 307 → `/admin/login`
+  - Diagram coverage: sequence diagram (01-sequence-admin-oauth-flow.puml) §1 進入登入頁、§2 觸發 OAuth、middleware bypass note 全部由 shouldHideAdminNav + handleGithubSignIn + middleware bypass behavior 對齊
+  - 設計亮點:
+    - URL routing 修正：bootstrap 的 (admin) 是 Next.js route group 不加 URL prefix，需 `app/(admin)/admin/{login,upload}/` 才對應 `/admin/*`
+    - middleware env-check fallback：缺 SUPABASE env 時 redirect /admin/login（dev 友善，prod 有 env 不影響）
+    - login page lazy createBrowserClient 在 onClick 內避免 SSR crash on missing env
+    - admin layout 拆出 `AdminTopNav` Client Component 以使用 `usePathname()` 而 layout 本身仍是 Server Component
+- Next action: 啟動 task 6.5（/admin/upload Coming soon + sign-out）——使用 createBrowserClient 在 sign-out button onClick 呼叫 auth.signOut() + router.push('/')；admin top-nav 的 Sign out button 也一併接通

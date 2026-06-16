@@ -57,11 +57,11 @@ doc_language: 繁體中文
 
 ## 6. Admin pages + flash toast
 
-- [ ] 6.4 `/admin/login` GitHub OAuth button（取代 bootstrap placeholder）
+- [x] 6.4 `/admin/login` GitHub OAuth button（取代 bootstrap placeholder）
   - Acceptance: WHEN 訪客 GET `/admin/login` THEN HTTP 200 且不被 middleware redirect；AND 頁面 render shadcn Card + 「以 GitHub 登入」Button；AND 按下 Button 觸發 `supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: '<origin>/admin/upload' } })`；AND `app/(admin)/layout.tsx` 對 pathname === `/admin/login` 不顯示上方 admin nav
   - Depends on: 3.6
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 - [ ] 6.5 `/admin/upload` Coming soon placeholder + sign-out（取代 bootstrap placeholder）
   - Acceptance: WHEN admin GET `/admin/upload` THEN HTTP 200 且顯示「Coming soon · GPX 上傳開發中」訊息；AND 頁面右上角顯示 Sign out Button，按下後呼叫 `supabase.auth.signOut()` 並 redirect `/`；AND 未登入 GET 同路徑 THEN 被 middleware redirect 到 `/admin/login`（由 4.1 保證）
