@@ -1,10 +1,16 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
+import { AuthErrorFlash } from "@/features/auth-flash/AuthErrorFlash";
 
 export default function HomePage() {
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-20">
+      <Suspense fallback={null}>
+        <AuthErrorFlash />
+      </Suspense>
+
       <div className="flex flex-col gap-3">
         <span className="font-mono text-xs tracking-widest text-accent uppercase">
           Yuki&apos;s Running Map

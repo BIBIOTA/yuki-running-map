@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Toaster } from "@/components/ui/sonner";
+
 export default function PublicLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
@@ -32,6 +34,8 @@ export default function PublicLayout({ children }: Readonly<{ children: React.Re
           </span>
         </div>
       </footer>
+
+      <Toaster />
     </div>
   );
 }
