@@ -63,11 +63,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [ ] 6.5 `/admin/upload` Coming soon placeholder + sign-out（取代 bootstrap placeholder）
+- [x] 6.5 `/admin/upload` Coming soon placeholder + sign-out（取代 bootstrap placeholder）
   - Acceptance: WHEN admin GET `/admin/upload` THEN HTTP 200 且顯示「Coming soon · GPX 上傳開發中」訊息；AND 頁面右上角顯示 Sign out Button，按下後呼叫 `supabase.auth.signOut()` 並 redirect `/`；AND 未登入 GET 同路徑 THEN 被 middleware redirect 到 `/admin/login`（由 4.1 保證）
   - Depends on: 4.1
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 - [x] 6.6 `/` flash toast handler for `?auth_error=not_admin`
   - Acceptance: WHEN 訪客 GET `/?auth_error=not_admin` THEN 頁面 mount 時用 sonner 顯示 toast「您不是 admin，已登出」；AND toast 顯示後 client 端 `router.replace('/')` 清除 query param；AND `/` 無 query param 時不顯示 toast

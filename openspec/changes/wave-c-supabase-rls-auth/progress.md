@@ -109,3 +109,21 @@ doc_language: 繁體中文
     - login page lazy createBrowserClient 在 onClick 內避免 SSR crash on missing env
     - admin layout 拆出 `AdminTopNav` Client Component 以使用 `usePathname()` 而 layout 本身仍是 Server Component
 - Next action: 啟動 task 6.5（/admin/upload Coming soon + sign-out）——使用 createBrowserClient 在 sign-out button onClick 呼叫 auth.signOut() + router.push('/')；admin top-nav 的 Sign out button 也一併接通
+
+## Session 12 — 2026-06-16 21:00
+- Stage: TDD
+- Task: 6.5 `/admin/upload` Coming soon + sign-out
+- Transition: not_started → in_progress
+- Next action: 寫純函式 `handleSignOut` failing test（對應 placeholder-pages ADDED Requirement "/admin/upload shows the Coming soon placeholder for authenticated admin" Scenario "Sign out clears the session"），skeleton throw "not implemented"，commit `test: red - 6.5 sign out`
+
+## Session 13 — 2026-06-16 21:05
+- Stage: TDD
+- Task: 6.5 `/admin/upload` Coming soon + sign-out
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: `22e0798` test(wave-c): red - 6.5 sign out; `6a9a51d` feat(wave-c): green - 6.5 /admin/upload + sign-out
+  - Tests: 全 suite 8 Test Files / 23 Tests pass；typecheck + lint exit 0
+  - Smoke：dev server `/admin/upload` HTTP 307 → `/admin/login`（env 未設、middleware 早 return）；AdminTopNav 從 placeholder disabled button 升為功能性 Sign out（onClick → lazy createBrowserClient → handleSignOut）
+  - Scenario "Authenticated admin sees the placeholder" 標 `verification-pending: e2e`（need external setup + task 8.3 OAuth mock fixture 才能 end-to-end 驗證）
+  - Diagram coverage: sequence diagram (01-sequence-admin-oauth-flow.puml) §6「(選用) Sign out → supabase.signOut() → cookie cleared, 302 → /」由 handleSignOut 單元測試斷言
+- Next action: 5 個 code-only tasks 全部 passing（6.6 / 3.3 / 3.6 / 4.1 / 6.4 / 6.5），剩餘 12 個 tasks 等 external setup：3.1 / 3.2 / 8.2（Yuki Supabase + Vercel dashboard 手動）、3.4 / 3.5 / 7.1 / 7.2 / 7.3 / 7.4 / 7.5（migration + docs，需 Supabase live）、8.3 / 8.4（E2E + CI，需所有 env 就緒）。Session 收尾建議：等 Yuki 完成 deploy runbook 後 resume 跑剩餘 tasks。
