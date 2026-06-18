@@ -233,3 +233,55 @@ doc_language: 繁體中文
   - 兩個 task 都標 external 因此沒 commit hash；evidence 走 progress trail + 已通過 migration 為 proof
   - Validation: `openspec validate wave-c-supabase-rls-auth --strict` exit 0
 - Next action: 啟動 task 8.3 前要先 dep approval — `@playwright/test` (devDep)、`jose` (devDep)。已向 Yuki 提交 dep proposal（用途、bundle 影響、替代方案、風險）等回覆。8.2 (Vercel) 需 Yuki 走 dashboard 流程，與 dep approval 平行進行不互斥。
+
+## Session 21 — 2026-06-18 22:50
+- Stage: debugging (system-debugging skill)
+- Trigger: Yuki 嘗試走 OAuth 失敗，看到 `{"code":400,"error_code":"validation_failed","msg":"Unsupported provider: provider is not enabled"}`
+- Root cause（迭代 3 層）：
+  1. Supabase Dashboard → Authentication → Providers → GitHub Enabled toggle 沒打開（Yuki 之前只填 client_id/secret 但沒 enable）→ 修：Yuki dashboard 打開 toggle + save
+  2. GitHub OAuth App client_id 欄填的是 app 名稱 `yuki-running-map` 而非真實 client_id（Yuki 看 GitHub OAuth App 設定頁複製 client_id 字串到 Supabase）
+  3. `ADMIN_GITHUB_USERNAME=bibiota` 但 GitHub 回的 `user_metadata.user_name='BIBIOTA'`（大寫），middleware 比對 mismatch → signOut + redirect `/?auth_error=not_admin` → 回 /admin/login
+- Evidence:
+  - `debugging-report.md` 寫入（symptom / repro / observation plan / evidence / data flow trace / hypothesis / next action）
+  - 決定性證據：`curl ${SUPABASE_URL}/auth/v1/settings` → `external.github = false`
+  - `curl ${SUPABASE_URL}/auth/v1/admin/users` after first OAuth 成功 → 拿到 row id `d5a91e9c-...`、`user_metadata.user_name = "BIBIOTA"`、`email = "yukiotataitien@gmail.com"`
+- Resolution:
+  - `.env.local` `ADMIN_GITHUB_USERNAME=BIBIOTA`
+  - `.env.example` 補上「must match exact case GitHub returns in OAuth user_metadata」註解 + 提及 SQL function 需同步
+  - migration `0002_sync_admin_username_uppercase.sql`：`CREATE OR REPLACE FUNCTION public.app_admin_github_username() ... AS $$ SELECT 'BIBIOTA'::text $$;`
+  - `pnpm db:migrate` → ✅；驗證 `SELECT public.app_admin_github_username()` → `'BIBIOTA'`
+- Next action: Yuki kill 掉 dev server + 重跑 `pnpm dev` 重新走一次 OAuth 看是否進到 `/admin/upload`
+
+## Session 22 — 2026-06-18 23:05
+- Stage: debugging (system-debugging skill, 接續 Session 21)
+- Symptom 2: Yuki 完成 OAuth 但被踢回 `/admin/login`（URL 純粹 `/admin/login` 無 query；dev server 已 Ctrl+C 重啟）
+- Root cause: 缺一個 `/auth/callback` Route Handler 來執行 PKCE code exchange。`@supabase/ssr` 預設走 PKCE，Supabase 在 OAuth 完成後 redirect `?code=...` 到 redirectTo，需要 server-side `auth.exchangeCodeForSession(code)` 才會把 session cookie 寫進去；但 `handleGithubSignIn` 把 redirectTo 設成 `/admin/upload`，middleware 在 code exchange 之前 run、看不到 cookie → redirect `/admin/login`
+- 原 design.md §4 Auth flow 描述「supabase.co/auth/v1/callback → 換 session cookie → 回 /admin/upload，cookie 已存在」是**錯**的——supabase.co domain 寫的 cookie 跨不了 domain
+- Evidence:
+  - 查 `app/` 沒有 `/auth/callback` route
+  - `app/(admin)/admin/login/page.tsx` + `features/admin-auth/handleGithubSignIn.ts` 都把 redirectTo 設成 `/admin/upload`
+- Resolution:
+  - 新增 `app/auth/callback/route.ts`：GET handler 讀 `?code=&next=`、呼叫 `supabase.auth.exchangeCodeForSession(code)`、成功 302 → `next`、失敗 302 → `/admin/login?error=oauth_(missing_code|exchange_failed)`
+  - `features/admin-auth/handleGithubSignIn.ts`：`redirectTo` 改為 `${origin}/auth/callback?next=/admin/upload`
+  - `features/admin-auth/__tests__/login.test.ts` 更新斷言
+  - design.md §4 Auth flow 改寫流程圖 + 加「為什麼需要 /auth/callback」段落
+  - specs/data-and-auth-infrastructure/spec.md 新增 ADDED Requirement「`/auth/callback` exchanges PKCE code for a session」+ 4 個 Scenarios
+- Validation:
+  - dev server curl `/auth/callback?code=fake` → 307 → `/admin/login?error=oauth_exchange_failed`（route handler 上線）
+  - Yuki Cmd+Shift+R refresh /admin/login 後點「以 GitHub 登入」→ 完整走通 → 看到「Coming soon · GPX 上傳開發中」+ Sign out button
+- Next action: 重跑 `pnpm test:e2e`，spec 5 用 admin Magic Link API 走 implicit flow 拿真 access_token + refresh_token 包成 cookie
+
+## Session 23 — 2026-06-18 23:20
+- Stage: TDD-like (e2e implementation + spec sync)
+- Task: 8.3 Playwright config + admin session via magic link + 5 specs
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - `playwright.config.ts`：chromium-only / webServer `pnpm start --port ${E2E_PORT:-3000}` reuseExistingServer in dev / baseURL / trace retain-on-failure / fullyParallel
+  - `package.json` `test:e2e` script：`node --env-file=.env.local ./node_modules/@playwright/test/cli.js test`（自動載入 env，避免 playwright CLI shim 不認 --env-file）
+  - 5 個 spec：visitor-home / visitor-list / visitor-detail (2 slug 共 2 test) / admin-unauthenticated / admin-login-flow → 6 test 全 pass
+  - **3 個 design pivot during implementation**：
+    1. dep：原 plan `jose` SignJWT 自造 admin JWT → Playwright 1.61 對 jose@6 webapi-only conditional exports 的 ESM loader `context.conditions?.includes` 拋 `TypeError`；改用 node 內建 `crypto.createHmac` 自簽 → 自簽通過 typecheck/lint 但 middleware getUser 拒（user UUID fabricate、Supabase 不認）→ 最後改用 Admin API `generate_link(type=magiclink)` 換真 access_token，刪掉 `jose` dep
+    2. fixture 拆檔：原 plan `e2e/fixtures/admin-session.ts` → Playwright 1.61 ESM loader 對 testDir 內 relative TS import 同樣拋 `context.conditions?.includes`；inline 進 spec 5 file 規避
+    3. cookie 格式：原 plan 直接 inject `sb-<ref>-auth-token` cookie → @supabase/ssr 用 `base64-` prefix + base64url(JSON.stringify(session)) 包 session、Buffer base64url 路徑 + 真 access_token (claims `sub`、`iss`、`exp` 都是 Supabase 真鑄出來的) 可被 middleware getUser 接受
+  - 全 suite：6 e2e pass / typecheck exit 0 / lint exit 0 / vitest 8 files / 23 tests pass
+- Next action: 剩 task 7.5 (CLAUDE.md 更新)、8.2 (Vercel external)、8.4 (CI yml)、3.1/3.2 已 Session 20 標 passing。可下一輪推 7.5（純文件）+ 詢問 8.4 是否要動 CI yml（依賴 Yuki 設 GitHub Actions secrets）。

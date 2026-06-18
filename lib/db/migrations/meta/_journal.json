@@ -15,6 +15,13 @@
       "when": 1781763248123,
       "tag": "0001_rls_policies_and_storage_buckets",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781766374198,
+      "tag": "0002_sync_admin_username_uppercase",
+      "breakpoints": true
     }
   ]
 }

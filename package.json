@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "db:generate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs migrate",
-    "db:studio": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs studio"
+    "db:studio": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs studio",
+    "test:e2e": "node --env-file=.env.local ./node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.16",
@@ -53,7 +54,6 @@
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.0",
     "fast-xml-parser": "^5.8.0",
-    "jose": "^6.2.3",
     "postcss": "^8.4.49",
     "prettier": "^3.4.0",
     "prettier-plugin-tailwindcss": "^0.6.9",

@@ -118,11 +118,11 @@ doc_language: 繁體中文
   - Independence: external (manual)
   - status: not_started
 
-- [ ] 8.3 Playwright config + OAuth mock fixture + 5 specs
-  - Acceptance: WHEN 安裝 `@playwright/test` 與 `jose` 為 devDependencies 並 `pnpm exec playwright install --with-deps chromium` THEN Playwright 可執行；AND `playwright.config.ts` 設 `webServer: { command: 'pnpm start', port: 3000 }`；AND `e2e/fixtures/admin-session.ts` 使用 `SignJWT` + `SUPABASE_JWT_SECRET` 簽 JWT 並 inject Supabase auth cookie；AND 5 個 spec 檔（`visitor-home.spec.ts` / `visitor-list.spec.ts` / `visitor-detail.spec.ts` / `admin-unauthenticated.spec.ts` / `admin-login-flow.spec.ts`）全部存在；AND `pnpm test:e2e` 對 `pnpm build && pnpm start` 起的 prod server 5 個 spec 全 pass on local
+- [x] 8.3 Playwright config + admin session via magic link + 5 specs
+  - Acceptance: WHEN 安裝 `@playwright/test` 為 devDependency 並 `pnpm exec playwright install chromium` THEN Playwright 可執行；AND `playwright.config.ts` 設 `webServer: { command: 'pnpm start --port 3000', reuseExistingServer: true (dev) }` + chromium-only project + `E2E_PORT` env override；AND `package.json` script `test:e2e` 走 `node --env-file=.env.local ./node_modules/@playwright/test/cli.js test` 自動載入 `.env.local`；AND 5 個 spec 檔（`visitor-home.spec.ts` / `visitor-list.spec.ts` / `visitor-detail.spec.ts` / `admin-unauthenticated.spec.ts` / `admin-login-flow.spec.ts`）全部存在；AND `admin-login-flow.spec.ts` 使用 Supabase admin API `generate_link(type=magiclink)` 換到真的 access_token + refresh_token、解 URL fragment、組成 base64-prefixed JSON session cookie 注入 `sb-<ref>-auth-token`（取代原 `jose` `SignJWT` 自造 JWT 的方案——magic link 走 implicit flow 換到的是真 token，繞過 Playwright 1.61 對 jose webapi 條件式 exports 的 ESM loader 不相容問題）；AND `pnpm test:e2e` 對 `pnpm start` 起的 prod server / 或 `pnpm dev` server `reuseExistingServer` 模式，6 條 test（spec 5 spec 內加 visitor-detail 跑 2 slug）全 pass on local；AND prerequisite：admin user row 已存在於 Supabase auth.users（GitHub OAuth round-trip 完成一次以建立 row，或 follow-up 改用 admin API createUser）
   - Depends on: 4.1, 6.4, 6.5
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 - [ ] 8.4 GitHub Actions `e2e` job
   - Acceptance: WHEN PR 開啟 THEN `.github/workflows/ci.yml` 既有 `lint` / `typecheck` / `test` 三 job 後新增 `e2e` job 並執行 `pnpm install` → `playwright install chromium` → `pnpm build` → `pnpm test:e2e`；AND job env 含 5 + 1 = 6 個 secrets（含 `SUPABASE_JWT_SECRET` for E2E mock）；AND job 條件 `if: github.event.pull_request.head.repo.full_name == github.repository`（Fork PR 不觸發、避免 secrets 洩漏）；AND 任一 spec fail 則 job 紅 X

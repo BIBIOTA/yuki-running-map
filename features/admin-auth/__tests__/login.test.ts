@@ -21,7 +21,7 @@ describe("/admin/login", () => {
     expect(signInWithOAuth).toHaveBeenCalledTimes(1);
     expect(signInWithOAuth).toHaveBeenCalledWith({
       provider: "github",
-      options: { redirectTo: "https://example.com/admin/upload" },
+      options: { redirectTo: "https://example.com/auth/callback?next=/admin/upload" },
     });
   });
 });

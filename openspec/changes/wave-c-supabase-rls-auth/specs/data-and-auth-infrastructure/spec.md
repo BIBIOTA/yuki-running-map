@@ -107,6 +107,28 @@ The system SHALL export three Supabase client factories from `lib/supabase/`: `c
 
 > See: ../../diagrams/01-sequence-admin-oauth-flow.puml
 
+### Requirement: /auth/callback exchanges PKCE code for a session
+The system SHALL include a Route Handler at `app/auth/callback/route.ts` whose GET handler reads `?code=<value>` from the URL, calls `supabase.auth.exchangeCodeForSession(code)` via the server-side `createServerClient`, and redirects to the `?next=<path>` query (default `/admin/upload`) on success or to `/admin/login?error=<reason>` on failure. The system SHALL also configure `handleGithubSignIn` to set `redirectTo = "<origin>/auth/callback?next=/admin/upload"` so the PKCE flow lands on this handler rather than directly on a middleware-guarded route.
+
+#### Scenario: Successful code exchange lands on next
+- **WHEN** `/auth/callback?code=<valid>&next=/admin/upload` is requested with a valid PKCE code stored in cookies
+- **THEN** the handler calls `supabase.auth.exchangeCodeForSession(code)` and writes the resulting session cookie via the `setAll` adapter
+- **AND** responds 307 with `Location: /admin/upload`
+
+#### Scenario: Missing code redirects to login with error
+- **WHEN** `/auth/callback` is requested without `?code`
+- **THEN** the handler responds 307 with `Location: /admin/login?error=oauth_missing_code`
+
+#### Scenario: Failed exchange surfaces the error
+- **WHEN** `/auth/callback?code=<invalid>` is requested with a code the auth server rejects
+- **THEN** the handler responds 307 with `Location: /admin/login?error=oauth_exchange_failed`
+
+#### Scenario: handleGithubSignIn targets /auth/callback
+- **WHEN** a reader inspects `features/admin-auth/handleGithubSignIn.ts`
+- **THEN** the `redirectTo` value equals `${origin}/auth/callback?next=/admin/upload`
+
+> See: ../../diagrams/01-sequence-admin-oauth-flow.puml
+
 ### Requirement: middleware.ts guards admin routes
 The system SHALL include a root `middleware.ts` whose matcher equals `['/admin/:path*']` and which: bypasses the guard for `/admin/login`, redirects unauthenticated visitors of other `/admin/*` paths to `/admin/login`, and on mismatched `ADMIN_GITHUB_USERNAME` calls `supabase.auth.signOut()` then redirects to `/?auth_error=not_admin`. The system SHALL fail closed: when `ADMIN_GITHUB_USERNAME` is unset, no user matches admin.
 

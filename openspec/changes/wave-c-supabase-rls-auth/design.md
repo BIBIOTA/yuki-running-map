@@ -207,10 +207,16 @@ CREATE POLICY gpx_admin_delete ON storage.objects
   → 顯示「以 GitHub 登入」Button
   → supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: <origin>/admin/upload }
+      options: { redirectTo: <origin>/auth/callback?next=/admin/upload }
     })
+  → @supabase/ssr 在 cookies 中寫入 PKCE code_verifier
   → 跳轉 github.com OAuth consent
-  → GitHub callback → supabase.co/auth/v1/callback → 換 session cookie
+  → GitHub callback → supabase.co/auth/v1/callback?code=... → 302 → <origin>/auth/callback?code=...&next=/admin/upload
+  → /auth/callback (Route Handler, Node runtime):
+       - createServerClient() with next/headers cookies
+       - supabase.auth.exchangeCodeForSession(code) — server-side 把 PKCE code 換成 session 並寫 cookie
+       - 302 → next（/admin/upload）
+       - 失敗：302 → /admin/login?error=oauth_(missing_code|exchange_failed)
   → 回 /admin/upload，cookie 已存在
   → middleware 攔截：
        - 抓 session
@@ -219,6 +225,8 @@ CREATE POLICY gpx_admin_delete ON storage.objects
        - 不符 → supabase.auth.signOut() + redirect("/?auth_error=not_admin")
        - 無 session → redirect("/admin/login")
 ```
+
+> **為什麼需要 `/auth/callback` Route Handler**：`@supabase/ssr` 預設走 PKCE flow，Supabase 把 `?code=...` 丟回 `redirectTo`，需要 server-side `exchangeCodeForSession(code)` 才會把 session cookie 寫進去。若 `redirectTo` 直接設成被 middleware 攔截的 `/admin/upload`，middleware 在 code exchange 之前 run，看不到 cookie，redirect 回 `/admin/login` → loop。原 design 描述「supabase.co/auth/v1/callback → 換 session cookie」是錯的——supabase.co domain 寫的 cookie 無法跨 domain，session 必須由自家 Route Handler 寫入。
 
 ### middleware.ts（Edge runtime）
 

@@ -12,6 +12,6 @@ export async function handleGithubSignIn({
 }: SignInDeps): Promise<void> {
   await signInWithOAuth({
     provider: "github",
-    options: { redirectTo: `${origin}/admin/upload` },
+    options: { redirectTo: `${origin}/auth/callback?next=/admin/upload` },
   });
 }
