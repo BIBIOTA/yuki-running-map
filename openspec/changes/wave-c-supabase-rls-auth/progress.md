@@ -164,3 +164,15 @@ doc_language: 繁體中文
     - Clean up：service_role `DELETE` 移除 sanity row
   - Grep verify：`RLS sanity SQL` / `Query A|B|C` / `anon_read_published` / `service_role` / `rls-sanity-draft` 全部出現
 - Next action: 啟動 task 7.4（docs/runbooks/local-dev.md 新增 啟動本地 supabase + `pnpm db:migrate` 流程）
+
+## Session 17 — 2026-06-18 19:10
+- Stage: implementation (docs)
+- Task: 7.4 Update `docs/runbooks/local-dev.md`
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - 「## Local Supabase」新章節（Option A 共用 dev project / Option B Supabase CLI emulator `supabase start` + `CREATE EXTENSION postgis`）
+  - 「## Database migrations」新章節：5-step workflow（edit schema → `pnpm db:generate` → review SQL → `pnpm db:migrate` → RLS sanity SQL cross-link 到 deploy.md §7）+ 後續修補需另起 migration（保留 journal）
+  - Useful commands 段落更新：`pnpm db:migrate` 已脫離 Wave B 標籤，僅 `pnpm test:e2e` 還在 Wave C
+  - Environment variables 內舊的「For a quick local Supabase」段落替換為指向 Local Supabase Option B 的 anchor
+  - Grep verify：`Local Supabase` / `Option A` / `Option B` / `supabase start` / `pnpm db:generate` / `pnpm db:migrate` / `Database migrations` / `ALTER DATABASE GUC` / `RLS sanity SQL` 全部出現
+- Next action: 7.5 依賴 task 3.4 + 8.3（需 migration + e2e 真正執行通），先 skip；docs 階段任務（7.1–7.4）全部 passing。下一個可推進的 code-only 工作不多，建議 session 收尾並等 Yuki 完成 external setup（3.1 / 3.2 / 8.2 + 3.4 / 3.5 migration apply + 8.3 / 8.4 E2E + CI），再 resume 跑剩餘 9 個 tasks。

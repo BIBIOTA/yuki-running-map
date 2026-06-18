@@ -96,11 +96,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [ ] 7.4 Update `docs/runbooks/local-dev.md`：新增 `pnpm db:migrate` 流程
+- [x] 7.4 Update `docs/runbooks/local-dev.md`：新增 `pnpm db:migrate` 流程
   - Acceptance: WHEN 開啟 `docs/runbooks/local-dev.md` THEN 含「啟動本地 supabase（或用共用 dev project）」段落（指向 Supabase CLI 或 Yuki 個人 Supabase project）；AND 含「`pnpm db:migrate` 流程」說明（generate → review SQL → migrate）
   - Depends on: 3.4
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 - [ ] 7.5 Update `CLAUDE.md` 常用指令表
   - Acceptance: WHEN 開啟 `CLAUDE.md` 常用指令表 THEN `pnpm db:migrate` 的「What it does」欄不再標註 _Wave B_；AND `pnpm test:e2e` 的「What it does」欄不再標註 _Wave C_，皆改為現役狀態描述

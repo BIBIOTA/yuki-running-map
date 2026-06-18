@@ -47,7 +47,76 @@ pnpm format:check
 pnpm build       # production build
 ```
 
-`pnpm db:migrate` and `pnpm test` / `pnpm test:e2e` activate in Waves B / C.
+`pnpm test:e2e` activates in Wave C once Playwright fixtures land (task 8.3). `pnpm db:migrate` is live — see [Database migrations](#database-migrations) below.
+
+## Local Supabase
+
+You have two options for the Supabase backend during local development. Pick whichever matches your situation:
+
+### Option A — Shared dev project (recommended for solo work)
+
+Use Yuki's existing Supabase project. Ask Yuki to share the four values listed in [Environment variables](#environment-variables) and paste them into `.env.local`. Anonymous writes are rejected by RLS, so day-to-day reads against the dev project are safe.
+
+Pros: zero setup, identical PostGIS + RLS as production.
+Cons: writes you commit are visible to everyone with access; not suitable for destructive experiments.
+
+### Option B — Supabase CLI emulator (recommended for migrations / RLS work)
+
+When you need to iterate on schema or RLS policies, run a fully local Postgres + PostGIS + Auth stack via the Supabase CLI:
+
+```bash
+brew install supabase/tap/supabase    # one-time install
+supabase init                         # only if supabase/ folder is absent
+supabase start                        # boots Postgres + Studio + Auth on :54321 (~30s)
+```
+
+After `supabase start` finishes, it prints local API URL + anon key + service-role key. Copy them into `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<from supabase start output>
+SUPABASE_SERVICE_ROLE_KEY=<from supabase start output>
+```
+
+Then enable PostGIS once (the emulator does not enable it by default):
+
+```bash
+supabase db reset           # if you want a clean state; otherwise skip
+psql "postgresql://postgres:postgres@localhost:54321/postgres" \
+  -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+```
+
+Stop the stack with `supabase stop` when you're done — it survives system reboots otherwise.
+
+Pros: throwaway data, full control over schema state, no risk of polluting the shared project.
+Cons: GitHub OAuth provider must be re-configured per emulator boot if you want to test the full sign-in flow; for pure schema work the service-role key is enough.
+
+## Database migrations
+
+`pnpm db:migrate` runs Drizzle migrations against whatever Supabase project the `.env.local` keys point at. The full local workflow is:
+
+```bash
+# 1. Edit lib/db/schema.ts (add/change columns, indexes, enums).
+pnpm typecheck                              # confirm the TS shape compiles
+
+# 2. Generate a migration SQL from the schema diff.
+pnpm db:generate                            # writes lib/db/migrations/<timestamp>_<slug>.sql
+
+# 3. Review the generated SQL by hand.
+#    - confirm column types, NOT NULL constraints, default values
+#    - confirm indexes (GIST for geometry, GIN for tags, btree for recorded_at)
+#    - for RLS / GUC migrations: confirm policy expressions + ALTER DATABASE GUC line
+#    NEVER apply a migration you have not eyeballed — Drizzle generators are best-effort.
+
+# 4. Apply the migration to the configured Supabase project.
+pnpm db:migrate                             # idempotent; re-runs replay the journal
+
+# 5. Sanity-check the result in Supabase Studio (or the CLI emulator's Studio).
+#    For RLS migrations, walk through the three queries in
+#    docs/runbooks/deploy.md §7 "RLS sanity SQL".
+```
+
+If a migration is wrong, do **not** edit it in-place after applying — instead create a follow-up migration. Drizzle keeps a journal in `lib/db/migrations/meta/` that tracks which migrations have been applied, and rewriting history breaks that journal.
 
 ## Environment variables
 
@@ -61,7 +130,7 @@ Filled in `.env.local`. The full list is enumerated in [AGENTS.md](../../AGENTS.
 | `ADMIN_GITHUB_USERNAME`         | Your GitHub handle (for local admin testing)                                                                          |
 | `NEXT_PUBLIC_PMTILES_URL`       | Use a public Protomaps demo first: `https://demo-bucket.protomaps.com/v4.pmtiles`; switch to Yuki's tile bundle later |
 
-For a quick local Supabase, you can run `supabase start` from the CLI (creates an emulator on `http://localhost:54321`). Wave B will add tooling for this; for now the production Supabase project is fine to point at since RLS rejects anon writes.
+For local Postgres + Auth emulation see [Local Supabase → Option B](#option-b--supabase-cli-emulator-recommended-for-migrations--rls-work) above.
 
 ## Common gotchas
 
