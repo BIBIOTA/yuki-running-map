@@ -90,11 +90,11 @@ doc_language: 繁體中文
   - status: passing
   - Note: 「Postgres SET LOCAL」依 design pivot (Session 5) 改寫為「migration ALTER DATABASE GUC、policies 用 `current_setting`」；mermaid 與 prose 雙寫明 pivot 後的真實實作
 
-- [ ] 7.3 Update `docs/runbooks/deploy.md`：新增 OAuth callback 驗證步驟 + RLS 手動測試 SQL
+- [x] 7.3 Update `docs/runbooks/deploy.md`：新增 OAuth callback 驗證步驟 + RLS 手動測試 SQL
   - Acceptance: WHEN 開啟 `docs/runbooks/deploy.md` THEN 含「OAuth callback 驗證」章節指出測試命令（`curl supabase.co/auth/v1/callback`）與預期 302 redirect；AND 含「RLS 手動測試 SQL」章節列出三條 sanity SQL（anon select 應 0、service role insert 應成功、anon select 仍 0 因 published=false）
   - Depends on: 3.2, 3.5
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 - [ ] 7.4 Update `docs/runbooks/local-dev.md`：新增 `pnpm db:migrate` 流程
   - Acceptance: WHEN 開啟 `docs/runbooks/local-dev.md` THEN 含「啟動本地 supabase（或用共用 dev project）」段落（指向 Supabase CLI 或 Yuki 個人 Supabase project）；AND 含「`pnpm db:migrate` 流程」說明（generate → review SQL → migrate）

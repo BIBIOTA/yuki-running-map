@@ -150,3 +150,17 @@ doc_language: 繁體中文
   - 後續 prose 列出 3 個 boundary：Edge / Node / Postgres GUC
   - Grep verify：sequenceDiagram + Edge runtime + Node runtime + ADMIN_GITHUB_USERNAME + ALTER DATABASE + app.admin_github_username 全部存在
 - Next action: 啟動 task 7.3（docs/runbooks/deploy.md 新增 OAuth callback 驗證 + RLS 手動測試 SQL）
+
+## Session 16 — 2026-06-18 19:00
+- Stage: implementation (docs)
+- Task: 7.3 Update `docs/runbooks/deploy.md`
+- Transition: in_progress → passing
+- Evidence:
+  - §3 內新增「### Verify OAuth callback」子節：`curl -i "https://<your-supabase-ref>.supabase.co/auth/v1/callback"` + 常見失敗模式（404 provider 未啟用 / `provider not supported` / GitHub OAuth App callback URL mismatch）
+  - 新增「## 7. RLS sanity SQL」段落（位於 §6 與 Maintenance 之間），列出 3 條 sanity SQL：
+    - Query A：anon `SELECT count(*) FROM routes` → 0（空表）
+    - Query B：service_role INSERT draft row（`published = false`）→ 1 row returned
+    - Query C：anon `SELECT count(*) FROM routes` → 仍為 0（`anon_read_published` 過濾掉 draft）
+    - Clean up：service_role `DELETE` 移除 sanity row
+  - Grep verify：`RLS sanity SQL` / `Query A|B|C` / `anon_read_published` / `service_role` / `rls-sanity-draft` 全部出現
+- Next action: 啟動 task 7.4（docs/runbooks/local-dev.md 新增 啟動本地 supabase + `pnpm db:migrate` 流程）

@@ -68,6 +68,23 @@ Estimated time: 45–60 minutes the first time. Subsequent deploys are zero-touc
 3. Save.
 4. Optional: add `https://<your-vercel-url>/admin/login` to the **Site URL** field, and `https://<your-vercel-url>/admin/**` plus `http://localhost:3000/admin/**` to **Redirect URLs**.
 
+### Verify OAuth callback
+
+Before moving on, sanity-check that the Supabase Auth callback endpoint responds. The callback is the URL GitHub redirects to after a successful OAuth consent.
+
+```bash
+# Should return 302 with Location: https://github.com/login/oauth/authorize?...
+# OR 400 with a JSON error explaining the missing `code` query param —
+# either way confirms the endpoint exists and is wired.
+curl -i "https://<your-supabase-ref>.supabase.co/auth/v1/callback"
+```
+
+Common failure modes:
+
+- **404**: GitHub provider not enabled in Supabase Authentication → Providers.
+- **`provider not supported`**: Provider toggle is off; re-enable and save.
+- **GitHub OAuth App callback mismatch**: edit the GitHub OAuth App's _Authorization callback URL_ to exactly `https://<your-supabase-ref>.supabase.co/auth/v1/callback`. Any trailing slash mismatch fails silently with a confusing "redirect_uri_mismatch" later.
+
 ## 4. Upload first PMTiles bundle
 
 Follow [pmtiles-update.md](./pmtiles-update.md) to extract a Taiwan-only PMTiles file (~600 MB) from the Protomaps planet build. Upload to the `tiles` Storage bucket created in step 1.5.
@@ -122,6 +139,60 @@ Then sign in via GitHub:
 ```
 
 If any check fails, see [Troubleshooting](#troubleshooting).
+
+## 7. RLS sanity SQL
+
+After running `pnpm db:migrate` (task 3.4 + 3.5), open Supabase **SQL Editor** and walk through the three sanity queries below in order. They confirm that RLS is enabled, that the anon role can only see `published = true` rows, and that the `service_role` key correctly bypasses RLS for admin writes.
+
+> The SQL Editor defaults to running queries **as `postgres` (service_role)**. Use the role switcher in the upper-right (or run via `curl` with the anon key) to exercise the anon path.
+
+### Query A — anon SELECT should return 0 on an empty table
+
+Switch the SQL Editor role to **anon** (or run via `curl`), then execute:
+
+```sql
+SELECT count(*) FROM routes;
+```
+
+Expected: `0`. Reason: the table is freshly migrated and empty. If you get a permission error instead of `0`, RLS is off or the `anon_read_published` policy is missing — re-check task 3.5.
+
+### Query B — service_role INSERT a draft row should succeed
+
+Switch the role back to **postgres / service_role**, then execute:
+
+```sql
+INSERT INTO routes (
+  slug, title, distance_m, elevation_gain_m, recorded_at,
+  difficulty, tags, gpx_path, geojson, bbox, start_point, published
+) VALUES (
+  'rls-sanity-draft', 'RLS sanity draft', 5000, 50, now(),
+  'easy', ARRAY['sanity'], 'gpx/sanity/sanity.gpx',
+  '{"type":"LineString","coordinates":[[121.5,25.0],[121.51,25.01]]}'::jsonb,
+  ST_MakeEnvelope(121.5, 25.0, 121.51, 25.01, 4326),
+  ST_SetSRID(ST_MakePoint(121.5, 25.0), 4326),
+  false
+) RETURNING id, slug, published;
+```
+
+Expected: 1 row returned with `published = false`. Reason: `service_role` bypasses RLS, so the insert succeeds regardless of the policy expression. If this fails, suspect a schema mismatch (re-check task 3.3 + 3.4) rather than RLS.
+
+### Query C — anon SELECT should still return 0 (draft is hidden)
+
+Switch the role back to **anon** and re-run:
+
+```sql
+SELECT count(*) FROM routes;
+```
+
+Expected: still `0`. Reason: the row inserted in Query B has `published = false`, and `anon_read_published USING (published = true)` filters it out for the anon role. If you get `1`, the policy expression is wrong — re-check task 3.5.
+
+### Clean up
+
+Switch back to **service_role** and remove the sanity row before continuing:
+
+```sql
+DELETE FROM routes WHERE slug = 'rls-sanity-draft';
+```
 
 ## Maintenance
 
