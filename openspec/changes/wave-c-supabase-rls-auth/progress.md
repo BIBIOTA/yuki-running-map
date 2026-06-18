@@ -176,3 +176,20 @@ doc_language: 繁體中文
   - Environment variables 內舊的「For a quick local Supabase」段落替換為指向 Local Supabase Option B 的 anchor
   - Grep verify：`Local Supabase` / `Option A` / `Option B` / `supabase start` / `pnpm db:generate` / `pnpm db:migrate` / `Database migrations` / `ALTER DATABASE GUC` / `RLS sanity SQL` 全部出現
 - Next action: 7.5 依賴 task 3.4 + 8.3（需 migration + e2e 真正執行通），先 skip；docs 階段任務（7.1–7.4）全部 passing。下一個可推進的 code-only 工作不多，建議 session 收尾並等 Yuki 完成 external setup（3.1 / 3.2 / 8.2 + 3.4 / 3.5 migration apply + 8.3 / 8.4 E2E + CI），再 resume 跑剩餘 9 個 tasks。
+
+## Session 18 — 2026-06-18 22:00
+- Stage: external setup landed + dispatch 3.4
+- External: Yuki 完成 3.1（Supabase project + PostGIS via `CREATE EXTENSION` from `.env.local` 連線 / pgcrypto 預設已 enable）+ 3.2（GitHub OAuth App + Supabase Provider）
+- `.env.local` 落地：補 `DATABASE_URL` + `SUPABASE_JWT_SECRET` 兩 var；direct connection (`db.<ref>.supabase.co:5432`) IPv6-only 不可達，改用 Session Pooler (`aws-1-ap-northeast-1.pooler.supabase.com:5432`, IPv4 supavisor) 等價於 direct；password 含 `!` URL-encode 為 `%21`
+- `.env.example` 同步補 2 個新 var + 註釋說明來源
+- Task: 3.4 Drizzle migration routes table + 4 indexes
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - schema fix：`createdAt` / `updatedAt` 補 `.notNull()`（修 3.3 漏掉的）+ 新增 4 個 indexes（bbox GIST / start_point GIST / recorded_at btree DESC NULLS LAST / tags GIN）
+  - `drizzle.config.ts` 建：postgresql dialect / schema=lib/db/schema.ts / out=lib/db/migrations / casing=snake_case / strict+verbose / `DATABASE_URL` 缺則 throw
+  - `package.json` 新 scripts：`db:generate` / `db:migrate` / `db:studio`（皆用 `node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs <cmd>` wrap）
+  - `pnpm db:generate` → `lib/db/migrations/0000_famous_lionheart.sql`（1 table / 20 columns / 4 indexes / 0 fks）+ `meta/_journal.json` 記錄 idx 0
+  - `pnpm db:migrate` → ✅ applied successfully
+  - DB 驗證：20 columns 對齊 design.md 全部 NOT NULL/NULL 正確、4 indexes + pkey + slug unique 都存在、`routes` 0 rows、`difficulty` enum 存在
+  - `pnpm typecheck` exit 0；`pnpm lint` exit 0；`pnpm exec vitest run` 8 files / 23 tests 全 pass
+- Next action: 啟動 task 3.5（RLS policies + storage policies + `ALTER DATABASE` GUC）—— Drizzle 不自動產生 RLS，需 `drizzle-kit generate --custom` 起一個空 migration、手寫 SQL（2 條 routes policy + 4 條 storage.objects policy + 1 條 ALTER DATABASE）+ `ENABLE ROW LEVEL SECURITY`，再 `pnpm db:migrate` 套用。完成後跑 deploy.md §7 三條 sanity SQL 驗證行為。

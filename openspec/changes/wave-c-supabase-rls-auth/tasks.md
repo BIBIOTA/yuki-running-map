@@ -29,11 +29,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [ ] 3.4 Drizzle migration: routes table + 4 個 indexes
+- [x] 3.4 Drizzle migration: routes table + 4 個 indexes
   - Acceptance: WHEN 執行 `pnpm db:migrate` THEN migration SQL 套用到 Supabase 且 `routes` table 出現含 design.md §3 所列全部欄位；AND 4 個 indexes（`routes_bbox_gist` / `routes_start_point_gist` / `routes_recorded_at_desc` / `routes_tags_gin`）皆建立；AND migration file commit 在 `lib/db/migrations/`
   - Depends on: 3.3
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 - [ ] 3.5 RLS policies on `routes` + `gpx` bucket + DB-level admin username（同一個 migration SQL）
   - Acceptance: WHEN 執行 `pnpm db:migrate` 後檢查 Supabase Dashboard → Database → Tables → routes THEN Row Level Security = enabled；AND Policies 上有 `anon_read_published`（FOR SELECT, USING published = true）與 `admin_full_access`（FOR ALL, USING jwt user_name = `current_setting('app.admin_github_username', true)`）兩條 policy；AND `storage.objects` 上有 `gpx_public_select_published`（含 EXISTS published row 條件）、`gpx_admin_write`、`gpx_admin_modify`、`gpx_admin_delete` 四條 policy；AND migration 含 `ALTER DATABASE postgres SET app.admin_github_username = '<value-from-ADMIN_GITHUB_USERNAME-env>'`，使 `current_setting('app.admin_github_username', true)` 在每個 PostgREST connection 中皆 resolve 為該值；AND 以 anon key 查 `SELECT count(*) FROM routes` 回 0（表初始空 + RLS 任一情形皆應為 0）；NOTE: 完整 RLS 行為驗證（anon 看不見 unpublished row）需要 seed 資料、推到 `feat-admin-gpx-upload`
