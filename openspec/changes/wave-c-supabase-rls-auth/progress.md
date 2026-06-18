@@ -285,3 +285,14 @@ doc_language: 繁體中文
     3. cookie 格式：原 plan 直接 inject `sb-<ref>-auth-token` cookie → @supabase/ssr 用 `base64-` prefix + base64url(JSON.stringify(session)) 包 session、Buffer base64url 路徑 + 真 access_token (claims `sub`、`iss`、`exp` 都是 Supabase 真鑄出來的) 可被 middleware getUser 接受
   - 全 suite：6 e2e pass / typecheck exit 0 / lint exit 0 / vitest 8 files / 23 tests pass
 - Next action: 剩 task 7.5 (CLAUDE.md 更新)、8.2 (Vercel external)、8.4 (CI yml)、3.1/3.2 已 Session 20 標 passing。可下一輪推 7.5（純文件）+ 詢問 8.4 是否要動 CI yml（依賴 Yuki 設 GitHub Actions secrets）。
+
+## Session 24 — 2026-06-18 23:35
+- Stage: implementation (docs + ergonomics)
+- Task: 7.5 Update CLAUDE.md 常用指令表
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - `package.json` 新增 `test` (vitest run) + `test:watch` (vitest) script
+  - `CLAUDE.md` Common commands 表 3 行更新：拔掉 `pnpm db:migrate` 的 _Wave B_、`pnpm test` 的 _Wave B_、`pnpm test:e2e` 的 _Wave C_；3 行 description 改為現役狀態描述；新增 `pnpm test:watch` 一行 ergonomics
+  - `pnpm test` 驗證：8 files / 23 tests pass exit 0
+  - `openspec validate wave-c-supabase-rls-auth --strict` exit 0
+- Next action: 13/17 task passing。剩 8.2 (Vercel external) + 8.4 (CI yml)。可問 Yuki 要不要動 8.4（依賴 Yuki 設 GitHub Actions secrets）或先做 verification + archive 收尾。

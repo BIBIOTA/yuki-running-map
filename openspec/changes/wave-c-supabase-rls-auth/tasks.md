@@ -104,11 +104,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [ ] 7.5 Update `CLAUDE.md` 常用指令表
-  - Acceptance: WHEN 開啟 `CLAUDE.md` 常用指令表 THEN `pnpm db:migrate` 的「What it does」欄不再標註 _Wave B_；AND `pnpm test:e2e` 的「What it does」欄不再標註 _Wave C_，皆改為現役狀態描述
+- [x] 7.5 Update `CLAUDE.md` 常用指令表
+  - Acceptance: WHEN 開啟 `CLAUDE.md` 常用指令表 THEN `pnpm db:migrate` 的「What it does」欄不再標註 _Wave B_；AND `pnpm test:e2e` 的「What it does」欄不再標註 _Wave C_，皆改為現役狀態描述；AND `pnpm test` 行從原 _Wave B_ 標籤改為現役 Vitest 描述（並新增 `pnpm test:watch` 補完 ergonomics）；AND `package.json` 對應這 3 個 script 全部存在（`test`, `test:watch`, `test:e2e`）
   - Depends on: 3.4, 8.3
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## 8. CI & deployment
 
