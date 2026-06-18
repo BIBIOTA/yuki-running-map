@@ -222,3 +222,14 @@ doc_language: 繁體中文
     - deploy.md §1 step 5：Supabase Dashboard 手動建 bucket 步驟改為「Recommended: skip; migration creates buckets」（仍保留 manual fallback）
   - Validation: `openspec validate wave-c-supabase-rls-auth --strict` exit 0
 - Next action: Code/migration 路徑全綠。剩 9 個 deferred tasks：3.1 / 3.2 / 8.2 (Yuki external manual setup)、7.5 / 8.3 / 8.4 (E2E + CI + CLAUDE.md 收尾，依賴 dep approval 與 external env)。等 Yuki ack：(a) 確認 3.5 pass acceptance；(b) 是否要繼續 pursue dep approval（@playwright/test、jose）跑 8.3。
+
+## Session 20 — 2026-06-18 22:35
+- Stage: status sync (external setup)
+- Task: 3.1 + 3.2（Supabase project + GitHub OAuth provider）
+- Transition: not_started → passing
+- Decision: Session 18 + 19 evidence 已涵蓋兩個 task 的 acceptance：3.1 由 `pnpm db:migrate` 對 Supabase 套用成功 + RLS sanity SQL 三條全綠間接驗證；3.2 由 `.env.local` 含 `SUPABASE_JWT_SECRET` + Provider enabled 表示完成。callback URL 的 end-to-end 驗證留給 8.3 `admin-login-flow.spec.ts`
+- Evidence:
+  - tasks.md 3.1 + 3.2 status 從 not_started → passing；Acceptance 各補 Evidence row 指向 Session 18 + 19
+  - 兩個 task 都標 external 因此沒 commit hash；evidence 走 progress trail + 已通過 migration 為 proof
+  - Validation: `openspec validate wave-c-supabase-rls-auth --strict` exit 0
+- Next action: 啟動 task 8.3 前要先 dep approval — `@playwright/test` (devDep)、`jose` (devDep)。已向 Yuki 提交 dep proposal（用途、bundle 影響、替代方案、風險）等回覆。8.2 (Vercel) 需 Yuki 走 dashboard 流程，與 dep approval 平行進行不互斥。

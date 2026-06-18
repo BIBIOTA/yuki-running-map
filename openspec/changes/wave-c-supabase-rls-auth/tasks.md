@@ -11,17 +11,19 @@ doc_language: 繁體中文
 
 ## 3. DB & Storage
 
-- [ ] 3.1 [External setup] Supabase project + PostGIS extension + `gpx` Storage bucket
-  - Acceptance: WHEN Yuki 開啟 Supabase Dashboard → Database → Extensions THEN `postgis` extension 為 enabled；AND Storage → Buckets 出現 `gpx` bucket 且 public 為 true；AND `.env.local` 含 `NEXT_PUBLIC_SUPABASE_URL` 與 `NEXT_PUBLIC_SUPABASE_ANON_KEY` 與 `SUPABASE_SERVICE_ROLE_KEY`
+- [x] 3.1 [External setup] Supabase project + PostGIS extension + `gpx` Storage bucket
+  - Acceptance: WHEN Yuki 開啟 Supabase Dashboard → Database → Extensions THEN `postgis` extension 為 enabled；AND Storage → Buckets 出現 `gpx` bucket 且 public 為 true（task 3.5 migration 內聯 `INSERT INTO storage.buckets` 同時涵蓋 dashboard 手動路徑）；AND `.env.local` 含 `NEXT_PUBLIC_SUPABASE_URL` 與 `NEXT_PUBLIC_SUPABASE_ANON_KEY` 與 `SUPABASE_SERVICE_ROLE_KEY`（Session 18 補上 `DATABASE_URL` + `SUPABASE_JWT_SECRET` 兩個 var；direct connection IPv6-only 不通改走 Session Pooler）
   - Depends on: -
   - Independence: external (manual)
-  - status: not_started
+  - status: passing
+  - Evidence: Session 18 progress entry — Yuki 完成 Supabase project + PostGIS via `CREATE EXTENSION` + pgcrypto 預設 enabled；Session 19 task 3.5 `pnpm db:migrate` 對該 project 套用成功 + sanity SQL 三條全綠 + `storage.buckets` gpx + tiles public=true 已驗
 
-- [ ] 3.2 [External setup] Supabase Auth GitHub OAuth provider
+- [x] 3.2 [External setup] Supabase Auth GitHub OAuth provider
   - Acceptance: WHEN Yuki 在 Supabase Dashboard → Authentication → Providers → GitHub 開啟 provider 並填入 GitHub OAuth App 的 client_id / client_secret THEN provider 狀態為 enabled；AND GitHub OAuth App 的 Authorization callback URL 設定為 `https://<supabase-ref>.supabase.co/auth/v1/callback`；AND 從 Dashboard → Settings → API 取得 JWT secret 並記入 Yuki 本機 `.env.local` 的 `SUPABASE_JWT_SECRET`（不入 git，僅 E2E fixture 使用）
   - Depends on: 3.1
   - Independence: external (manual)
-  - status: not_started
+  - status: passing
+  - Evidence: Session 18 — Yuki 完成 GitHub OAuth App + Supabase Provider 設定；`.env.local` 含 `SUPABASE_JWT_SECRET`；callback URL 端對端驗證留給 8.3 E2E `admin-login-flow.spec.ts`（OAuth mock fixture 走 supabase.co/auth/v1/callback path）
 
 - [x] 3.3 Drizzle schema for `routes` table（含 `lib/db/postgis.ts` customType helpers）
   - Acceptance: WHEN 開啟 `lib/db/schema.ts` THEN 含 `routes` table 定義且每個欄位對齊 `docs/data-model.md` §`routes` table；AND `bbox` 與 `start_point` 透過 `lib/db/postgis.ts` 的 `customType` 封裝為 `geometry(Polygon, 4326)` / `geometry(Point, 4326)`；AND `difficulty` 為 pgEnum `('easy', 'medium', 'hard')`；AND `pnpm typecheck` exit 0
