@@ -35,11 +35,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing
 
-- [ ] 3.5 RLS policies on `routes` + `gpx` bucket + DB-level admin username（同一個 migration SQL）
-  - Acceptance: WHEN 執行 `pnpm db:migrate` 後檢查 Supabase Dashboard → Database → Tables → routes THEN Row Level Security = enabled；AND Policies 上有 `anon_read_published`（FOR SELECT, USING published = true）與 `admin_full_access`（FOR ALL, USING jwt user_name = `current_setting('app.admin_github_username', true)`）兩條 policy；AND `storage.objects` 上有 `gpx_public_select_published`（含 EXISTS published row 條件）、`gpx_admin_write`、`gpx_admin_modify`、`gpx_admin_delete` 四條 policy；AND migration 含 `ALTER DATABASE postgres SET app.admin_github_username = '<value-from-ADMIN_GITHUB_USERNAME-env>'`，使 `current_setting('app.admin_github_username', true)` 在每個 PostgREST connection 中皆 resolve 為該值；AND 以 anon key 查 `SELECT count(*) FROM routes` 回 0（表初始空 + RLS 任一情形皆應為 0）；NOTE: 完整 RLS 行為驗證（anon 看不見 unpublished row）需要 seed 資料、推到 `feat-admin-gpx-upload`
+- [x] 3.5 RLS policies on `routes` + `gpx` bucket + admin identity SQL function（同一個 migration SQL）
+  - Acceptance: WHEN 執行 `pnpm db:migrate` 後檢查 Supabase Dashboard → Database → Tables → routes THEN Row Level Security = enabled；AND Policies 上有 `anon_read_published`（FOR SELECT, USING `published = true`）與 `admin_full_access`（FOR ALL, USING `auth.jwt()->'user_metadata'->>'user_name' = public.app_admin_github_username()`）兩條 policy；AND `storage.objects` 上有 `gpx_public_select_published`（含 EXISTS published row 條件）、`gpx_admin_write`、`gpx_admin_modify`、`gpx_admin_delete` 四條 policy；AND migration 含 `CREATE OR REPLACE FUNCTION public.app_admin_github_username() RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT '<ADMIN_GITHUB_USERNAME>'::text $$;`，使 `public.app_admin_github_username()` 在每個 connection resolve 為該值（取代 Session 5 嘗試的 `ALTER DATABASE ... SET app.admin_github_username`——Supabase managed `postgres` role 無權設定 cluster-level custom parameter）；AND migration 額外 `INSERT INTO storage.buckets (id, name, public) VALUES ('gpx', 'gpx', true), ('tiles', 'tiles', true) ON CONFLICT DO UPDATE SET public = EXCLUDED.public`，把 task 3.1 的手動 dashboard 步驟內聯化；AND 以 anon key 查 `SELECT count(*) FROM routes` 回 0（表初始空 + RLS 任一情形皆應為 0）；NOTE: 完整 RLS 行為驗證（anon 看不見 unpublished row）需要 seed 資料、推到 `feat-admin-gpx-upload`
   - Depends on: 3.4
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 - [x] 3.6 `lib/supabase/` factories：`browser.ts` / `server.ts` / `middleware.ts`
   - Acceptance: WHEN import `createBrowserClient` from `lib/supabase/browser` 並呼叫 THEN 回傳 Supabase client 可在 "use client" component 使用；AND import `createServerClient` from `lib/supabase/server` 並呼叫 THEN 回傳 client 且正確 wrap `@supabase/ssr` createServerClient + next/headers cookies 雙向讀寫（無需手動 SET LOCAL，admin username 來自 task 3.5 設定的 cluster-level GUC）；AND `lib/supabase/middleware.ts` 匯出 `createMiddlewareClient({ req, res })` helper 處理 cookie 雙向寫；AND `pnpm typecheck` exit 0
@@ -83,12 +83,12 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [x] 7.2 Update `docs/architecture.md`：補上 Edge Middleware → Supabase Auth → Postgres `current_setting` 流程圖
-  - Acceptance: WHEN 開啟 `docs/architecture.md` THEN 含一段 mermaid sequenceDiagram 描述 admin 點 `/admin/upload` → middleware 抓 session → 比對 `ADMIN_GITHUB_USERNAME` → Postgres SET LOCAL → RLS 放行的順序；AND 圖中清楚標示 Edge runtime vs Node runtime 邊界
+- [x] 7.2 Update `docs/architecture.md`：補上 Edge Middleware → Supabase Auth → Postgres admin identity 流程圖
+  - Acceptance: WHEN 開啟 `docs/architecture.md` THEN 含一段 mermaid sequenceDiagram 描述 admin 點 `/admin/upload` → middleware 抓 session → 比對 `ADMIN_GITHUB_USERNAME` → Postgres RLS 比對 admin identity → 放行的順序；AND 圖中清楚標示 Edge runtime vs Node runtime 邊界；AND prose 註明 admin identity 由 `public.app_admin_github_username()` IMMUTABLE function 提供
   - Depends on: 4.1
   - Independence: parallel-safe
   - status: passing
-  - Note: 「Postgres SET LOCAL」依 design pivot (Session 5) 改寫為「migration ALTER DATABASE GUC、policies 用 `current_setting`」；mermaid 與 prose 雙寫明 pivot 後的真實實作
+  - Note: 兩次 pivot — Session 5 從 per-request SET LOCAL 改為 ALTER DATABASE GUC、Session 19 再從 GUC 改為 SQL function（Supabase managed `postgres` role 沒權限改 cluster-level 參數）。mermaid 與 prose 同步反映最終實作
 
 - [x] 7.3 Update `docs/runbooks/deploy.md`：新增 OAuth callback 驗證步驟 + RLS 手動測試 SQL
   - Acceptance: WHEN 開啟 `docs/runbooks/deploy.md` THEN 含「OAuth callback 驗證」章節指出測試命令（`curl supabase.co/auth/v1/callback`）與預期 302 redirect；AND 含「RLS 手動測試 SQL」章節列出三條 sanity SQL（anon select 應 0、service role insert 應成功、anon select 仍 0 因 published=false）

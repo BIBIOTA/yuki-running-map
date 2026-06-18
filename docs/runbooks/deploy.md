@@ -32,9 +32,12 @@ Estimated time: 45–60 minutes the first time. Subsequent deploys are zero-touc
    - Left sidebar → **Database** → **Extensions**
    - Search `postgis` → toggle **Enable extension**
    - Verify: open the SQL Editor and run `select postgis_version();` — should return a non-empty version string.
-5. **Create Storage buckets** (left sidebar → **Storage** → **New bucket**):
-   - `gpx` — **Public bucket: OFF** (we always serve via signed URLs)
-   - `tiles` — **Public bucket: ON** (PMTiles needs unrestricted range requests)
+5. **Create Storage buckets** — pick one path:
+
+   - **(Recommended)** Skip this step; the buckets are created by the Wave C `0001_rls_policies_and_storage_buckets.sql` migration alongside the RLS policies. After `pnpm db:migrate` the dashboard Storage tab will show both buckets.
+   - Manual via dashboard (left sidebar → **Storage** → **New bucket**):
+     - `gpx` — **Public bucket: ON** (published routes served via public URL; drafts hidden by `gpx_public_select_published` RLS policy)
+     - `tiles` — **Public bucket: ON** (PMTiles needs unrestricted range requests)
 6. **Copy three keys** (left sidebar → **Project Settings** → **API**):
 
    | Key               | Where it goes                                    |

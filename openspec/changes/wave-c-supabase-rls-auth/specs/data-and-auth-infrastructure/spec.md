@@ -61,7 +61,7 @@ The system SHALL include a Drizzle migration that, when applied to a clean Supab
 > See: ../../diagrams/02-er-routes-schema.puml
 
 ### Requirement: RLS policies enforce admin and public access
-The system SHALL enable Row Level Security on the `routes` table with two policies (`anon_read_published`, `admin_full_access`), and SHALL apply four storage.objects policies on the `gpx` bucket (`gpx_public_select_published`, `gpx_admin_write`, `gpx_admin_modify`, `gpx_admin_delete`). The admin identity is determined by matching `jwt.user_metadata.user_name` against `current_setting('app.admin_github_username', true)`. The migration SHALL set this GUC at the database level via `ALTER DATABASE postgres SET app.admin_github_username = '<value-from-ADMIN_GITHUB_USERNAME-env>'`, so every PostgREST connection inherits it without per-request SET LOCAL.
+The system SHALL enable Row Level Security on the `routes` table with two policies (`anon_read_published`, `admin_full_access`), SHALL apply four `storage.objects` policies on the `gpx` bucket (`gpx_public_select_published`, `gpx_admin_write`, `gpx_admin_modify`, `gpx_admin_delete`), and SHALL provision both `gpx` and `tiles` Storage buckets as public via the same migration. The admin identity is determined by matching `auth.jwt()->'user_metadata'->>'user_name'` against `public.app_admin_github_username()`, an IMMUTABLE SQL function created by the migration whose body returns the configured admin GitHub username as a text literal. Changing the admin requires a follow-up `CREATE OR REPLACE FUNCTION` migration.
 
 #### Scenario: routes table has RLS enabled with two policies
 - **WHEN** an operator opens Supabase Dashboard → Database → Tables → routes
@@ -69,22 +69,28 @@ The system SHALL enable Row Level Security on the `routes` table with two polici
 - **AND** Policies tab lists `anon_read_published` (FOR SELECT, USING `published = true`) and `admin_full_access` (FOR ALL, USING the admin-username match expression)
 
 #### Scenario: gpx bucket has four storage policies
-- **WHEN** an operator queries `storage.policies` for `bucket_id = 'gpx'`
+- **WHEN** an operator queries `pg_policies` for `tablename = 'objects'` and `policyname LIKE 'gpx%'`
 - **THEN** the result includes `gpx_public_select_published` (FOR SELECT with the EXISTS-published-row condition), `gpx_admin_write` (FOR INSERT), `gpx_admin_modify` (FOR UPDATE), and `gpx_admin_delete` (FOR DELETE)
 
 #### Scenario: Anonymous SELECT returns zero on empty table
 - **WHEN** the routes table is empty and an anonymous client issues `SELECT count(*) FROM routes`
 - **THEN** the result is 0
 
-#### Scenario: app.admin_github_username GUC is set at the database level
-- **WHEN** a reviewer queries `SHOW app.admin_github_username` on any new PostgREST-bound session after migration
-- **THEN** the result equals the value of the `ADMIN_GITHUB_USERNAME` env supplied at migration time
-- **AND** no client code issues `SET LOCAL app.admin_github_username` per request
+#### Scenario: Admin identity function returns the configured GitHub username
+- **WHEN** a reviewer issues `SELECT public.app_admin_github_username()` after migration
+- **THEN** the result equals the `ADMIN_GITHUB_USERNAME` env value supplied to the operator who authored the migration
+- **AND** the function is declared `LANGUAGE sql IMMUTABLE` so the planner can inline it into the policy expression
+- **AND** no client code issues `SET LOCAL` or relies on a cluster-level GUC for admin identity
+
+#### Scenario: gpx and tiles buckets are provisioned by the migration
+- **WHEN** a reviewer queries `SELECT id, public FROM storage.buckets WHERE id IN ('gpx', 'tiles')`
+- **THEN** both rows exist with `public = true`
+- **AND** rerunning the migration is idempotent (ON CONFLICT update keeps the buckets public)
 
 > See: ../../diagrams/02-er-routes-schema.puml
 
 ### Requirement: Supabase client factories are exported from lib/supabase
-The system SHALL export three Supabase client factories from `lib/supabase/`: `createBrowserClient` in `browser.ts` for client components, `createServerClient` in `server.ts` for server components and server actions (wrapping `@supabase/ssr` with `next/headers` cookie integration), and `createMiddlewareClient` in `middleware.ts` for edge middleware cookie management. The admin identity is established by a cluster-level Postgres GUC `app.admin_github_username` set during migration (see the RLS Requirement), not by per-request `SET LOCAL`.
+The system SHALL export three Supabase client factories from `lib/supabase/`: `createBrowserClient` in `browser.ts` for client components, `createServerClient` in `server.ts` for server components and server actions (wrapping `@supabase/ssr` with `next/headers` cookie integration), and `createMiddlewareClient` in `middleware.ts` for edge middleware cookie management. The admin identity is established by the `public.app_admin_github_username()` SQL function created during migration (see the RLS Requirement), not by per-request `SET LOCAL` or any cluster-level GUC, so the factories carry no admin-identity setup responsibility.
 
 #### Scenario: createBrowserClient is callable from "use client" code
 - **WHEN** a Client Component imports `createBrowserClient` from `lib/supabase/browser` and calls it

@@ -105,7 +105,7 @@ pnpm db:generate                            # writes lib/db/migrations/<timestam
 # 3. Review the generated SQL by hand.
 #    - confirm column types, NOT NULL constraints, default values
 #    - confirm indexes (GIST for geometry, GIN for tags, btree for recorded_at)
-#    - for RLS / GUC migrations: confirm policy expressions + ALTER DATABASE GUC line
+#    - for RLS migrations: confirm policy expressions + `public.app_admin_github_username()` function body
 #    NEVER apply a migration you have not eyeballed — Drizzle generators are best-effort.
 
 # 4. Apply the migration to the configured Supabase project.

@@ -48,6 +48,16 @@ updated_at      timestamptz NOT NULL DEFAULT now()
 
 ## Row Level Security (RLS)
 
+Admin identity is encoded by a SQL function：
+
+```sql
+CREATE OR REPLACE FUNCTION public.app_admin_github_username()
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$ SELECT '<ADMIN_GITHUB_USERNAME>'::text $$;
+```
+
 `routes` table policies（兩條）：
 
 ```sql
@@ -62,15 +72,20 @@ USING (published = true);
 CREATE POLICY admin_full_access ON routes
 FOR ALL
 USING (
-  (auth.jwt()->'user_metadata'->>'user_name') = current_setting('app.admin_github_username', true)
+  (auth.jwt()->'user_metadata'->>'user_name') = public.app_admin_github_username()
+)
+WITH CHECK (
+  (auth.jwt()->'user_metadata'->>'user_name') = public.app_admin_github_username()
 );
 ```
 
-> `current_setting('app.admin_github_username')` 來自 **DB-level cluster setting**：migration 中以 `ALTER DATABASE postgres SET app.admin_github_username = '<ADMIN_GITHUB_USERNAME>'` 一次性設定，所有 PostgREST connection pool 內的 connection 自動繼承。改 admin username 需重跑該 ALTER（單一 admin 的個人專案可接受）。env 未設時 `current_setting(..., true)` 回 NULL，policy 比對任何 jwt user_name 皆 false，fail-closed。
+> `public.app_admin_github_username()` 是 migration 寫死的 IMMUTABLE SQL function，planner 會 inline 到 policy expression。改 admin username 需起一支 follow-up migration 重新 `CREATE OR REPLACE FUNCTION`（單一 admin 的個人專案可接受）。此設計取代過去嘗試的 cluster-level `ALTER DATABASE ... SET app.admin_github_username`——Supabase managed `postgres` role 沒權限改 cluster-level custom parameters，故改用 function 封裝。jwt 不含 `user_name`（未登入 anon）時比對結果 NULL，policy 拒絕，fail-closed。
+>
+> 注意：`public.app_admin_github_username()` 的回傳值與 `ADMIN_GITHUB_USERNAME` env 是**兩個獨立的事實源**，需保持手動同步——前者由 RLS 比對使用，後者由 middleware 比對使用。
 
 Storage RLS（`gpx` bucket）：
 
-bucket 設 `public=true`，但 SELECT 仍受 RLS policy 過濾——只有「對應到 `published=true` 的 row」的 path 才會被放行。Admin 透過 jwt + GUC 比對取得寫入權。
+bucket 設 `public=true`（與 `tiles` bucket 一同由 RLS migration 內以 `INSERT INTO storage.buckets ... ON CONFLICT DO UPDATE` 內聯化建立），SELECT 仍受 RLS policy 過濾——只有「對應到 `published=true` 的 row」的 path 才會被放行。Admin 透過 jwt + admin identity function 比對取得寫入權。
 
 ```sql
 -- Public read with conditional policy
@@ -91,21 +106,21 @@ FOR INSERT
 WITH CHECK (
   bucket_id = 'gpx'
   AND (auth.jwt()->'user_metadata'->>'user_name')
-      = current_setting('app.admin_github_username', true)
+      = public.app_admin_github_username()
 );
 
 CREATE POLICY gpx_admin_modify ON storage.objects
 FOR UPDATE USING (
   bucket_id = 'gpx'
   AND (auth.jwt()->'user_metadata'->>'user_name')
-      = current_setting('app.admin_github_username', true)
+      = public.app_admin_github_username()
 );
 
 CREATE POLICY gpx_admin_delete ON storage.objects
 FOR DELETE USING (
   bucket_id = 'gpx'
   AND (auth.jwt()->'user_metadata'->>'user_name')
-      = current_setting('app.admin_github_username', true)
+      = public.app_admin_github_username()
 );
 ```
 

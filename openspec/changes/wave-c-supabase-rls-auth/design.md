@@ -113,6 +113,13 @@ CREATE INDEX routes_tags_gin         ON routes USING GIN(tags);
 ### RLS policies
 
 ```sql
+-- Admin identity 由 SQL function 提供（migration CREATE OR REPLACE 設定值）
+CREATE OR REPLACE FUNCTION public.app_admin_github_username()
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$ SELECT 'bibiota'::text $$;
+
 ALTER TABLE routes ENABLE ROW LEVEL SECURITY;
 
 -- Anon SELECT: 只能看 published
@@ -125,13 +132,20 @@ CREATE POLICY admin_full_access ON routes
   FOR ALL
   USING (
     (auth.jwt()->'user_metadata'->>'user_name')
-    = current_setting('app.admin_github_username', true)
+    = public.app_admin_github_username()
+  )
+  WITH CHECK (
+    (auth.jwt()->'user_metadata'->>'user_name')
+    = public.app_admin_github_username()
   );
 ```
 
-`current_setting('app.admin_github_username')` 取自 **DB-level cluster setting**：在 migration 中以 `ALTER DATABASE postgres SET app.admin_github_username = '<ADMIN_GITHUB_USERNAME>'` 一次性設定，PostgREST connection pool 內每個 connection 都會繼承此值。改 admin 需重跑此 ALTER（個人專案可接受）。若 env 未設則 policy `current_setting(..., true)` 回 NULL，比對任何 jwt user_name 皆 false，fallback 為「無人是 admin」（fail-closed）。
+`public.app_admin_github_username()` 是 **migration 寫死**的 SQL function（`IMMUTABLE` 讓 planner inline 進 policy expression）。改 admin = 起一支 follow-up migration `CREATE OR REPLACE FUNCTION ... RETURN '<new-user>'`（個人專案可接受）。若 jwt 不含 `user_name`（未登入 anon）則比對結果 NULL，policy 拒絕——fallback 為「無人是 admin」（fail-closed）。
 
-> **設計取捨**：原 design 想用 per-request `SET LOCAL` 灌入，但 Supabase JS client 走 PostgREST connection pool，無法直接 SET LOCAL；改用 cluster-level setting 後 `lib/supabase/server.ts` factory 變簡單（只 wrap `@supabase/ssr` createServerClient + cookie handling）。代價：改 admin username 需重跑 ALTER DATABASE。
+> **設計取捨（兩次 pivot）**：
+> 1. 原 design 想用 per-request `SET LOCAL app.admin_github_username = ...`，但 Supabase JS client 走 PostgREST connection pool，無法 per-request SET LOCAL。
+> 2. 改為 `ALTER DATABASE postgres SET app.admin_github_username = ...` cluster-level GUC，但 Supabase **managed `postgres` role 沒權限**改 cluster-level custom parameters（`permission denied to set parameter "app.admin_github_username"`）。
+> 3. 最終改為 SQL function `public.app_admin_github_username()`，policy `current_setting(...)` → `public.app_admin_github_username()`。優點：migration 內自洽、不依賴 cluster setting、`IMMUTABLE` 讓 planner inline；代價：admin username 與 `ADMIN_GITHUB_USERNAME` env 需保持手動同步（兩個獨立的事實源），改 admin 要起 follow-up migration。
 
 ### `gpx` bucket（public + conditional SELECT）
 
@@ -154,21 +168,21 @@ CREATE POLICY gpx_admin_write ON storage.objects
   WITH CHECK (
     bucket_id = 'gpx'
     AND (auth.jwt()->'user_metadata'->>'user_name')
-        = current_setting('app.admin_github_username', true)
+        = public.app_admin_github_username()
   );
 
 CREATE POLICY gpx_admin_modify ON storage.objects
   FOR UPDATE USING (
     bucket_id = 'gpx'
     AND (auth.jwt()->'user_metadata'->>'user_name')
-        = current_setting('app.admin_github_username', true)
+        = public.app_admin_github_username()
   );
 
 CREATE POLICY gpx_admin_delete ON storage.objects
   FOR DELETE USING (
     bucket_id = 'gpx'
     AND (auth.jwt()->'user_metadata'->>'user_name')
-        = current_setting('app.admin_github_username', true)
+        = public.app_admin_github_username()
   );
 ```
 
@@ -179,7 +193,7 @@ CREATE POLICY gpx_admin_delete ON storage.objects
 | 檔案 | 用途 | 重點 |
 |---|---|---|
 | `browser.ts` | "use client" component 用 | `createBrowserClient` from `@supabase/ssr` |
-| `server.ts` | Server Component / Server Action | `createServerClient` + cookies + 每 request `SET LOCAL app.admin_github_username` |
+| `server.ts` | Server Component / Server Action | `createServerClient` 包 `@supabase/ssr` + `next/headers` cookies；無需手動灌入 admin identity（policy 用 `public.app_admin_github_username()`） |
 | `middleware.ts` | Edge middleware 用 | session refresh helper、cookie 雙向寫 |
 
 ---
@@ -350,7 +364,7 @@ e2e:
 |---|---|
 | `docs/data-model.md` §RLS / §Storage RLS | 從「Public read disabled, signed URL」改為「bucket public + policy 限 published」；同步 SQL 範例 |
 | `docs/data-model.md` §`gpx_path` 描述 | 「下載按鈕直接給 signed URL」改成「published row 直接給 public URL；草稿不公開」 |
-| `docs/architecture.md` | 補上 Edge Middleware → Supabase Auth → Postgres `current_setting` 流程圖（mermaid） |
+| `docs/architecture.md` | 補上 Edge Middleware → Supabase Auth → Postgres `public.app_admin_github_username()` 流程圖（mermaid） |
 | `docs/runbooks/deploy.md` | 新增「OAuth callback 驗證步驟」+「RLS 手動測試 SQL」 |
 | `docs/runbooks/local-dev.md` | 新增「啟動本地 supabase（或共用 dev project）」+「`pnpm db:migrate` 流程」 |
 | `CLAUDE.md` 常用指令表 | `pnpm db:migrate`、`pnpm test:e2e` 從「Wave B/C」更新為「可用」 |
@@ -362,7 +376,7 @@ e2e:
 | Risk | 對應 |
 |---|---|
 | Supabase RLS 寫錯導致 admin 也存不到 | migration 後跑驗證 SQL：admin session → `SELECT count(*) FROM routes` 應成功；無 session → 0 row。記入 task acceptance |
-| `SET LOCAL app.admin_github_username` 沒灌入 | `lib/supabase/server.ts` factory 無條件 `SET LOCAL`；env 未設時為 NULL，policy fallback「無人是 admin」（fail-closed） |
+| `public.app_admin_github_username()` 與 `ADMIN_GITHUB_USERNAME` env 不同步 | 兩個獨立的事實源（policy 比對 vs middleware 比對），改 admin 要同時改 follow-up migration 與 Vercel env。`docs/runbooks/deploy.md` 第 5 步與 RLS sanity SQL 章節記錄此手動步驟 |
 | GitHub OAuth callback URL 設錯 | `docs/runbooks/deploy.md` 增加「測試 OAuth callback」驗證；callback 走 supabase.co、無需自架 |
 | Supabase 自由方案 cold start latency | 個人專案可接受，不引入 keepalive |
 | `jose` 新 dep | task acceptance 標「需取得新 dep approval」；若拒絕，切到 password-based test user 替代方案 |

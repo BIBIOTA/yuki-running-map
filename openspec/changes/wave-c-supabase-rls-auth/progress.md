@@ -193,3 +193,32 @@ doc_language: 繁體中文
   - DB 驗證：20 columns 對齊 design.md 全部 NOT NULL/NULL 正確、4 indexes + pkey + slug unique 都存在、`routes` 0 rows、`difficulty` enum 存在
   - `pnpm typecheck` exit 0；`pnpm lint` exit 0；`pnpm exec vitest run` 8 files / 23 tests 全 pass
 - Next action: 啟動 task 3.5（RLS policies + storage policies + `ALTER DATABASE` GUC）—— Drizzle 不自動產生 RLS，需 `drizzle-kit generate --custom` 起一個空 migration、手寫 SQL（2 條 routes policy + 4 條 storage.objects policy + 1 條 ALTER DATABASE）+ `ENABLE ROW LEVEL SECURITY`，再 `pnpm db:migrate` 套用。完成後跑 deploy.md §7 三條 sanity SQL 驗證行為。
+
+## Session 19 — 2026-06-18 22:25
+- Stage: design pivot + implementation (migration)
+- Task: 3.5 RLS policies + storage policies + admin identity SQL function
+- Transition: not_started → in_progress → passing
+- Decision: 把 admin identity 從「migration `ALTER DATABASE postgres SET app.admin_github_username = ...`」改為「migration `CREATE OR REPLACE FUNCTION public.app_admin_github_username() RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT 'bibiota'::text $$`」
+  - Why: Supabase managed `postgres` role 沒權限改 cluster-level custom parameter（試跑 `ALTER DATABASE` 報 `permission denied to set parameter`）
+  - Pivot 後好處：migration 內自洽（不依賴 Supabase 提權）、IMMUTABLE function 讓 planner inline、admin identity 完全鎖在 migration 控制下
+  - Trade-off：`public.app_admin_github_username()` 的回傳值與 `ADMIN_GITHUB_USERNAME` env 變成兩個獨立事實源，需保持手動同步；改 admin 要起 follow-up migration（個人專案可接受）
+- Evidence:
+  - Migration: `lib/db/migrations/0001_rls_policies_and_storage_buckets.sql` 含 7 個 statement-breakpoint：
+    1. `INSERT INTO storage.buckets` gpx (public=true) + 2. tiles (public=true)，皆 `ON CONFLICT DO UPDATE` 保持 idempotent
+    3. `CREATE OR REPLACE FUNCTION public.app_admin_github_username()` IMMUTABLE SQL function
+    4. `ALTER TABLE routes ENABLE ROW LEVEL SECURITY` + 5–6. `anon_read_published` (SELECT, USING `published = true`) + `admin_full_access` (ALL, USING + WITH CHECK 比對 jwt.user_name 與 function)
+    7–10. `gpx_public_select_published` (SELECT, EXISTS published row) + `gpx_admin_write` (INSERT) + `gpx_admin_modify` (UPDATE) + `gpx_admin_delete` (DELETE)
+  - `pnpm db:migrate` → ✅ migrations applied successfully（idx 1 落地、`__drizzle_migrations` 有 row）
+  - 一次性 `scripts/verify-rls.mjs`（已刪除）查驗 DB：`routes.relrowsecurity=true`、2 routes policies + 4 gpx storage policies 齊全、`SELECT public.app_admin_github_username()` 回 `'bibiota'`、`storage.buckets` 兩個 bucket public=true
+  - deploy.md §7 三條 sanity SQL 走過：Query A anon `SELECT count(*) FROM routes` → 0；Query B service_role INSERT draft (`published=false`) → returning id；Query C anon `SELECT count(*) FROM routes` → 仍 0（draft 被 `anon_read_published` 過濾）；Cleanup `DELETE FROM routes WHERE slug = 'rls-sanity-draft'` 成功
+  - `pnpm typecheck` exit 0；`pnpm lint` exit 0；`pnpm exec vitest run` 8 files / 23 tests 全 pass
+  - Updated artifacts (spec compliance):
+    - design.md §3：RLS policies + Storage policies 全部改寫為 `public.app_admin_github_username()` reference；新增 Session 19 「兩次 pivot」設計取捨段落；§6 文件更新清單對 architecture.md 描述更新；Risk 表格替換掉 `SET LOCAL` 行
+    - tasks.md task 3.5 acceptance 改寫（policy expression、function CREATE OR REPLACE 條款、storage.buckets idempotent insert 條款）+ status passing；task 7.2 Note 補上 Session 19 pivot
+    - specs/data-and-auth-infrastructure/spec.md "RLS policies enforce admin and public access" Requirement：重寫 description + 替換 "GUC set at the database level" Scenario 為 "Admin identity function returns the configured GitHub username"，新增 "gpx and tiles buckets are provisioned by the migration" Scenario；"Supabase client factories" Requirement description 同步修正
+    - docs/data-model.md §RLS：admin identity function 段落、policy SQL `public.app_admin_github_username()`、Storage 段落補上「migration 內聯 `INSERT INTO storage.buckets` ON CONFLICT」描述
+    - docs/architecture.md：sequenceDiagram participant + Note + key boundaries prose + section header 全部改寫為 `public.app_admin_github_username()` IMMUTABLE function；保留 history 註記
+    - docs/runbooks/local-dev.md：generate-review checklist 條款改寫
+    - deploy.md §1 step 5：Supabase Dashboard 手動建 bucket 步驟改為「Recommended: skip; migration creates buckets」（仍保留 manual fallback）
+  - Validation: `openspec validate wave-c-supabase-rls-auth --strict` exit 0
+- Next action: Code/migration 路徑全綠。剩 9 個 deferred tasks：3.1 / 3.2 / 8.2 (Yuki external manual setup)、7.5 / 8.3 / 8.4 (E2E + CI + CLAUDE.md 收尾，依賴 dep approval 與 external env)。等 Yuki ack：(a) 確認 3.5 pass acceptance；(b) 是否要繼續 pursue dep approval（@playwright/test、jose）跑 8.3。
