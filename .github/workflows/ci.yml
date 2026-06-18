@@ -47,9 +47,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
-  # Test job is wired up once Vitest + Playwright land in Wave B / Wave C.
-  # Placeholder ensures the CI pipeline has a stable `test` check from day one,
-  # so branch-protection rules can be set against it before the suite exists.
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -63,10 +60,48 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - name: Vitest (skipped until tests exist)
-        run: |
-          if pnpm list vitest >/dev/null 2>&1; then
-            pnpm test --run --passWithNoTests
-          else
-            echo "vitest not installed yet — skipping (will activate in Wave B)"
-          fi
+      - run: pnpm test
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
+    # Skip on PRs from forks — secrets are not available there and we don't
+    # want to expose them anyway.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+      ADMIN_GITHUB_USERNAME: ${{ secrets.ADMIN_GITHUB_USERNAME }}
+      NEXT_PUBLIC_PMTILES_URL: ${{ secrets.NEXT_PUBLIC_PMTILES_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - run: pnpm test:e2e
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

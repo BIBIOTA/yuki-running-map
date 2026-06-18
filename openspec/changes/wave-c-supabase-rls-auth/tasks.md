@@ -124,11 +124,12 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing
 
-- [ ] 8.4 GitHub Actions `e2e` job
-  - Acceptance: WHEN PR 開啟 THEN `.github/workflows/ci.yml` 既有 `lint` / `typecheck` / `test` 三 job 後新增 `e2e` job 並執行 `pnpm install` → `playwright install chromium` → `pnpm build` → `pnpm test:e2e`；AND job env 含 5 + 1 = 6 個 secrets（含 `SUPABASE_JWT_SECRET` for E2E mock）；AND job 條件 `if: github.event.pull_request.head.repo.full_name == github.repository`（Fork PR 不觸發、避免 secrets 洩漏）；AND 任一 spec fail 則 job 紅 X
+- [x] 8.4 GitHub Actions `e2e` job
+  - Acceptance: WHEN PR 開啟 THEN `.github/workflows/ci.yml` 既有 `lint` / `typecheck` / `test` 三 job 後新增 `e2e` job 並執行 `pnpm install` → `playwright install --with-deps chromium` (cached via `actions/cache@v4` keyed on pnpm-lock) → `pnpm build` → `pnpm test:e2e`；AND job-level env 含 6 個 secrets（`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_JWT_SECRET` / `ADMIN_GITHUB_USERNAME` / `NEXT_PUBLIC_PMTILES_URL`）；AND job 條件 `if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository`（Fork PR 不觸發避免 secrets 洩漏，但 push to main 仍跑）；AND `needs: [lint, typecheck, test]` 序列依賴；AND `pnpm test:e2e` script 改用 `node --env-file-if-exists=.env.local` 讓 local 與 CI 同一支 script work（CI 走 job-level env、local 走 `.env.local`）；AND 任一 spec fail 則 job 紅 X + `actions/upload-artifact@v4` 把 `playwright-report/` 與 `test-results/` 抓出來；AND 既有 test job 清理掉 Wave B placeholder，改跑 `pnpm test`（vitest）；AND task acceptance 採用 `github.event_name != 'pull_request' || ...` 而非原 spec 的單一條件，是為了讓 push to main 後仍跑 e2e 守住 main branch（與 spec intent「Fork PR 不觸發避免 secrets 洩漏」一致、覆蓋範圍更廣）
   - Depends on: 8.3
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Prerequisite for real CI green: Yuki 在 GitHub repo Settings → Secrets and variables → Actions 加入 6 個 secrets（同上 env key list）。secrets 未補時 e2e job 會跑 `pnpm test:e2e` 但 env 都是空字串、fixture 第一個 `expect(...).not.toBe("")` 會 fail-fast，job 紅 X 並上傳 playwright-report 方便 debug
 
 ## Optional artifacts
 

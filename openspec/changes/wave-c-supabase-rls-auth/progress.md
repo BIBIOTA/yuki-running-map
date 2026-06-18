@@ -296,3 +296,22 @@ doc_language: 繁體中文
   - `pnpm test` 驗證：8 files / 23 tests pass exit 0
   - `openspec validate wave-c-supabase-rls-auth --strict` exit 0
 - Next action: 13/17 task passing。剩 8.2 (Vercel external) + 8.4 (CI yml)。可問 Yuki 要不要動 8.4（依賴 Yuki 設 GitHub Actions secrets）或先做 verification + archive 收尾。
+
+## Session 25 — 2026-06-18 23:50
+- Stage: implementation (CI)
+- Task: 8.4 GitHub Actions `e2e` job
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - `.github/workflows/ci.yml`：
+    - 既有 `test` job 拔掉「Wave B placeholder」comment，從條件式 vitest detection 改為直接跑 `pnpm test`
+    - 新 `e2e` job：`needs: [lint, typecheck, test]` 序列依賴 + chromium-only Playwright + `actions/cache@v4` 對 `~/.cache/ms-playwright` 用 `pnpm-lock.yaml` hash 當 key + `pnpm exec playwright install --with-deps chromium` + `pnpm build` + `pnpm test:e2e` + `actions/upload-artifact@v4` failure-only 抓 `playwright-report/` 與 `test-results/`
+    - Job-level env 6 個 secrets：`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_JWT_SECRET` / `ADMIN_GITHUB_USERNAME` / `NEXT_PUBLIC_PMTILES_URL`
+    - Fork-PR 條件改寫為 `github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository`（push to main 也跑 e2e 守住 main）
+  - `package.json` `test:e2e` script：`--env-file` 改為 `--env-file-if-exists`（Node 22.10+ 支援），讓 CI 用 job-level env、local 用 `.env.local` 同 script
+  - 驗證：
+    - `node -e ... yaml.load(ci.yml)` 解析 OK；`jobs = [lint, typecheck, test, e2e]`；`e2e.needs = [lint, typecheck, test]`；`e2e.if` 與 `e2e.env` 鍵符合 acceptance
+    - `pnpm test:e2e visitor-home.spec.ts` local exit 0（驗 `--env-file-if-exists` 不破 local）
+    - `pnpm typecheck` exit 0；`pnpm lint` exit 0；`pnpm test` 8 files / 23 tests pass
+    - `openspec validate wave-c-supabase-rls-auth --strict` exit 0
+- Prerequisite for real CI green: Yuki 在 GitHub repo Settings → Secrets and variables → Actions 加 6 個 secrets。未補 secrets 時 e2e job env 都是空字串、fixture 第一個 `expect(...).not.toBe("")` fail-fast 紅 X，並上傳 report 方便 debug
+- Next action: 14/17 task passing；剩 8.2 (Vercel external)。可問 Yuki 要動 8.2 還是先進 verification + archive。如果要 verify + archive 可以接受 8.2 留為 external follow-up（與 3.1/3.2 同模式）。
