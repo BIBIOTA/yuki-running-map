@@ -72,7 +72,12 @@ note as routes_rls <<rls>>
   admin_full_access
     FOR ALL
     USING jwt.user_metadata.user_name
-        = current_setting('app.admin_github_username')
+        = public.app_admin_github_username()
+  ── admin identity ──
+  CREATE OR REPLACE FUNCTION
+    public.app_admin_github_username()
+    RETURNS text LANGUAGE sql IMMUTABLE
+    AS $$ SELECT 'BIBIOTA' $$;
 end note
 
 ' ── External entities (logical relations) ────────
@@ -95,7 +100,7 @@ note as gpx_rls <<rls>>
     )
   gpx_admin_write / _modify / _delete
     USING jwt.user_metadata.user_name
-        = current_setting('app.admin_github_username')
+        = public.app_admin_github_username()
 end note
 
 entity "auth.users\n(Supabase managed)" as users <<authsrc>> {
@@ -107,7 +112,7 @@ entity "auth.users\n(Supabase managed)" as users <<authsrc>> {
 
 ' ── Relationships ────────────────────────────────
 routes ||--o{ gpx : "gpx_path (logical FK)\nname"
-users  ||..o{ routes : "admin identity gates writes\nvia RLS jwt + SET LOCAL"
+users  ||..o{ routes : "admin identity gates writes\nvia RLS jwt + IMMUTABLE fn"
 
 ' Layout hints
 routes -[hidden]down- routes_indexes

@@ -113,10 +113,11 @@ doc_language: 繁體中文
 ## 8. CI & deployment
 
 - [ ] 8.2 [External setup] Vercel project + Preview deployment
-  - Acceptance: WHEN Yuki 在 Vercel Dashboard import GitHub repo THEN 專案建立成功；AND Build Command 為 `pnpm build`、Install Command 為 `pnpm install`；AND Project Settings → Environment Variables 含 5 個（`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `ADMIN_GITHUB_USERNAME=bibiota` / `NEXT_PUBLIC_PMTILES_URL`）；AND 開一個 PR 後 Vercel 自動 deploy preview 並在 PR comment 出 preview URL
+  - Acceptance: WHEN Yuki 在 Vercel Dashboard import GitHub repo THEN 專案建立成功；AND Build Command 為 `pnpm build`、Install Command 為 `pnpm install`；AND Project Settings → Environment Variables 含 5 個（`NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `ADMIN_GITHUB_USERNAME=BIBIOTA` / `NEXT_PUBLIC_PMTILES_URL`）；AND 開一個 PR 後 Vercel 自動 deploy preview 並在 PR comment 出 preview URL
   - Depends on: 3.1, 3.2
   - Independence: external (manual)
   - status: not_started
+  - deferred: external manual setup follow-up，與 3.1/3.2 同模式（Yuki 動 Vercel Dashboard 後直接補 evidence + 改 status）；不阻塞本 change 收尾，因為 (a) CI 8.4 e2e job 已能覆蓋從 git push 到 e2e green 的端對端閉環，preview deployment 是「人類能在 PR 看到 URL」的 UX 加值而非功能 gate；(b) Vercel preview 一旦設好不會影響 spec / code 任何 file
 
 - [x] 8.3 Playwright config + admin session via magic link + 5 specs
   - Acceptance: WHEN 安裝 `@playwright/test` 為 devDependency 並 `pnpm exec playwright install chromium` THEN Playwright 可執行；AND `playwright.config.ts` 設 `webServer: { command: 'pnpm start --port 3000', reuseExistingServer: true (dev) }` + chromium-only project + `E2E_PORT` env override；AND `package.json` script `test:e2e` 走 `node --env-file=.env.local ./node_modules/@playwright/test/cli.js test` 自動載入 `.env.local`；AND 5 個 spec 檔（`visitor-home.spec.ts` / `visitor-list.spec.ts` / `visitor-detail.spec.ts` / `admin-unauthenticated.spec.ts` / `admin-login-flow.spec.ts`）全部存在；AND `admin-login-flow.spec.ts` 使用 Supabase admin API `generate_link(type=magiclink)` 換到真的 access_token + refresh_token、解 URL fragment、組成 base64-prefixed JSON session cookie 注入 `sb-<ref>-auth-token`（取代原 `jose` `SignJWT` 自造 JWT 的方案——magic link 走 implicit flow 換到的是真 token，繞過 Playwright 1.61 對 jose webapi 條件式 exports 的 ESM loader 不相容問題）；AND `pnpm test:e2e` 對 `pnpm start` 起的 prod server / 或 `pnpm dev` server `reuseExistingServer` 模式，6 條 test（spec 5 spec 內加 visitor-detail 跑 2 slug）全 pass on local；AND prerequisite：admin user row 已存在於 Supabase auth.users（GitHub OAuth round-trip 完成一次以建立 row，或 follow-up 改用 admin API createUser）
@@ -137,3 +138,4 @@ doc_language: 繁體中文
   - [01-sequence-admin-oauth-flow.puml](./diagrams/01-sequence-admin-oauth-flow.puml) — admin OAuth flow（含 middleware mismatch alt 分支）
   - [02-er-routes-schema.puml](./diagrams/02-er-routes-schema.puml) — `routes` table + indexes + RLS + `gpx` bucket logical FK
 - [ ] Figma designs (spec-driven-dev:writing-figma)
+  - deferred: design.md §8「Probable next steps」明列「不需要」——`/admin/login` 是 OAuth button 一顆、`/admin/upload` 是 Coming soon placeholder，沿用 bootstrap 已落地的 V2 Trail Vintage tokens；無新元件需要 Figma 設計

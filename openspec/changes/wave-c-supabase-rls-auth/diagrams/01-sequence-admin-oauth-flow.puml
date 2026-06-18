@@ -24,6 +24,7 @@ participant "Browser" as browser
 participant "/admin/login\n(Client Component)" as loginPage
 participant "Supabase Auth\n(OAuth handler)" as supaAuth
 participant "github.com\n(OAuth consent)" as github
+participant "/auth/callback\n(Route Handler, Node)" as cb
 participant "middleware.ts\n(Edge)" as mw
 participant "/admin/upload\n(protected)" as uploadPage
 participant "/ (home)\n(flash toast handler)" as home
@@ -40,7 +41,12 @@ loginPage --> browser: render Card + GitHub OAuth Button
 
 == 2. 觸發 OAuth ==
 user -> browser: 按下「以 GitHub 登入」
-browser -> supaAuth: signInWithOAuth\n({ provider: 'github',\n   redirectTo: <origin>/admin/upload })
+browser -> supaAuth: signInWithOAuth\n({ provider: 'github',\n   redirectTo: <origin>/auth/callback?next=/admin/upload })
+note over supaAuth
+  @supabase/ssr 把 PKCE code_verifier 寫入 cookies；
+  redirectTo 必須指向自家 Route Handler，否則 middleware
+  在 code exchange 之前 run，會看不到 cookie 而 loop。
+end note
 supaAuth --> browser: 302 → github.com/login/oauth/authorize
 
 == 3. GitHub 同意授權 ==
@@ -48,11 +54,17 @@ browser -> github: GET /login/oauth/authorize
 user -> github: 確認授權
 github --> browser: 302 → supabase.co/auth/v1/callback?code=...
 
-== 4. Supabase callback 換 session ==
+== 4. Supabase exchange + 302 回我家 Route Handler ==
 browser -> supaAuth: GET /auth/v1/callback?code=...
 supaAuth -> github: POST /login/oauth/access_token
 github --> supaAuth: access_token + user_metadata.user_name
-supaAuth --> browser: Set-Cookie: sb-<ref>-auth-token\n302 → /admin/upload
+supaAuth --> browser: 302 → <origin>/auth/callback?code=...&next=/admin/upload\n(no cookie yet — supabase.co domain ≠ localhost/vercel)
+
+== 4.5 我家 /auth/callback 換 session ==
+browser -> cb: GET /auth/callback?code=...&next=/admin/upload
+cb -> supaAuth: exchangeCodeForSession(code)\n(server-side via createServerClient + next/headers cookies)
+supaAuth --> cb: session
+cb --> browser: Set-Cookie: sb-<ref>-auth-token\n302 → /admin/upload
 
 == 5. middleware 比對 admin ==
 browser -> mw: GET /admin/upload\n(Cookie: sb-<ref>-auth-token)
