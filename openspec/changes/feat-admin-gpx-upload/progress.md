@@ -136,3 +136,9 @@ Supabase 起來後執行），不在本機偽造通過。
   - Code-quality-reviewer: APPROVE — no Critical/Important; minor `mapDbError` DRY note left for 2.3-or-later extraction; UUID-shape soft-guard suggestion left as non-blocking; locked-key strip is an allow-list (not deny-list) — future-proof
 - VERIFICATION-PENDING: 3 gated integration scenarios (slug-change happy / same-slug dedup / slug UNIQUE conflict) against local Supabase
 - Next action: Resume SDD on task 2.3 `deleteRoute` (no deps; reuses `lib/db/client.ts` + same gated pattern).
+
+## Session 13 — 2026-06-20 04:05
+- Stage: SDD
+- Task: 2.3 Add `features/admin-routes/actions/deleteRoute.ts`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `deleteRoute({ id })` Server Action covering happy path + unknown-id idempotent + Storage remove failure (orphan warn) + DB DELETE failure per spec.md:122–150; integration test gated; execution stays VERIFICATION-PENDING.
