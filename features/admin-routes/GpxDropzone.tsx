@@ -73,11 +73,12 @@ export function GpxDropzone({ onFile }: Props) {
     }
     try {
       const arrayBuffer = await file.arrayBuffer();
-      // `parseGpx` is typed against Node's `Buffer`; Next.js's Webpack
-      // config auto-polyfills `Buffer` in the client bundle, so this
-      // works in the browser too.
-      const buffer = Buffer.from(arrayBuffer);
-      const metadata = parseGpx(buffer);
+      // `parseGpx` accepts `Uint8Array | string` so it works in both the
+      // Node runtime (where `Buffer` is a `Uint8Array` subclass) and the
+      // browser bundle. We deliberately avoid Node's `Buffer` here because
+      // Next.js 15 + Turbopack does NOT polyfill Node globals in the client
+      // bundle — referencing `Buffer` would throw `ReferenceError` at runtime.
+      const metadata = parseGpx(new Uint8Array(arrayBuffer));
       setState({ kind: "loaded", file });
       onFile(file, metadata);
     } catch {

@@ -169,17 +169,25 @@ function computeBbox(points: ReadonlyArray<TrackPoint>): BBox2D {
 }
 
 /**
- * Parse a GPX `Buffer` and return a `GpxMetadata` summary. The returned
+ * Parse GPX XML and return a `GpxMetadata` summary. The returned
  * `geojson.geometry.coordinates` is the *simplified* polyline (suitable for
  * list-page thumbnails); `distanceM`, `elevationGainM`, `bbox` and
  * `startPoint` are computed from the *full* trackpoint set so the metadata
  * stays accurate even when the rendered line is coarse.
  *
+ * Accepts either a raw XML `string` or any `Uint8Array` (including Node's
+ * `Buffer`, which is a `Uint8Array` subclass). The browser-side caller
+ * (`GpxDropzone`) cannot use Node's `Buffer` because Next.js 15 + Turbopack
+ * does NOT polyfill Node globals in the client bundle — accepting
+ * `Uint8Array` keeps the signature portable across runtimes while leaving
+ * existing server callers (`Buffer.from(await file.arrayBuffer())`)
+ * type-compatible.
+ *
  * Throws when the input has no parseable `<trkpt>` elements — callers
  * should treat that as "this is not a valid GPX route".
  */
-export function parseGpx(buffer: Buffer): GpxMetadata {
-  const xml = buffer.toString("utf8");
+export function parseGpx(input: Uint8Array | string): GpxMetadata {
+  const xml = typeof input === "string" ? input : new TextDecoder("utf-8").decode(input);
   const parsed = xmlParser.parse(xml) as RawGpx;
   const points = extractTrackPoints(parsed);
 
