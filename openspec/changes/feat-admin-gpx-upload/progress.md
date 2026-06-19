@@ -88,3 +88,29 @@ Supabase 起來後執行），不在本機偽造通過。
   - Code-quality-reviewer: APPROVE — no Critical/Important blockers; one "Important — not blocking" note on adding a typed cast for `db.execute<T>` return shape clarity; minor JSDoc note about empty-string filter and a future-refactor seed-helper extraction once a 2nd integration test lands
 - VERIFICATION-PENDING: integration test execution against local Supabase (待 CI / Supabase 起來後執行；不在本機偽造通過)
 - Next action: Confirm with user whether to continue to group 2 (Server Actions; all need local Supabase → integration execution will be VERIFICATION-PENDING) or stop after group 1.
+
+## Session 9 — 2026-06-20 01:00
+- Stage: SDD
+- Task: 2.1 Add `features/admin-routes/actions/createRoute.ts`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `createRoute` Server Action (Node runtime, `"use server"`) covering happy path + 5 failure paths per spec.md:59–95; integration test gated with skipIf; execution stays VERIFICATION-PENDING. Implementer adds `lib/db/client.ts` lazy Drizzle factory if not present, since 2.1/2.2/2.3 share need.
+
+## Session 10 — 2026-06-20 03:15
+- Stage: SDD
+- Task: 2.1 Add `features/admin-routes/actions/createRoute.ts`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits:
+    - b27595e feat(admin-routes): add createRoute Server Action with Storage rollback
+    - a9f774a fix(admin-routes): surface fieldErrors.tags on malformed tags JSON
+  - New shared infra: `lib/db/client.ts` lazy Drizzle singleton with `{ prepare: false }` (Supabase pooler) — to be reused by 2.2 / 2.3
+  - Tests:
+    - `pnpm exec vitest run features/admin-routes/actions/__tests__/createRoute.integration.test.ts` → 1 passed (malformed-tags boundary) + 6 skipped (gated by `describe.skipIf(!process.env.DATABASE_URL)` per environment note)
+    - Full suite `pnpm exec vitest run` → 72 passed + 8 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0
+  - Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (all 6 scenarios with named describes, diagram contract matched step-by-step against `01-sequence-create-route.puml`, trust boundary §3.3 respected, EXACT 繁中 strings verified, no extras, skipIf gating verified)
+  - Code-quality-reviewer round 1: REQUEST_CHANGES — Important: malformed `tags` JSON silently swallowed because validator treats `tags === null` as "absent" → silent empty-tags row instead of `fieldErrors.tags`. Fix: short-circuit at the FormData parse boundary in `parseMetadataFromFormData` so `validateRouteMetadata` stays pure.
+  - Code-quality-reviewer round 2 (after fix `a9f774a`): APPROVE — fix verified at the boundary (line 141 short-circuit before Storage/parseGpx/INSERT/revalidatePath); new non-gated `describe("createRoute (parse-boundary)")` block with `vi.doMock` covers regression; previous Minors (raw `e.message` leak, `rollbackStorage` typing, concat style) remain accepted/cosmetic and are not blockers
+- VERIFICATION-PENDING: integration test execution of the 6 gated `describe.skipIf` scenarios (happy / metadata / parseGpx / Storage upload / slug UNIQUE / generic INSERT) against local Supabase
+- Next action: Confirm with user whether to continue task 2.2 `updateRoute` (depends on 1.1 + 1.4 only — both passing — and reuses `lib/db/client.ts` from 2.1) and 2.3 `deleteRoute` (no deps; same shared infra).

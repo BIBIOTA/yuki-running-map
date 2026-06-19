@@ -43,11 +43,11 @@ doc_language: 繁體中文
 
 ## 2. Server Actions
 
-- [ ] 2.1 Add `features/admin-routes/actions/createRoute.ts`
+- [x] 2.1 Add `features/admin-routes/actions/createRoute.ts`
   - Acceptance: WHEN `createRoute(formData)` 收到含合法 `gpxFile` + 完整 metadata 的 FormData THEN server 端執行 `parseGpx(buffer)` → `supabase.storage.from('gpx').upload(path, buffer)` → `db.insert(routes).values(...)` → `revalidatePath('/routes')` + `revalidatePath('/routes/' + slug)` + `revalidatePath('/admin/routes')` → 回 `{ ok: true, id, slug }`；AND 對 metadata 驗證失敗 THEN 不 upload、不 INSERT、回 `{ ok: false, fieldErrors }`；AND 對 server `parseGpx` throw（GPX 無 trackpoint）THEN 不 upload、回 `{ ok: false, fieldErrors: { gpxFile: 'GPX 解析失敗（無有效軌跡點？）' } }`；AND 對 Storage upload throw THEN 不 INSERT、回 `{ ok: false, fieldErrors: { _form: 'Storage 上傳失敗，請重試' } }`；AND 對 INSERT throw 因 slug UNIQUE 衝突 THEN 呼叫 `storage.remove([path])` rollback、回 `{ ok: false, fieldErrors: { slug: '此 slug 已被使用' } }`；AND 對其他 INSERT throw THEN rollback Storage、回 `{ ok: false, fieldErrors: { _form: '寫入失敗：...' } }` 且 `console.error`；AND `features/admin-routes/actions/__tests__/createRoute.integration.test.ts` 用 local Supabase + fixture sample.gpx 涵蓋上述五條路徑；AND `pnpm typecheck` exit 0
   - Depends on: 1.1, 1.2, 1.4
   - Independence: serial
-  - status: not_started
+  - status: passing (static; integration execution VERIFICATION-PENDING; malformed-tags boundary test runs locally)
 
 - [ ] 2.2 Add `features/admin-routes/actions/updateRoute.ts`
   - Acceptance: WHEN `updateRoute({ id, ...meta })` 收到合法 metadata THEN Action 先 `SELECT slug FROM routes WHERE id=$1` 取得 `oldSlug` → `db.update(routes).set({...metaOnly, updated_at: now()}).where(eq(routes.id, id))` 執行成功 → `revalidatePath('/routes')` + `revalidatePath('/routes/' + oldSlug)` + `revalidatePath('/routes/' + newSlug)`（若兩者不同）+ `revalidatePath('/admin/routes')` → 回 `{ ok: true }`；AND Action 內 strip 掉 client 試圖送來的 `gpx_path` / `geojson` / `bbox` / `start_point` / `distance_m` / `elevation_gain_m` / `recorded_at` / `id` / `created_at`；AND 驗證失敗 THEN 不 UPDATE、回 `{ ok: false, fieldErrors }`；AND slug UNIQUE 衝突 THEN 回 `{ ok: false, fieldErrors: { slug: '此 slug 已被使用' } }`；AND 其他 throw THEN 回 `{ ok: false, fieldErrors: { _form: '寫入失敗：...' } }` 且 `console.error`；AND `features/admin-routes/actions/__tests__/updateRoute.integration.test.ts` 涵蓋 happy path / slug 衝突 / 鎖死欄被 strip 三個情境；AND `pnpm typecheck` exit 0
