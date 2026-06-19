@@ -156,13 +156,14 @@ Server Action 用 `lib/supabase/server.ts` 的 `createServerClient`（讀 cookie
 2. Yuki 改幾欄按「儲存」→ POST Server Action `updateRoute({ id, ...meta })`
 3. Action：
    1. `validateRouteMetadata` — fail 回 `fieldErrors`
-   2. `db.update(routes).set({...metaOnly, updated_at: now()}).where(eq(routes.id, id))`
-   3. 若 slug UNIQUE 衝突回 `fieldErrors.slug`
-   4. `revalidatePath('/routes')` + `revalidatePath('/routes/' + oldSlug)` + `revalidatePath('/routes/' + newSlug)` + `revalidatePath('/admin/routes')`
-   5. 回 `{ ok: true }`
+   2. `SELECT slug FROM routes WHERE id=$1` 取得 `oldSlug`（也順便驗證 row 存在）
+   3. `db.update(routes).set({...metaOnly, updated_at: now()}).where(eq(routes.id, id))`
+   4. 若 slug UNIQUE 衝突回 `fieldErrors.slug`
+   5. `revalidatePath('/routes')` + `revalidatePath('/routes/' + oldSlug)` + `revalidatePath('/routes/' + newSlug)`（若兩者不同）+ `revalidatePath('/admin/routes')`
+   6. 回 `{ ok: true }`
 4. Client：stay on edit page + toast「已儲存」
 
-**鎖死欄位**：`gpx_path` / `geojson` / `bbox` / `start_point` / `distance_m` / `elevation_gain_m` / `recorded_at` / `id` / `created_at`。Edit form 連欄位都不渲染，且 Action 內 strip 掉任何 client 試圖送來的這些 key。
+**鎖死欄位**：`gpx_path` / `geojson` / `bbox` / `start_point` / `distance_m` / `elevation_gain_m` / `recorded_at` / `id` / `created_at`。Edit form 連欄位都不渲染，且 Action 內 strip 掉任何 client 試圖送來的這些 key。`oldSlug` 由 Action 自己 SELECT 取得，不依賴 client 或 SSR closure，避免 tampering。
 
 ### 5.3 Delete
 
