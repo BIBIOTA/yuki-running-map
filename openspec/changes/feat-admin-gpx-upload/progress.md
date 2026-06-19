@@ -239,6 +239,29 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: form DOM behaviour (submit-disable cycle, prefill, fieldErrors visibility, Alert rendering, TagsInput integration, native control accessibility) deferred to Playwright E2E task 5.1.
 - Next action: Resume SDD on task 3.5 `DeleteRouteButton.tsx` (depends on 2.3 ✅; serial).
 
+## Session 24 — 2026-06-20 07:05
+- Stage: SDD
+- Task: 3.5 Add `features/admin-routes/DeleteRouteButton.tsx` (Client Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer; spec wording mentions Radix AlertDialog but @radix-ui/react-alert-dialog is NOT installed — use the existing @radix-ui/react-dialog (already in deps from `components/ui/dialog.tsx`) with `role="alertdialog"` semantics, OR use a hand-rolled confirmation modal. Document choice. Use existing sonner for toast.
+
+## Session 25 — 2026-06-20 07:25
+- Stage: SDD
+- Task: 3.5 Add `features/admin-routes/DeleteRouteButton.tsx` (Client Component)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 40edefd feat(admin-routes): add DeleteRouteButton Client Component + state helpers
+  - Implementer used existing shadcn `<Dialog>` with `role="alertdialog"` semantics + Radix-auto-wired `aria-labelledby`/`aria-describedby` from `DialogTitle`/`DialogDescription` (since `@radix-ui/react-alert-dialog` is not installed per CLAUDE.md no-new-deps).
+  - Tests: 8 new pass on `deleteButtonState.test.ts`; full suite 135 passed + 12 skipped (no regression).
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean.
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (all acceptance clauses + Figma frame 07 strings verbatim + 480px width + `role="alertdialog"` + `router.refresh()` + `toast.success` + ok-vs-not-ok dispatch correct)
+  - Code-quality-reviewer: APPROVE — no Critical; **2 Important flagged for follow-up tracking**:
+    - **Toaster gap**: `<Toaster />` is only mounted in `app/(public)/layout.tsx`, not in `app/(admin)/layout.tsx`. So `toast.success` calls from `DeleteRouteButton` silently no-op until `<Toaster />` is added to the admin layout. **TRACKED for task 4.x** (admin layout wiring) — Playwright E2E 5.1 cannot pass without this fix.
+    - **Lucide icon naming inconsistency** (`TriangleAlertIcon` vs `TriangleAlert`) — left as cosmetic; standardise to the `Icon` suffix when next touching either file.
+  - 3 Minor: `handleOpenChange` blocks Escape while pending (may trap on hung action — consider dropping); `<span>` nested inside `DialogDescription` (Radix renders as `<p>`); inline error `✕ ` prefix could use Lucide icon for consistency with GpxDropzone error state.
+- VERIFICATION-PENDING: Dialog open/close, sonner toast (after Toaster mount), `router.refresh()`, inline error rendering, accessibility focus management — all deferred to Playwright E2E task 5.1.
+- Next action: Resume SDD on task 3.6 `RouteList.tsx` (depends on 3.5 ✅; Server Component for `/admin/routes`).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

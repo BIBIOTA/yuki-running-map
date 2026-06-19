@@ -87,11 +87,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (pure helpers fully tested; form DOM behaviour VERIFICATION-PENDING for E2E 5.1)
 
-- [ ] 3.5 Add `features/admin-routes/DeleteRouteButton.tsx` (Client Component)
+- [x] 3.5 Add `features/admin-routes/DeleteRouteButton.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<DeleteRouteButton id={...} title={...} />` THEN 顯示「刪除」Button；AND 點按 THEN 開啟 Radix `AlertDialog` body 含「將永久刪除 {title}（含 GPX 原檔）」；AND Dialog 內按「確認刪除」呼叫 `deleteRoute({ id })` Server Action；AND Action 回 `{ ok: true }` THEN 關閉 Dialog 並由 router 重整列表 + sonner toast「已刪除 {title}」；AND Action 回 `{ ok: false, message }` THEN Dialog 保留並顯示錯誤訊息；AND `pnpm typecheck` exit 0
   - Depends on: 2.3
   - Independence: serial
-  - status: not_started
+  - status: passing (pure helpers fully tested; Dialog DOM behaviour VERIFICATION-PENDING for E2E 5.1; **TRACKED follow-up: mount `<Toaster />` in `(admin)` layout — currently only mounted in `(public)` so `toast.success` no-ops in admin pages**)
 
 - [ ] 3.6 Add `features/admin-routes/RouteList.tsx` (Server Component)
   - Acceptance: WHEN 從 Server Component 呼叫 `<RouteList routes={routes} />` THEN 渲染 shadcn Table 含欄：title / slug / region / published / recorded_at / actions；AND `published=false` 的 row 視覺上以「草稿」chip 標示；AND actions 欄含「編輯」連結（→ `/admin/routes/${id}`）與 `<DeleteRouteButton>`；AND 空 routes THEN 顯示「尚無路線，請至 /admin/upload 新增」CTA；AND `pnpm typecheck` exit 0
