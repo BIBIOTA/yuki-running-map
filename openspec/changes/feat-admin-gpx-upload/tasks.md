@@ -63,11 +63,11 @@ doc_language: 繁體中文
 
 ## 3. UI components
 
-- [ ] 3.1 Add `features/admin-routes/TagsInput.tsx` (Client Component)
+- [x] 3.1 Add `features/admin-routes/TagsInput.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<TagsInput value={[]} onChange={fn} existingTags={['河濱','LSD']} />` THEN 顯示輸入框 + 空 chip 區；AND 輸入 `河濱` 後按 Enter 或 `,` THEN 觸發 `onChange(['河濱'])` 且輸入框清空 chip 出現；AND 輸入時下方顯示 `existingTags` typeahead 建議；AND 點 chip 上 × 按鈕 THEN 觸發 `onChange([])`；AND 同字串重複輸入 THEN 不重複加入 chip；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing (pure helpers fully tested; component visual VERIFICATION-PENDING for E2E 5.1)
 
 - [ ] 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<GpxDropzone onFile={fn} />` THEN 顯示 drop area 含「拖放 GPX 或點擊選擇」copy；AND drop 或選擇副檔名 `.gpx` 且 ≤ 10 MB 的 File THEN 呼叫 `onFile(file, parsedMetadata)`，`parsedMetadata` 為 client `parseGpx(buffer)` 結果；AND drop 非 `.gpx` THEN 顯示 inline 紅字「請選 .gpx 檔」且不觸發 `onFile`；AND drop > 10 MB THEN 顯示「檔案超過 10 MB」；AND client `parseGpx` throw THEN 顯示「無法解析此 GPX」且不觸發 `onFile`；AND 用 `lib/admin-routes/gpxFile.ts` 與 `lib/gpx/parseGpx`；AND `pnpm typecheck` exit 0

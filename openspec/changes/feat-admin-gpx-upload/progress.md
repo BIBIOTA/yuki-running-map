@@ -160,3 +160,24 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: 1 gated integration scenario (happy-path row deletion + Storage `remove` call + 3-path revalidate) against local Supabase
 - Closes Group 2 (Server Actions). Branch state: 7/22 passing (Groups 1+2 done); Group 3 (UI components) / 4 (pages) / 5 (E2E) remain not_started.
 - Next action: Confirm with user whether to continue Group 3 UI components (8 tasks; mostly Client Component typecheck-only) or stop and push.
+
+## Session 15 — 2026-06-20 04:50
+- Stage: SDD
+- Task: 3.1 Add `features/admin-routes/TagsInput.tsx` (Client Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `<TagsInput>` Client Component (chip input + typeahead) + Vitest behavioural tests using React Testing Library if present, else jsdom + happy-dom render.
+
+## Session 16 — 2026-06-20 05:30
+- Stage: SDD
+- Task: 3.1 Add `features/admin-routes/TagsInput.tsx` (Client Component)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: b618b25 feat(admin-routes): add TagsInput Client Component + pure tags helpers
+  - Constraint: no React testing library / jsdom installed (deps-budget per CLAUDE.md); pure logic extracted to `features/admin-routes/tags.ts` and fully unit-tested
+  - Tests: `pnpm exec vitest run features/admin-routes/__tests__/tags.test.ts` → 19/19 pass; full suite `pnpm exec vitest run` → 97 passed + 12 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0
+  - Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (every acceptance clause has either a pure-helper unit test or a clear code path in TagsInput.tsx; Figma frame 03 layout matched at structural level; V2 Trail Vintage tokens verified — shadcn aliases bg-muted/text-foreground/ring-ring/bg-popover/border-border resolve to V2 palette in app/globals.css; no extras)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; minor logic-duplication observation with `validation.ts` (different sides of trust boundary, intentional); backspace-on-empty-draft chip-pop is non-spec UX extension already documented in JSDoc; aria-selected on options is dead code without keyboard nav (out of scope)
+- VERIFICATION-PENDING: component visual / DOM behaviour (chips render, Enter / `,` keydown commits draft, × click removes, typeahead panel appears) deferred to manual + Playwright E2E task 5.1.
+- Next action: Resume SDD on task 3.2 `GpxDropzone.tsx` (depends on 1.2; parallel-safe with 3.3).
