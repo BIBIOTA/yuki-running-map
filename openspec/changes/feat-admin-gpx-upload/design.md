@@ -302,7 +302,12 @@ Integration tests 前置 seed admin user + 1–2 條 sample routes；測完 trun
 
 每個 `.puml` 旁附同名 `.png`。需重新渲染：`plantuml -tpng <path>`。
 
-## 10. Probable next steps
+## 10. Designs
+
+- [Figma Designs](./designs/figma.md) — 7 wireframe frames（3 happy / 1 empty / 1 error / 1 dropzone composite / 1 delete dialog overlay）位於 file `Yx9G0efBQq3amHPEyeVSDc` 的新 page `Admin · feat-admin-gpx-upload`，沿用 V2 Trail Vintage tokens
+- Screenshots 同步存於 `./designs/screenshots/`
+
+## 11. Probable next steps
 
 按 spec-driven-dev 工序：
 
