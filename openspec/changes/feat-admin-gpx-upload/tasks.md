@@ -23,11 +23,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [ ] 1.2 Add `lib/admin-routes/gpxFile.ts` with `validateGpxFile` + `derivePathFromUuid`
+- [x] 1.2 Add `lib/admin-routes/gpxFile.ts` with `validateGpxFile` + `derivePathFromUuid`
   - Acceptance: WHEN `validateGpxFile(file)` 收到副檔名非 `.gpx` 的 File THEN 回 `{ ok: false, message: '請選 .gpx 檔' }`；AND 收到 `size > 10 * 1024 * 1024` 的 File THEN 回 `{ ok: false, message: '檔案超過 10 MB' }`；AND 合法 File 回 `{ ok: true }`；AND `derivePathFromUuid(new Date('2026-06-19'), 'abc-123')` 回 `'gpx/2026/abc-123.gpx'`；AND `lib/admin-routes/__tests__/gpxFile.test.ts` 涵蓋三種 validate 結果與 path 格式；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 - [ ] 1.3 Add `lib/admin-routes/listExistingTags.ts`
   - Acceptance: WHEN 對含多筆 routes（tags 重疊）的 Supabase 執行 `await listExistingTags(db)` THEN 回 `string[]` 且每個元素 distinct、長度 = union(unnest(tags))；AND 對空表執行 THEN 回 `[]`；AND `lib/admin-routes/__tests__/listExistingTags.integration.test.ts` 用 local Supabase + seed 涵蓋兩個情境；AND `pnpm typecheck` exit 0

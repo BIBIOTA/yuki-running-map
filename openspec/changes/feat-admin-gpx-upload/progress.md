@@ -33,3 +33,21 @@ Supabase 起來後執行），不在本機偽造通過。
   - Spec-reviewer: APPROVE — 5/5 checks pass (scenario coverage with named `describe` blocks, discriminated-union shape matches activity diagram, all §6.1 rules enforced with ≥2 cases, no extra features, no missing clauses)
   - Code-quality-reviewer: APPROVE — no Critical/Important; minor DRY observation on `description`/`region` optional-trimmed-text pattern and boundary-equality positive tests (logged for follow-up, not blocking)
 - Next action: Resume SDD on task 1.2 `lib/admin-routes/gpxFile.ts` (validateGpxFile + derivePathFromUuid) once user confirms.
+
+## Session 3 — 2026-06-19 23:55
+- Stage: SDD
+- Task: 1.2 Add `lib/admin-routes/gpxFile.ts` with `validateGpxFile` + `derivePathFromUuid`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `validateGpxFile(file)` + `derivePathFromUuid(date, uuid)` + unit tests per tasks.md 1.2 acceptance.
+
+## Session 4 — 2026-06-20 00:10
+- Stage: SDD
+- Task: 1.2 Add `lib/admin-routes/gpxFile.ts` with `validateGpxFile` + `derivePathFromUuid`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 180346e feat(admin-routes): add validateGpxFile + derivePathFromUuid helpers
+  - Tests: `pnpm exec vitest run lib/admin-routes/__tests__/gpxFile.test.ts` → 9/9 pass; full suite regression check 61/61 pass
+  - Typecheck: `pnpm typecheck` exit 0
+  - Spec-reviewer: APPROVE — 5/5 checks (scenario coverage, diagram path format `gpx/{yyyy}/{uuid}.gpx`, signatures match design.md:115, no extra features, no missing clauses)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; minor naming nit (`derivePathFromUuid` vs `deriveStoragePath`) noted but not blocking; UTC year choice and `.GPX` case handling justified in doc-comments
+- Next action: Resume SDD on task 1.3 `lib/admin-routes/listExistingTags.ts` (Drizzle integration helper).
