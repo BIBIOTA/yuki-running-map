@@ -21,7 +21,7 @@ doc_language: 繁體中文
   - Acceptance: WHEN import `validateRouteMetadata` from `lib/admin-routes/validation` 並以合法 metadata 物件呼叫 THEN 回 `{ ok: true, value: RouteMetadataInput }` 且 `value` 內所有欄位通過 design.md §6.1 的規則（title trim、slug 通過 `^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$`、tags trim+dedup+上限 20、difficulty enum、duration 正整數、published boolean）；AND 對任一違規輸入 THEN 回 `{ ok: false, fieldErrors }` 且 `fieldErrors` 含對應欄位 key 與中文錯誤訊息；AND `lib/admin-routes/__tests__/validation.test.ts` 涵蓋每條規則正反面 ≥ 2 case；AND `pnpm test` 對 `lib/admin-routes/validation.ts` statement coverage ≥ 80%；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: in_progress
 
 - [ ] 1.2 Add `lib/admin-routes/gpxFile.ts` with `validateGpxFile` + `derivePathFromUuid`
   - Acceptance: WHEN `validateGpxFile(file)` 收到副檔名非 `.gpx` 的 File THEN 回 `{ ok: false, message: '請選 .gpx 檔' }`；AND 收到 `size > 10 * 1024 * 1024` 的 File THEN 回 `{ ok: false, message: '檔案超過 10 MB' }`；AND 合法 File 回 `{ ok: true }`；AND `derivePathFromUuid(new Date('2026-06-19'), 'abc-123')` 回 `'gpx/2026/abc-123.gpx'`；AND `lib/admin-routes/__tests__/gpxFile.test.ts` 涵蓋三種 validate 結果與 path 格式；AND `pnpm typecheck` exit 0
