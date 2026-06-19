@@ -294,7 +294,15 @@ Integration tests 前置 seed admin user + 1–2 條 sample routes；測完 trun
 | Yuki 誤刪 | Confirm dialog；無還原機制（personal site 接受） |
 | Wave C `/admin/upload` placeholder-pages spec requirement 與本 change 直接衝突 | `proposal.md` 將 `placeholder-pages` 的 `/admin/upload` requirement 標為 REMOVED；新 capability `admin-routes-crud` 包含取而代之的 requirement |
 
-## 9. Probable next steps
+## 9. Diagrams
+
+- [Sequence: createRoute orchestration](./diagrams/01-sequence-create-route.puml) — storage-first + INSERT + rollback；四個 alt 失敗分支
+- [Sequence: deleteRoute hard delete](./diagrams/02-sequence-delete-route.puml) — DELETE row → Storage remove（best-effort）；idempotent 0-rows + order note
+- [Activity: Server Action result handling](./diagrams/03-activity-action-result-handling.puml) — create / update / delete 三條 Action 共享的 validate → core → revalidate 流程
+
+每個 `.puml` 旁附同名 `.png`。需重新渲染：`plantuml -tpng <path>`。
+
+## 10. Probable next steps
 
 按 spec-driven-dev 工序：
 

@@ -1,0 +1,90 @@
+@startuml 03-activity-action-result-handling
+title Server Action result handling (create / update / delete 共享形狀)
+
+start
+
+:Server Action 收到 input;
+
+partition "Validate input" {
+  if (需要 metadata validate?\n(create / update)) then (yes)
+    :validateRouteMetadata(input);
+    if (ok?) then (no)
+      :return { ok:false,\n  fieldErrors };
+      stop
+    endif
+  else (no — delete)
+    :input 只含 id;
+  endif
+}
+
+partition "Core operation" {
+  if (action 類別?) then (create)
+    :server parseGpx(buffer);
+    if (throws?) then (yes)
+      :return { ok:false,\n  fieldErrors:{ gpxFile:\n  'GPX 解析失敗...' } };
+      stop
+    endif
+    :uuid + path;
+    :Storage upload(path, buffer);
+    if (throws?) then (yes)
+      :return { ok:false,\n  fieldErrors:{ _form:\n  'Storage 上傳失敗...' } };
+      stop
+    endif
+    :INSERT routes;
+    if (throws?) then (yes)
+      :storage.remove([path])\n(best-effort rollback);
+      if (slug UNIQUE?\n(pg 23505)) then (yes)
+        :return { ok:false,\n  fieldErrors:{ slug:\n  '此 slug 已被使用' } };
+        stop
+      else (no)
+        :console.error(e);
+        :return { ok:false,\n  fieldErrors:{ _form:\n  '寫入失敗...' } };
+        stop
+      endif
+    endif
+  elseif (update) then
+    :SELECT oldSlug;
+    :strip GPX-derived keys\nfrom input;
+    :UPDATE routes SET (...);
+    if (throws?) then (yes)
+      if (slug UNIQUE?) then (yes)
+        :return { ok:false,\n  fieldErrors:{ slug } };
+        stop
+      else (no)
+        :console.error(e);
+        :return { ok:false,\n  fieldErrors:{ _form } };
+        stop
+      endif
+    endif
+  else (delete)
+    :SELECT gpx_path;
+    if (0 rows?) then (yes)
+      :return { ok:true };
+      stop
+    endif
+    :DELETE routes;
+    if (throws?) then (yes)
+      :return { ok:false,\n  message:'刪除失敗' };
+      stop
+    endif
+    :storage.remove([gpx_path]);
+    if (throws?) then (yes)
+      :console.warn('orphan');
+    endif
+  endif
+}
+
+partition "Side effects + return" {
+  :revalidatePath('/routes')\n+ '/routes/'+slug(s)\n+ '/admin/routes';
+  if (action 類別?) then (create)
+    :return { ok:true, id, slug };
+  elseif (update) then
+    :return { ok:true };
+  else (delete)
+    :return { ok:true };
+  endif
+}
+
+stop
+
+@enduml

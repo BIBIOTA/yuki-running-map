@@ -1,0 +1,58 @@
+@startuml 01-sequence-create-route
+title createRoute orchestration (storage-first + rollback)
+
+actor Yuki
+participant "Browser\n(UploadPageClient)" as Browser
+participant "createRoute\n(Server Action · Node)" as Action
+participant "lib/gpx\nparseGpx()" as Gpx
+participant "Supabase Storage\n(gpx bucket · RLS)" as Storage
+participant "Postgres\nroutes (RLS)" as DB
+participant "Next.js cache\nrevalidatePath()" as Cache
+
+== Client-side preview ==
+Yuki -> Browser : drop foo.gpx + 填表單
+Browser -> Browser : validateGpxFile(file)\nclient parseGpx(buffer)\n→ map preview + metadata
+Yuki -> Browser : 按「儲存」
+
+== Server Action (POST FormData) ==
+Browser -> Action : createRoute(formData)
+
+Action -> Action : ① validateRouteMetadata(formData)
+alt 驗證失敗
+  Action --> Browser : { ok:false, fieldErrors }
+end
+
+Action -> Gpx : ② parseGpx(buffer)
+alt parseGpx throws (no trackpoints)
+  Gpx --> Action : throw
+  Action --> Browser : { ok:false,\n  fieldErrors:{ gpxFile:'GPX 解析失敗...' } }
+end
+Gpx --> Action : { distanceM, elevationGainM, bbox,\n  startPoint, geojson, recordedAt }
+
+Action -> Action : ③ uuid = randomUUID()\npath = `gpx/${yyyy}/${uuid}.gpx`
+Action -> Storage : ④ storage.from('gpx').upload(path, buffer)\n[RLS: gpx_admin_write]
+alt Storage upload fail
+  Storage --> Action : throw
+  Action --> Browser : { ok:false,\n  fieldErrors:{ _form:'Storage 上傳失敗...' } }
+end
+Storage --> Action : ok
+
+Action -> DB : ⑤ INSERT INTO routes (...)\n[RLS: admin_full_access]
+alt slug UNIQUE 衝突 (23505)
+  DB --> Action : throw 23505
+  Action -> Storage : storage.remove([path])  ' rollback (best-effort)
+  Action --> Browser : { ok:false,\n  fieldErrors:{ slug:'此 slug 已被使用' } }
+else 其他 DB throw
+  DB --> Action : throw
+  Action -> Storage : storage.remove([path])  ' rollback
+  Action --> Browser : { ok:false,\n  fieldErrors:{ _form:'寫入失敗...' } }
+end
+DB --> Action : ok
+
+Action -> Cache : ⑥ revalidatePath('/routes')\nrevalidatePath('/routes/'+slug)\nrevalidatePath('/admin/routes')
+Action --> Browser : { ok:true, id, slug }
+
+Browser -> Browser : router.push('/admin/routes')\nsonner toast「已新增 ${title}」
+Browser --> Yuki : 跳列表頁 + toast
+
+@enduml

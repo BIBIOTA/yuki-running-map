@@ -1,0 +1,61 @@
+@startuml 02-sequence-delete-route
+title deleteRoute hard delete (row first, Storage second)
+
+actor Yuki
+participant "Browser\n(RouteList +\nDeleteRouteButton)" as Browser
+participant "Radix AlertDialog" as Dialog
+participant "deleteRoute\n(Server Action · Node)" as Action
+participant "Postgres\nroutes (RLS)" as DB
+participant "Supabase Storage\n(gpx bucket · RLS)" as Storage
+participant "Next.js cache\nrevalidatePath()" as Cache
+
+Yuki -> Browser : 在 /admin/routes 列表按某 row「刪除」
+Browser -> Dialog : open AlertDialog\n「將永久刪除 {title}（含 GPX 原檔）」
+
+alt 取消
+  Yuki -> Dialog : 按「取消」
+  Dialog --> Browser : close
+end
+
+Yuki -> Dialog : 按「確認刪除」
+Dialog -> Action : deleteRoute({ id })
+
+Action -> DB : ① SELECT gpx_path FROM routes WHERE id=$1
+alt 0 rows (id 已不存在)
+  DB --> Action : []
+  Action --> Browser : { ok:true }   ' idempotent
+  note right of Action
+    這條 flow 在 race 下保護
+    Yuki 從別瀏覽器同步刪了
+  end note
+end
+DB --> Action : { gpx_path }
+
+Action -> DB : ② DELETE FROM routes WHERE id=$1\n[RLS: admin_full_access]
+alt DB DELETE throw
+  DB --> Action : throw
+  Action --> Browser : { ok:false, message:'刪除失敗' }
+end
+DB --> Action : ok
+
+note over Action, Storage
+  row 已刪 → gpx_public_select_published
+  policy 的 EXISTS 條件失效，
+  剩下 Storage object 對 anon 已不可讀
+end note
+
+Action -> Storage : ③ storage.from('gpx').remove([gpx_path])\n[RLS: gpx_admin_delete]
+alt Storage remove throw (best-effort)
+  Storage --> Action : throw
+  Action -> Action : console.warn('orphan gpx file', path, e)
+  Action --> Browser : { ok:true }   ' row 已刪，orphan 不影響可見性
+end
+Storage --> Action : ok
+
+Action -> Cache : ④ revalidatePath('/routes')\nrevalidatePath('/routes/'+slug)\nrevalidatePath('/admin/routes')
+Action --> Browser : { ok:true }
+
+Browser -> Browser : router.refresh()\nsonner toast「已刪除 ${title}」
+Browser --> Yuki : 列表少一條 + toast
+
+@enduml

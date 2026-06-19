@@ -158,5 +158,8 @@ doc_language: 繁體中文
   - status: not_started
 
 ## Optional artifacts
-- [x] PlantUML diagrams (spec-driven-dev:writing-uml) — required types: sequence (×2), activity (×1)
+- [x] PlantUML diagrams:
+  - [01-sequence-create-route.puml](./diagrams/01-sequence-create-route.puml)
+  - [02-sequence-delete-route.puml](./diagrams/02-sequence-delete-route.puml)
+  - [03-activity-action-result-handling.puml](./diagrams/03-activity-action-result-handling.puml)
 - [x] Figma designs (spec-driven-dev:writing-figma) — required scope: wireframes for /admin/upload + /admin/routes + /admin/routes/[id] + dropzone states
