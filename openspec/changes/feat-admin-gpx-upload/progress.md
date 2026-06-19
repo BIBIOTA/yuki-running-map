@@ -218,6 +218,27 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: MapLibre WebGL render, PMTiles base load, line-layer overlay paint, fitBounds animation, unmount cleanup — all deferred to Playwright E2E task 5.1.
 - Next action: Resume SDD on task 3.4 `RouteMetadataForm.tsx` (depends on 3.1; serial; the largest UI component — composes TagsInput + per-field validation rendering + submit handler).
 
+## Session 22 — 2026-06-20 06:40
+- Stage: SDD
+- Task: 3.4 Add `features/admin-routes/RouteMetadataForm.tsx` (Client Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer to build the metadata form composing TagsInput + per-field error rendering + submit/disable state; will need `select`, `switch`, `alert` shadcn primitives — check whether they're already installed or need to be added via shadcn CLI in a separate user-approved step.
+
+## Session 23 — 2026-06-20 07:00
+- Stage: SDD
+- Task: 3.4 Add `features/admin-routes/RouteMetadataForm.tsx` (Client Component)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 63053ca feat(admin-routes): add RouteMetadataForm Client Component + initial-values helpers
+  - Implementer chose native HTML (`<textarea>` / `<select>` / `<input type="checkbox">` / `<div role="alert">`) rather than installing shadcn Select / Switch / Alert / Textarea per CLAUDE.md no-new-deps policy. Documented in file-header JSDoc.
+  - Tests: 12 new pass on `routeMetadataForm.test.ts`; full suite 127 passed + 12 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0
+  - Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (all 8 fields + TagsInput composition + submit disable + edit prefill + fieldErrors red text + _form Alert + zero GPX-derived fields; Frame 03 layout + Frame 05 error state; snake_case `duration_s` → camelCase `durationS` binding documented)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 4 Minor: (i) `<a href={cancelHref}>` should be `next/link` (uses asChild button), (ii) `published`-field error markup diverges slightly from `Field` helper — extract `FieldError` if a 3rd usage lands, (iii) "_form" banner copy "請修正下列欄位後重試。" shows even when only _form is set (copy nit), (iv) native `<select>` styling hand-rolled; extract `inputClassName` constant if a 3rd native control joins. All deferred follow-ups.
+- VERIFICATION-PENDING: form DOM behaviour (submit-disable cycle, prefill, fieldErrors visibility, Alert rendering, TagsInput integration, native control accessibility) deferred to Playwright E2E task 5.1.
+- Next action: Resume SDD on task 3.5 `DeleteRouteButton.tsx` (depends on 2.3 ✅; serial).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

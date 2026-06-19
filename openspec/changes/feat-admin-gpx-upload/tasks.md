@@ -81,11 +81,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing (pure helpers fully tested; map render VERIFICATION-PENDING for E2E 5.1)
 
-- [ ] 3.4 Add `features/admin-routes/RouteMetadataForm.tsx` (Client Component)
+- [x] 3.4 Add `features/admin-routes/RouteMetadataForm.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<RouteMetadataForm mode="create" existingTags={...} onSubmit={fn} />` THEN 顯示欄位 title / slug / description / region / tags / difficulty / duration_s / published；AND tags 欄位渲染 `<TagsInput>`；AND submit 觸發 `onSubmit(values)`，submit 中 `<button>` disabled 直到 promise resolve；AND `mode="edit"` + `initial={route}` THEN 欄位 prefill；AND 收到 `fieldErrors` prop THEN 對應欄位下方顯示紅字；AND `_form` key 在表單頂部顯示 Alert 條；AND 不渲染 GPX 衍生欄位（distance / elevation / bbox / start_point / recorded_at / gpx_path）；AND `pnpm typecheck` exit 0
   - Depends on: 3.1
   - Independence: serial
-  - status: not_started
+  - status: passing (pure helpers fully tested; form DOM behaviour VERIFICATION-PENDING for E2E 5.1)
 
 - [ ] 3.5 Add `features/admin-routes/DeleteRouteButton.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<DeleteRouteButton id={...} title={...} />` THEN 顯示「刪除」Button；AND 點按 THEN 開啟 Radix `AlertDialog` body 含「將永久刪除 {title}（含 GPX 原檔）」；AND Dialog 內按「確認刪除」呼叫 `deleteRoute({ id })` Server Action；AND Action 回 `{ ok: true }` THEN 關閉 Dialog 並由 router 重整列表 + sonner toast「已刪除 {title}」；AND Action 回 `{ ok: false, message }` THEN Dialog 保留並顯示錯誤訊息；AND `pnpm typecheck` exit 0
