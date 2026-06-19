@@ -142,3 +142,21 @@ Supabase 起來後執行），不在本機偽造通過。
 - Task: 2.3 Add `features/admin-routes/actions/deleteRoute.ts`
 - Transition: not_started → in_progress
 - Next action: Dispatch implementer subagent to build `deleteRoute({ id })` Server Action covering happy path + unknown-id idempotent + Storage remove failure (orphan warn) + DB DELETE failure per spec.md:122–150; integration test gated; execution stays VERIFICATION-PENDING.
+
+## Session 14 — 2026-06-20 04:45
+- Stage: SDD
+- Task: 2.3 Add `features/admin-routes/actions/deleteRoute.ts`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 69c850a feat(admin-routes): add deleteRoute Server Action with best-effort Storage cleanup
+  - Note: 69c850a also carried this file's Session 13 transition + tasks.md 2.3 status flip — orchestrator leakage from forgetting to commit transitions before dispatch; harmless, the implementer code is the bulk of the diff.
+  - Tests:
+    - `pnpm exec vitest run features/admin-routes/actions/__tests__/deleteRoute.integration.test.ts` → 4 passed (unknown-id idempotent, Storage `{ error }` orphan, Storage throw orphan, DB DELETE throw) + 1 skipped (gated happy-path)
+    - Full suite `pnpm exec vitest run` → 78 passed + 12 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0
+  - Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (all 4 scenarios with named describes, sequence diagram order matched, SELECT pulls gpx_path AND slug, no extras, EXACT 繁中 `'刪除失敗'` + EXACT `console.warn('orphan gpx file', path, e)` payload)
+  - Code-quality-reviewer: APPROVE — no Critical/Important blockers; one **observation-only Important** flagged: with 2.1+2.2+2.3 in tree the `revalidatePath('/routes')` + `revalidatePath('/routes/' + slug)` + `revalidatePath('/admin/routes')` triplet now duplicates 3 ways — proposed `lib/admin/revalidateRoute.ts` `revalidateRoutePaths(slug)` extraction. Deferred to a follow-up (rule of three was just reached now, reviewer themselves said not blocking)
+- VERIFICATION-PENDING: 1 gated integration scenario (happy-path row deletion + Storage `remove` call + 3-path revalidate) against local Supabase
+- Closes Group 2 (Server Actions). Branch state: 7/22 passing (Groups 1+2 done); Group 3 (UI components) / 4 (pages) / 5 (E2E) remain not_started.
+- Next action: Confirm with user whether to continue Group 3 UI components (8 tasks; mostly Client Component typecheck-only) or stop and push.

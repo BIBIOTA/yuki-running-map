@@ -55,11 +55,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (static; integration execution VERIFICATION-PENDING; non-gated locked-key + validation-fail tests run locally)
 
-- [ ] 2.3 Add `features/admin-routes/actions/deleteRoute.ts`
+- [x] 2.3 Add `features/admin-routes/actions/deleteRoute.ts`
   - Acceptance: WHEN `deleteRoute({ id })` 收到存在 route 的 id THEN 先 `SELECT gpx_path FROM routes WHERE id = $1` → `DELETE FROM routes WHERE id = $1` → `supabase.storage.from('gpx').remove([gpx_path])` → `revalidatePath('/routes')` + `revalidatePath('/routes/' + slug)` + `revalidatePath('/admin/routes')` → 回 `{ ok: true }`；AND SELECT 0 rows（不存在的 id）THEN 直接回 `{ ok: true }`（idempotent）；AND Storage `remove` throw THEN row 已刪、回 `{ ok: true }` 且 `console.warn('orphan gpx file', path, e)`；AND DB DELETE throw THEN 回 `{ ok: false, message: '刪除失敗' }`；AND `features/admin-routes/actions/__tests__/deleteRoute.integration.test.ts` 涵蓋存在 / 不存在 / Storage remove 失敗三條路徑；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: serial
-  - status: in_progress
+  - status: passing (static; integration happy path VERIFICATION-PENDING; 4 non-gated mocked scenarios run locally)
 
 ## 3. UI components
 
