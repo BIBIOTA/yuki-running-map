@@ -49,11 +49,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (static; integration execution VERIFICATION-PENDING; malformed-tags boundary test runs locally)
 
-- [ ] 2.2 Add `features/admin-routes/actions/updateRoute.ts`
+- [x] 2.2 Add `features/admin-routes/actions/updateRoute.ts`
   - Acceptance: WHEN `updateRoute({ id, ...meta })` 收到合法 metadata THEN Action 先 `SELECT slug FROM routes WHERE id=$1` 取得 `oldSlug` → `db.update(routes).set({...metaOnly, updated_at: now()}).where(eq(routes.id, id))` 執行成功 → `revalidatePath('/routes')` + `revalidatePath('/routes/' + oldSlug)` + `revalidatePath('/routes/' + newSlug)`（若兩者不同）+ `revalidatePath('/admin/routes')` → 回 `{ ok: true }`；AND Action 內 strip 掉 client 試圖送來的 `gpx_path` / `geojson` / `bbox` / `start_point` / `distance_m` / `elevation_gain_m` / `recorded_at` / `id` / `created_at`；AND 驗證失敗 THEN 不 UPDATE、回 `{ ok: false, fieldErrors }`；AND slug UNIQUE 衝突 THEN 回 `{ ok: false, fieldErrors: { slug: '此 slug 已被使用' } }`；AND 其他 throw THEN 回 `{ ok: false, fieldErrors: { _form: '寫入失敗：...' } }` 且 `console.error`；AND `features/admin-routes/actions/__tests__/updateRoute.integration.test.ts` 涵蓋 happy path / slug 衝突 / 鎖死欄被 strip 三個情境；AND `pnpm typecheck` exit 0
   - Depends on: 1.1, 1.4
   - Independence: serial
-  - status: not_started
+  - status: passing (static; integration execution VERIFICATION-PENDING; non-gated locked-key + validation-fail tests run locally)
 
 - [ ] 2.3 Add `features/admin-routes/actions/deleteRoute.ts`
   - Acceptance: WHEN `deleteRoute({ id })` 收到存在 route 的 id THEN 先 `SELECT gpx_path FROM routes WHERE id = $1` → `DELETE FROM routes WHERE id = $1` → `supabase.storage.from('gpx').remove([gpx_path])` → `revalidatePath('/routes')` + `revalidatePath('/routes/' + slug)` + `revalidatePath('/admin/routes')` → 回 `{ ok: true }`；AND SELECT 0 rows（不存在的 id）THEN 直接回 `{ ok: true }`（idempotent）；AND Storage `remove` throw THEN row 已刪、回 `{ ok: true }` 且 `console.warn('orphan gpx file', path, e)`；AND DB DELETE throw THEN 回 `{ ok: false, message: '刪除失敗' }`；AND `features/admin-routes/actions/__tests__/deleteRoute.integration.test.ts` 涵蓋存在 / 不存在 / Storage remove 失敗三條路徑；AND `pnpm typecheck` exit 0

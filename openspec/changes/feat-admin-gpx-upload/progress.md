@@ -114,3 +114,25 @@ Supabase 起來後執行），不在本機偽造通過。
   - Code-quality-reviewer round 2 (after fix `a9f774a`): APPROVE — fix verified at the boundary (line 141 short-circuit before Storage/parseGpx/INSERT/revalidatePath); new non-gated `describe("createRoute (parse-boundary)")` block with `vi.doMock` covers regression; previous Minors (raw `e.message` leak, `rollbackStorage` typing, concat style) remain accepted/cosmetic and are not blockers
 - VERIFICATION-PENDING: integration test execution of the 6 gated `describe.skipIf` scenarios (happy / metadata / parseGpx / Storage upload / slug UNIQUE / generic INSERT) against local Supabase
 - Next action: Confirm with user whether to continue task 2.2 `updateRoute` (depends on 1.1 + 1.4 only — both passing — and reuses `lib/db/client.ts` from 2.1) and 2.3 `deleteRoute` (no deps; same shared infra).
+
+## Session 11 — 2026-06-20 03:20
+- Stage: SDD
+- Task: 2.2 Add `features/admin-routes/actions/updateRoute.ts`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `updateRoute({ id, ...meta })` Server Action covering happy path + GPX-derived-key strip + slug UNIQUE conflict + generic INSERT throw per spec.md:100–119; integration tests gated; execution stays VERIFICATION-PENDING. Reuses `lib/db/client.ts` from 2.1.
+
+## Session 12 — 2026-06-20 04:00
+- Stage: SDD
+- Task: 2.2 Add `features/admin-routes/actions/updateRoute.ts`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: b2171b8 feat(admin-routes): add updateRoute Server Action with slug-conflict + locked-key strip
+  - Tests:
+    - `pnpm exec vitest run features/admin-routes/actions/__tests__/updateRoute.integration.test.ts` → 2 passed (validation-short-circuit, locked-key-strip) + 3 skipped (gated: slug-change happy, same-slug dedup, slug UNIQUE conflict)
+    - Full suite `pnpm exec vitest run` → 74 passed + 11 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0
+  - Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (3 spec scenarios + same-slug bonus, activity diagram `elseif (update)` branch order matched, allow-list strip with snake_case + camelCase coverage, EXACT 繁中 strings)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; minor `mapDbError` DRY note left for 2.3-or-later extraction; UUID-shape soft-guard suggestion left as non-blocking; locked-key strip is an allow-list (not deny-list) — future-proof
+- VERIFICATION-PENDING: 3 gated integration scenarios (slug-change happy / same-slug dedup / slug UNIQUE conflict) against local Supabase
+- Next action: Resume SDD on task 2.3 `deleteRoute` (no deps; reuses `lib/db/client.ts` + same gated pattern).
