@@ -51,3 +51,21 @@ Supabase 起來後執行），不在本機偽造通過。
   - Spec-reviewer: APPROVE — 5/5 checks (scenario coverage, diagram path format `gpx/{yyyy}/{uuid}.gpx`, signatures match design.md:115, no extra features, no missing clauses)
   - Code-quality-reviewer: APPROVE — no Critical/Important; minor naming nit (`derivePathFromUuid` vs `deriveStoragePath`) noted but not blocking; UTC year choice and `.GPX` case handling justified in doc-comments
 - Next action: Resume SDD on task 1.3 `lib/admin-routes/listExistingTags.ts` (Drizzle integration helper).
+
+## Session 5 — 2026-06-20 00:15
+- Stage: SDD
+- Task: 1.4 Add `lib/db/errors.ts` with `isPgUniqueViolation`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `isPgUniqueViolation(error, constraintName)` + unit tests covering `postgres` package error shape (code 23505 + constraint match, non-23505, non-Error inputs).
+
+## Session 6 — 2026-06-20 00:30
+- Stage: SDD
+- Task: 1.4 Add `lib/db/errors.ts` with `isPgUniqueViolation`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: ca522d9 feat(db): add isPgUniqueViolation helper for slug conflict detection
+  - Tests: `pnpm exec vitest run lib/db/__tests__/errors.test.ts` → 10/10 pass
+  - Typecheck: `pnpm typecheck` exit 0
+  - Spec-reviewer: APPROVE — 5/5 checks (scenarios, diagram `alt` boolean contract, signature match design.md:250, no extra features, no missing clauses)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; minor DRY overlap with `validation.isPlainObject` flagged as YAGNI-acceptable (only two call sites; `errors.ts` does not need the array-exclusion branch); structural probe (no `instanceof PostgresError`) explicitly justified in JSDoc
+- Next action: Resume SDD on task 1.3 `lib/admin-routes/listExistingTags.ts` (Drizzle integration helper); per environment note, code+tests will be committed but execution verification stays VERIFICATION-PENDING (no local Supabase).

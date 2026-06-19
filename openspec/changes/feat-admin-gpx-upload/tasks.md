@@ -35,11 +35,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: not_started
 
-- [ ] 1.4 Add `lib/db/errors.ts` with `isPgUniqueViolation`
+- [x] 1.4 Add `lib/db/errors.ts` with `isPgUniqueViolation`
   - Acceptance: WHEN `isPgUniqueViolation(error, 'routes_slug_unique')` 收到 `postgres` 套件丟出的 unique violation error（code `23505`、constraint `routes_slug_unique`）THEN 回 true；AND 對 code 非 23505 或 constraint 不符的 error THEN 回 false；AND 對非 Error 物件（null / undefined / 字串）THEN 回 false；AND `lib/db/__tests__/errors.test.ts` 涵蓋三種情境；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing
 
 ## 2. Server Actions
 
