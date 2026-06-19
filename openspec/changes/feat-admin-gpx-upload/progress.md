@@ -21,3 +21,15 @@ Supabase 起來後執行），不在本機偽造通過。
 - Task: 1.1 Add `lib/admin-routes/validation.ts` with `validateRouteMetadata`
 - Transition: not_started → in_progress
 - Next action: Dispatch implementer subagent to build `validateRouteMetadata` + unit tests per design.md §6.1.
+
+## Session 2 — 2026-06-19 23:40
+- Stage: SDD
+- Task: 1.1 Add `lib/admin-routes/validation.ts` with `validateRouteMetadata`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: fe447a1 feat(admin-routes): add validateRouteMetadata field-level validator
+  - Tests: `pnpm test -- lib/admin-routes/__tests__/validation.test.ts` → 52/52 pass; coverage Stmts 95.23% / Branches 91.66% / Funcs 100% / Lines 95% on `lib/admin-routes/validation.ts` (≥ 80% threshold)
+  - Typecheck: `pnpm typecheck` exit 0
+  - Spec-reviewer: APPROVE — 5/5 checks pass (scenario coverage with named `describe` blocks, discriminated-union shape matches activity diagram, all §6.1 rules enforced with ≥2 cases, no extra features, no missing clauses)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; minor DRY observation on `description`/`region` optional-trimmed-text pattern and boundary-equality positive tests (logged for follow-up, not blocking)
+- Next action: Resume SDD on task 1.2 `lib/admin-routes/gpxFile.ts` (validateGpxFile + derivePathFromUuid) once user confirms.
