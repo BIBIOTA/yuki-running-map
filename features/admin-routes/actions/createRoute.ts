@@ -72,13 +72,29 @@ function formString(formData: FormData, key: string): string | null {
 }
 
 /**
+ * Result of parsing the FormData payload. A `parseError` short-circuit
+ * surfaces wire-shape failures (e.g. malformed JSON in `tags`) directly at
+ * the action boundary BEFORE `validateRouteMetadata` runs — the validator's
+ * job is content validation given a structured object, not parsing.
+ */
+type ParseMetadataResult =
+  | { ok: true; value: unknown }
+  | { ok: false; fieldErrors: Record<string, string> };
+
+/**
  * Parse the FormData payload into the structured metadata object that
  * `validateRouteMetadata` expects. The tags arrive as a JSON-stringified
  * array (the client serialises a `string[]` because FormData has no native
  * array type); `duration_s` arrives as a numeric string; `published` arrives
  * as the literal `'true'` / `'false'`.
+ *
+ * Malformed `tags` JSON is a wire-shape problem (client serialisation bug or
+ * tampering) and is surfaced here directly via `fieldErrors.tags`. We do NOT
+ * defer to `validateRouteMetadata` for this case because its `input.tags ===
+ * null` branch treats null as "absent" and silently defaults to `[]`, which
+ * would swallow the error.
  */
-function parseMetadataFromFormData(formData: FormData): unknown {
+function parseMetadataFromFormData(formData: FormData): ParseMetadataResult {
   const title = formString(formData, "title") ?? "";
   const slug = formString(formData, "slug") ?? "";
   const description = formString(formData, "description");
@@ -93,9 +109,7 @@ function parseMetadataFromFormData(formData: FormData): unknown {
     try {
       tags = JSON.parse(tagsRaw);
     } catch {
-      // Defer to validateRouteMetadata which will surface
-      // `fieldErrors.tags = '標籤格式不正確'` for a non-array value.
-      tags = null;
+      return { ok: false, fieldErrors: { tags: "標籤格式不正確" } };
     }
   }
 
@@ -107,21 +121,27 @@ function parseMetadataFromFormData(formData: FormData): unknown {
   }
 
   return {
-    title,
-    slug,
-    description,
-    region,
-    tags,
-    difficulty,
-    duration_s: durationS,
-    published: publishedRaw === "true",
+    ok: true,
+    value: {
+      title,
+      slug,
+      description,
+      region,
+      tags,
+      difficulty,
+      duration_s: durationS,
+      published: publishedRaw === "true",
+    },
   };
 }
 
 export async function createRoute(formData: FormData): Promise<CreateRouteResult> {
   // ── ① Validate metadata FIRST — fail before any I/O ─────────────────────
-  const metadata = parseMetadataFromFormData(formData);
-  const validation = validateRouteMetadata(metadata);
+  const parsed = parseMetadataFromFormData(formData);
+  if (!parsed.ok) {
+    return { ok: false, fieldErrors: parsed.fieldErrors };
+  }
+  const validation = validateRouteMetadata(parsed.value);
   if (!validation.ok) {
     return { ok: false, fieldErrors: validation.fieldErrors };
   }

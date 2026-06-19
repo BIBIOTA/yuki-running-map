@@ -87,6 +87,64 @@ async function makeGpxFormData(
   return fd;
 }
 
+describe("createRoute (parse-boundary)", () => {
+  // These scenarios short-circuit at FormData parsing BEFORE any I/O, so they
+  // do not require a live Supabase or Postgres and run unconditionally.
+
+  beforeEach(() => {
+    vi.mocked(revalidatePath).mockClear();
+  });
+
+  describe("Scenario: Malformed tags JSON surfaces fieldErrors.tags without I/O", () => {
+    it("returns fieldErrors.tags, performs no Storage upload or DB write", async () => {
+      vi.resetModules();
+      const uploadSpy = vi.fn();
+      const removeSpy = vi.fn();
+      const insertSpy = vi.fn();
+      vi.doMock("@/lib/supabase/server", () => ({
+        createServerClient: vi.fn().mockResolvedValue({
+          storage: {
+            from: () => ({ upload: uploadSpy, remove: removeSpy }),
+          },
+        }),
+      }));
+      vi.doMock("@/lib/db/client", () => ({
+        getDb: () => ({ insert: insertSpy }),
+      }));
+
+      const { createRoute } = await import("../createRoute");
+
+      const fd = new FormData();
+      fd.append("title", "Malformed Tags");
+      fd.append("slug", "malformed-tags");
+      fd.append("tags", "{broken"); // malformed JSON — not parseable
+      fd.append("difficulty", "easy");
+      fd.append("published", "true");
+      const file = new File([new Uint8Array(Buffer.from("ignored"))], "sample.gpx", {
+        type: "application/gpx+xml",
+      });
+      fd.append("gpxFile", file);
+
+      const result = await createRoute(fd);
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.fieldErrors.tags).toBeTruthy();
+      expect(result.fieldErrors.tags?.length).toBeGreaterThan(0);
+
+      // No I/O: neither Storage nor DB nor cache revalidation.
+      expect(uploadSpy).not.toHaveBeenCalled();
+      expect(removeSpy).not.toHaveBeenCalled();
+      expect(insertSpy).not.toHaveBeenCalled();
+      expect(vi.mocked(revalidatePath)).not.toHaveBeenCalled();
+
+      vi.doUnmock("@/lib/supabase/server");
+      vi.doUnmock("@/lib/db/client");
+      vi.resetModules();
+    });
+  });
+});
+
 describe.skipIf(!process.env.DATABASE_URL)("createRoute (integration)", () => {
   let client: Sql;
   let db: PostgresJsDatabase<typeof schema>;
