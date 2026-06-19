@@ -29,11 +29,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing
 
-- [ ] 1.3 Add `lib/admin-routes/listExistingTags.ts`
+- [x] 1.3 Add `lib/admin-routes/listExistingTags.ts`
   - Acceptance: WHEN 對含多筆 routes（tags 重疊）的 Supabase 執行 `await listExistingTags(db)` THEN 回 `string[]` 且每個元素 distinct、長度 = union(unnest(tags))；AND 對空表執行 THEN 回 `[]`；AND `lib/admin-routes/__tests__/listExistingTags.integration.test.ts` 用 local Supabase + seed 涵蓋兩個情境；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing (static; integration execution VERIFICATION-PENDING)
 
 - [x] 1.4 Add `lib/db/errors.ts` with `isPgUniqueViolation`
   - Acceptance: WHEN `isPgUniqueViolation(error, 'routes_slug_unique')` 收到 `postgres` 套件丟出的 unique violation error（code `23505`、constraint `routes_slug_unique`）THEN 回 true；AND 對 code 非 23505 或 constraint 不符的 error THEN 回 false；AND 對非 Error 物件（null / undefined / 字串）THEN 回 false；AND `lib/db/__tests__/errors.test.ts` 涵蓋三種情境；AND `pnpm typecheck` exit 0

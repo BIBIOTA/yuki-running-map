@@ -69,3 +69,22 @@ Supabase 起來後執行），不在本機偽造通過。
   - Spec-reviewer: APPROVE — 5/5 checks (scenarios, diagram `alt` boolean contract, signature match design.md:250, no extra features, no missing clauses)
   - Code-quality-reviewer: APPROVE — no Critical/Important; minor DRY overlap with `validation.isPlainObject` flagged as YAGNI-acceptable (only two call sites; `errors.ts` does not need the array-exclusion branch); structural probe (no `instanceof PostgresError`) explicitly justified in JSDoc
 - Next action: Resume SDD on task 1.3 `lib/admin-routes/listExistingTags.ts` (Drizzle integration helper); per environment note, code+tests will be committed but execution verification stays VERIFICATION-PENDING (no local Supabase).
+
+## Session 7 — 2026-06-20 00:35
+- Stage: SDD
+- Task: 1.3 Add `lib/admin-routes/listExistingTags.ts`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `listExistingTags(db)` Drizzle helper + integration test; tests authored against local Supabase contract but execution stays VERIFICATION-PENDING per environment note.
+
+## Session 8 — 2026-06-20 00:55
+- Stage: SDD
+- Task: 1.3 Add `lib/admin-routes/listExistingTags.ts`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 83c6906 feat(admin-routes): add listExistingTags Drizzle helper
+  - Tests: `pnpm exec vitest run lib/admin-routes/__tests__/listExistingTags.integration.test.ts` → 1 file / 2 tests **skipped** via `describe.skipIf(!process.env.DATABASE_URL)`; suite is gated, not failing
+  - Typecheck: `pnpm typecheck` exit 0
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (both scenarios authored, signature + return type match design.md:114 + acceptance, test file path matches design.md:261, no extra features, skipIf gating verified)
+  - Code-quality-reviewer: APPROVE — no Critical/Important blockers; one "Important — not blocking" note on adding a typed cast for `db.execute<T>` return shape clarity; minor JSDoc note about empty-string filter and a future-refactor seed-helper extraction once a 2nd integration test lands
+- VERIFICATION-PENDING: integration test execution against local Supabase (待 CI / Supabase 起來後執行；不在本機偽造通過)
+- Next action: Confirm with user whether to continue to group 2 (Server Actions; all need local Supabase → integration execution will be VERIFICATION-PENDING) or stop after group 1.
