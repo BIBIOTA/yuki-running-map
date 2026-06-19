@@ -181,3 +181,19 @@ Supabase 起來後執行），不在本機偽造通過。
   - Code-quality-reviewer: APPROVE — no Critical/Important; minor logic-duplication observation with `validation.ts` (different sides of trust boundary, intentional); backspace-on-empty-draft chip-pop is non-spec UX extension already documented in JSDoc; aria-selected on options is dead code without keyboard nav (out of scope)
 - VERIFICATION-PENDING: component visual / DOM behaviour (chips render, Enter / `,` keydown commits draft, × click removes, typeahead panel appears) deferred to manual + Playwright E2E task 5.1.
 - Next action: Resume SDD on task 3.2 `GpxDropzone.tsx` (depends on 1.2; parallel-safe with 3.3).
+
+## Session 17 — 2026-06-20 05:35
+- Stage: SDD
+- Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer subagent to build `<GpxDropzone onFile={fn} />` Client Component using `validateGpxFile` (task 1.2) + client-side `parseGpx`; extract pure state-derivation helper to a `.ts` for unit tests; visual behaviour gap acknowledged for E2E 5.1.
+
+## Session 18 — 2026-06-20 05:55
+- Stage: SDD (implementer subagent — task 3.2)
+- Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
+- Transition: in_progress → passing (static)
+- Files: `features/admin-routes/dropzoneState.ts` (pure helpers), `features/admin-routes/__tests__/dropzoneState.test.ts` (13 vitest cases), `features/admin-routes/GpxDropzone.tsx` (Client Component, `"use client"`, lucide-react `Upload` / `TriangleAlert` / `X`, Trail Vintage tokens via `border-border` / `border-ring` / `border-destructive`)
+- Tests: 13/13 new pass; full suite 110 passed | 12 skipped (no regression vs 97-baseline)
+- `pnpm typecheck` exit 0; `pnpm lint` clean
+- VERIFICATION-PENDING: drop event, file-picker open on click, parseGpx-throw error rendering, drag-hover styling — all deferred to Playwright E2E task 5.1 (no React testing library / jsdom in repo per CLAUDE.md).
+- Next action: Resume SDD on task 3.3 `RouteMapPreview.tsx` (parallel-safe with 3.2; depends on none).
