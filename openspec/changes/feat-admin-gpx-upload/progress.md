@@ -198,6 +198,26 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: drop event, file-picker open on click, parseGpx-throw error rendering, drag-hover styling — all deferred to Playwright E2E task 5.1 (no React testing library / jsdom in repo per CLAUDE.md).
 - Next action: Resume SDD on task 3.3 `RouteMapPreview.tsx` (parallel-safe with 3.2; depends on none).
 
+## Session 20 — 2026-06-20 06:20
+- Stage: SDD
+- Task: 3.3 Add `features/admin-routes/RouteMapPreview.tsx` (Client Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer to build MapLibre + PMTiles GPX line preview using `lib/map/createMap`; extract bounds computation to pure helper for unit tests; component visual gap acknowledged for E2E 5.1.
+
+## Session 21 — 2026-06-20 06:35
+- Stage: SDD
+- Task: 3.3 Add `features/admin-routes/RouteMapPreview.tsx` (Client Component)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 3fb549c feat(admin-routes): add RouteMapPreview Client Component + bbox helpers
+  - Tests: 5/5 new pass on `mapPreview.test.ts`; full suite 115 passed + 12 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0
+  - Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (createMap PMTiles base + GeoJSON LineString source/layer at literal `#c26a3d` matching `--map-route-line`, fitBounds with padding 32, map.remove on unmount, null guards on empty input, design.md:95 trio satisfied, no source/layer id collisions with `lib/map/style.ts`)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 3 Minor notes: (i) test boundary matrix could add a fully-negative bbox case; (ii) useEffect dep `[geojson, bbox]` may re-mount the map on parent re-renders with fresh object identities — JSDoc note for UploadPageClient/EditPageClient (task 4.x) to memoize; (iii) default className `h-72 w-full rounded-md border border-border` couples height — surface as prop. All deferred follow-ups, not blockers.
+- VERIFICATION-PENDING: MapLibre WebGL render, PMTiles base load, line-layer overlay paint, fitBounds animation, unmount cleanup — all deferred to Playwright E2E task 5.1.
+- Next action: Resume SDD on task 3.4 `RouteMetadataForm.tsx` (depends on 3.1; serial; the largest UI component — composes TagsInput + per-field validation rendering + submit handler).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

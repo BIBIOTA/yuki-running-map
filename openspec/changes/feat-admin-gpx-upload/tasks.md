@@ -75,11 +75,11 @@ doc_language: 繁體中文
   - Independence: parallel-safe
   - status: passing (pure helpers fully tested; component visual VERIFICATION-PENDING for E2E 5.1)
 
-- [ ] 3.3 Add `features/admin-routes/RouteMapPreview.tsx` (Client Component)
+- [x] 3.3 Add `features/admin-routes/RouteMapPreview.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<RouteMapPreview geojson={feature} bbox={[...]} />` THEN 用 `lib/map/createMap` 初始 MapLibre 載入 PMTiles 基圖；AND 加入 GeoJSON `LineString` source + line layer（顏色 `--color-route-line`）；AND 呼叫 `map.fitBounds([sw, ne], { padding: 32 })`；AND component unmount THEN 呼叫 `map.remove()` 清理；AND 不接受空 geojson（render null）；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing (pure helpers fully tested; map render VERIFICATION-PENDING for E2E 5.1)
 
 - [ ] 3.4 Add `features/admin-routes/RouteMetadataForm.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<RouteMetadataForm mode="create" existingTags={...} onSubmit={fn} />` THEN 顯示欄位 title / slug / description / region / tags / difficulty / duration_s / published；AND tags 欄位渲染 `<TagsInput>`；AND submit 觸發 `onSubmit(values)`，submit 中 `<button>` disabled 直到 promise resolve；AND `mode="edit"` + `initial={route}` THEN 欄位 prefill；AND 收到 `fieldErrors` prop THEN 對應欄位下方顯示紅字；AND `_form` key 在表單頂部顯示 Alert 條；AND 不渲染 GPX 衍生欄位（distance / elevation / bbox / start_point / recorded_at / gpx_path）；AND `pnpm typecheck` exit 0
