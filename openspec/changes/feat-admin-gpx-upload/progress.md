@@ -197,3 +197,14 @@ Supabase 起來後執行），不在本機偽造通過。
 - `pnpm typecheck` exit 0; `pnpm lint` clean
 - VERIFICATION-PENDING: drop event, file-picker open on click, parseGpx-throw error rendering, drag-hover styling — all deferred to Playwright E2E task 5.1 (no React testing library / jsdom in repo per CLAUDE.md).
 - Next action: Resume SDD on task 3.3 `RouteMapPreview.tsx` (parallel-safe with 3.2; depends on none).
+
+## Session 19 — 2026-06-20 06:15
+- Stage: SDD (orchestrator audit trail amendment for task 3.2)
+- Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
+- Transition: (no state change — already passing per Session 18; this entry records review outcomes)
+- Evidence:
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (empty-state copy, valid-file → onFile, validation errors no-fire, parseGpx-throw error, V2 Trail Vintage tokens; no extras)
+  - Code-quality-reviewer round 1: REQUEST_CHANGES — Important: `GpxDropzone.tsx` called `Buffer.from(arrayBuffer)` in a Client Component; Next.js 15 Turbopack does NOT auto-polyfill Node `Buffer` → would throw `ReferenceError: Buffer is not defined` at runtime
+  - Implementer fix (commit 7d8a744 `fix(gpx): widen parseGpx to accept Uint8Array for browser compatibility`): widened `parseGpx(input: Uint8Array | string)` using `new TextDecoder('utf-8').decode(input)`; client now passes `new Uint8Array(arrayBuffer)`. Server callers (`createRoute`) still type-check because `Buffer extends Uint8Array`. Full suite 110 passed + 12 skipped — no regression.
+  - Code-quality-reviewer round 2 (after 7d8a744): APPROVE — no `Buffer` references remain in client bundle path; `TextDecoder('utf-8')` BOM/invalid-UTF-8 behaviour matches prior `Buffer.toString("utf8")` for GPX XML; server callers unaffected; no new issues. Prior Minors (icon naming, drag-leave flicker) remain cosmetic / non-blocking.
+- Next action: Resume SDD on task 3.3 `RouteMapPreview.tsx` (parallel-safe with 3.2; depends on none).
