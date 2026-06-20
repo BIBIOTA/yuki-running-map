@@ -372,6 +372,25 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: SSR HTTP 200 + RouteList populated/empty rendering + count summary accuracy — deferred to Playwright E2E task 5.2.
 - Next action: Resume SDD on task 4.3 `app/(admin)/admin/routes/[id]/page.tsx` (NEW dynamic route; depends on 1.3 + 3.8 ✅).
 
+## Session 36 — 2026-06-20 10:00
+- Stage: SDD
+- Task: 4.3 Add `app/(admin)/admin/routes/[id]/page.tsx`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer for NEW Next.js 15 dynamic route ({ params: Promise<{ id: string }> } per Next 15 async params convention); SELECT by id with limit(1); notFound() if 0 rows; concurrent fetch existingTags via Promise.all; render EditPageClient. EditPageClient needs full Route shape since right-card displays GPX-derived fields, so do NOT project (unlike 4.2).
+
+## Session 37 — 2026-06-20 10:15
+- Stage: SDD
+- Task: 4.3 Add `app/(admin)/admin/routes/[id]/page.tsx`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 26c7ce1 feat(admin): add /admin/routes/[id] dynamic SSR edit page
+  - Tests: full suite 188 passed + 12 skipped (no regression; page itself has no unit test, consistent with project's SSR-page convention)
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (Next 15 `params: Promise<{id:string}>` + await, eq+limit(1) Drizzle query, Promise.all concurrent fetch, notFound() on 0-rows from `next/navigation`, full-row SELECT justified vs 4.2 projection since EditPageClient consumes geojson + GPX-derived columns)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 2 Minor: (i) page-shell duplication with /admin/upload + /admin/routes (3rd identical `<section className="mx-auto w-full max-w-6xl px-6 py-12">` — revisit `<AdminPageShell>` extraction if 4th page diverges), (ii) `routeRows[0]!` inline comment redundant with header doc. Both non-blocking.
+- VERIFICATION-PENDING: SSR HTTP 200 for existing id + 404 for unknown id + tag prefetch wired into EditPageClient — deferred to Playwright E2E task 5.2.
+- Next action: Resume SDD on task 4.4 `features/admin-auth/AdminTopNav.tsx` update (parallel-safe; adds 上傳 / 路線管理 nav links with active highlighting).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

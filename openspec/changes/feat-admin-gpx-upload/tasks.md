@@ -125,11 +125,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (page + projection optimization; SSR render VERIFICATION-PENDING for E2E 5.2)
 
-- [ ] 4.3 Add `app/(admin)/admin/routes/[id]/page.tsx`
+- [x] 4.3 Add `app/(admin)/admin/routes/[id]/page.tsx`
   - Acceptance: WHEN admin GET `/admin/routes/{id}` 對應到存在 route THEN HTTP 200；AND SSR 內以 `db.select().from(routes).where(eq(routes.id, id)).limit(1)` 取得 route，並呼叫 `listExistingTags(db)`；AND 渲染 `<EditPageClient initial={route} existingTags={...} />`；AND id 對應 0 rows THEN 呼叫 `notFound()` 回 404；AND 未登入或非 admin 被 middleware 擋；AND `pnpm typecheck` exit 0
   - Depends on: 1.3, 3.8
   - Independence: serial
-  - status: not_started
+  - status: passing (dynamic page + Promise.all fetch; SSR render + 404 VERIFICATION-PENDING for E2E 5.2)
 
 - [ ] 4.4 Update `features/admin-auth/AdminTopNav.tsx`
   - Acceptance: WHEN admin 在 `/admin/*` 任一頁 THEN top-nav 顯示「上傳 (/admin/upload)」與「路線管理 (/admin/routes)」兩個連結；AND 當前 pathname 對應的連結以 active 樣式凸顯；AND 既有 sign-out 行為不變；AND `pnpm typecheck` exit 0
