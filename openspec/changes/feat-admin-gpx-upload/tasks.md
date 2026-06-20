@@ -131,11 +131,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (dynamic page + Promise.all fetch; SSR render + 404 VERIFICATION-PENDING for E2E 5.2)
 
-- [ ] 4.4 Update `features/admin-auth/AdminTopNav.tsx`
+- [x] 4.4 Update `features/admin-auth/AdminTopNav.tsx`
   - Acceptance: WHEN admin 在 `/admin/*` 任一頁 THEN top-nav 顯示「上傳 (/admin/upload)」與「路線管理 (/admin/routes)」兩個連結；AND 當前 pathname 對應的連結以 active 樣式凸顯；AND 既有 sign-out 行為不變；AND `pnpm typecheck` exit 0
   - Depends on: -
   - Independence: parallel-safe
-  - status: not_started
+  - status: passing (pure helpers fully tested; nav DOM behaviour VERIFICATION-PENDING for E2E 5.1/5.2)
 
 ## 5. E2E (Playwright)
 

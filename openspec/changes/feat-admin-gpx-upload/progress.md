@@ -391,6 +391,26 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: SSR HTTP 200 for existing id + 404 for unknown id + tag prefetch wired into EditPageClient — deferred to Playwright E2E task 5.2.
 - Next action: Resume SDD on task 4.4 `features/admin-auth/AdminTopNav.tsx` update (parallel-safe; adds 上傳 / 路線管理 nav links with active highlighting).
 
+## Session 38 — 2026-06-20 10:20
+- Stage: SDD
+- Task: 4.4 Update `features/admin-auth/AdminTopNav.tsx`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer to add 上傳 + 路線管理 nav links with active-pathname highlighting; extract active-detection logic to pure helper for unit tests; keep sign-out behaviour unchanged.
+
+## Session 39 — 2026-06-20 10:40
+- Stage: SDD
+- Task: 4.4 Update `features/admin-auth/AdminTopNav.tsx`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 9abf285 feat(admin-auth): add 上傳 / 路線管理 nav links to AdminTopNav
+  - Tests: 9 new pass on `adminNavLinks.test.ts` (exact-match active, sub-route active for `/admin/routes/[id]`, prefix-without-boundary `/admin/upload-something` correctly false, root `/` false, ADMIN_NAV_LINKS shape verification). Full suite 197 passed + 12 skipped (no regression).
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (2 nav links with exact 繁中 labels, isLinkActive catches sub-routes via `${href}/` boundary, sign-out unchanged byte-identical, `aria-current="page"` on active, brand-color active style per Figma frame 02)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 3 Minor (i) `aria-label="admin navigation"` English in 繁中 product (suggest 「管理員導覽」), (ii) `ADMIN_NAV_LINKS[0]/[1]` access under noUncheckedIndexedAccess (cosmetic — single `toEqual` would be cleaner), (iii) "Sign out" button text still English (pre-existing, out of scope). All non-blocking.
+- VERIFICATION-PENDING: nav DOM rendering, active highlight CSS, keyboard navigation between links — deferred to Playwright E2E (5.1 + 5.2).
+- **Closes Group 4 (Pages + nav, 4/4 passing). Branch state: 19/22 passing. Only Group 5 (E2E, 3 tasks) remains.**
+- Next action: Start Group 5; spec wording says Playwright but the tasks are integration-leaning. Same VERIFICATION-PENDING pattern as 1.3 / 2.x integrations applies (specs gated, execution deferred to CI / live Supabase) — but the Playwright specs themselves should be authored fully.
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
