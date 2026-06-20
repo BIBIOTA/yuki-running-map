@@ -329,6 +329,26 @@ Supabase 起來後執行），不在本機偽造通過。
 - **Closes Group 3 (UI components, 8/8 passing). Branch state: 15/22 passing. Group 4 (Pages + nav) and Group 5 (E2E) remain.**
 - Next action: Resume SDD on task 4.1 `app/(admin)/admin/upload/page.tsx` (rewrite; depends on 1.3 + 3.7 ✅; Server Component page shell that calls `listExistingTags(db)` + renders `<UploadPageClient>`).
 
+## Session 32 — 2026-06-20 09:20
+- Stage: SDD
+- Task: 4.1 Rewrite `app/(admin)/admin/upload/page.tsx`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer to (i) check existing placeholder shape, (ii) rewrite SSR page calling `listExistingTags(getDb())` + rendering `<UploadPageClient existingTags>`, (iii) keep middleware-protected (no auth code in page; rely on Wave C middleware); also address the Toaster gap from 3.5 by mounting `<Toaster />` in `app/(admin)/layout.tsx` if missing.
+
+## Session 33 — 2026-06-20 09:30
+- Stage: SDD
+- Task: 4.1 Rewrite `app/(admin)/admin/upload/page.tsx`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 5857a2e feat(admin): wire UploadPageClient into /admin/upload + mount Toaster
+  - **Resolves 3.5 tracked Important**: `<Toaster />` mounted in `app/(admin)/layout.tsx`; `toast.success` calls from DeleteRouteButton / UploadPageClient / EditPageClient will now surface in admin pages.
+  - Tests: full suite 183 passed + 12 skipped (no regression; page itself has no unit test, consistent with project's SSR-page convention).
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (real upload UI replaces Card placeholder, listExistingTags(getDb()) SSR prefetch + prop passthrough, thin Server shell with no auth code, Toaster mount via `@/components/ui/sonner` matches public layout import path, async Server Component with no `"use client"`)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 3 Minor: (i) Toaster duplicated between public+admin layouts (acceptable for route group isolation; hoisting to root `app/layout.tsx` is a future-cleanup), (ii) container `max-w-5xl` vs prior `max-w-3xl` flagged for traceability (matches Figma frame 01 grid), (iii) `getDb()` fail-fast on missing `DATABASE_URL` is intentional. No action items.
+- VERIFICATION-PENDING: SSR HTTP 200 + middleware guard against unauthenticated requests + tag prefetch wired into the form — deferred to Playwright E2E task 5.1.
+- Next action: Resume SDD on task 4.2 `app/(admin)/admin/routes/page.tsx` (NEW file; depends on 3.6 ✅; Server Component listing all routes via Drizzle + rendering RouteList).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

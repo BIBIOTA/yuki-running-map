@@ -113,11 +113,11 @@ doc_language: 繁體中文
 
 ## 4. Page & nav integration
 
-- [ ] 4.1 Rewrite `app/(admin)/admin/upload/page.tsx`
+- [x] 4.1 Rewrite `app/(admin)/admin/upload/page.tsx`
   - Acceptance: WHEN admin GET `/admin/upload` THEN HTTP 200；AND SSR 內呼叫 `listExistingTags(db)` 取得 tags 並傳入 `<UploadPageClient existingTags={...} />`；AND 既有 placeholder「Coming soon · GPX 上傳開發中」與 sign-out 已被取代；AND 未登入或非 admin GET 同路徑 THEN 仍被 middleware 守住（依賴 Wave C 4.1 中介層）；AND `pnpm typecheck` exit 0
   - Depends on: 1.3, 3.7
   - Independence: serial
-  - status: not_started
+  - status: passing (page + Toaster mount; SSR render VERIFICATION-PENDING for E2E 5.1; resolves 3.5 Toaster gap)
 
 - [ ] 4.2 Add `app/(admin)/admin/routes/page.tsx`
   - Acceptance: WHEN admin GET `/admin/routes` THEN HTTP 200；AND SSR 內 `db.select().from(routes).orderBy(desc(routes.created_at))` 取全部 routes（admin RLS 看得到草稿）；AND 渲染 `<RouteList routes={...} />`；AND 未登入或非 admin 被 middleware 擋；AND `pnpm typecheck` exit 0
