@@ -452,6 +452,32 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: Playwright execution against real Supabase (same gate as 5.1; same env vars required).
 - Next action: Resume SDD on task 5.3 `e2e/admin-route-delete.spec.ts` (depends on 4.2 ✅; final task in Group 5).
 
+## Session 44 — 2026-06-20 12:05
+- Stage: SDD
+- Task: 5.3 Add `e2e/admin-route-delete.spec.ts`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer for final spec; reuse all helpers (seedRoute + adminAuth + dbCleanup); also add Storage-object existence helper for the post-delete verification.
+
+## Session 45 — 2026-06-20 12:30
+- Stage: SDD
+- Task: 5.3 Add `e2e/admin-route-delete.spec.ts`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 17a9ddd feat(e2e): add admin route delete Playwright spec + verify helpers
+  - New files: `e2e/helpers/verify.ts` (`routeExistsById`, `gpxObjectExists`, `uploadSeedGpxObject`); `e2e/admin-route-delete.spec.ts`
+  - Tests: full vitest 197 passed + 12 skipped (no regression); `pnpm exec playwright test --list` discovers all 3 admin specs
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (all 13 acceptance bullets covered: beforeEach truncate, seedRoute + uploadSeedGpxObject pre-action, sanity check, signInAsAdmin, navigate, click 刪除 in row, AlertDialog appears with 確認刪除路線？, click 確認刪除, dialog hidden, toast 已刪除「Delete Test Route」, row gone, routeExistsById === false, gpxObjectExists === false)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 5 Minor (Storage URL construction reused in 3 places — extract `gpxObjectUrl(path)` helper; uploadSeedGpxObject might belong in seed.ts not verify.ts; `gpx/` prefix tolerance defensive; routeExistsById `SELECT id` vs `SELECT 1` cosmetic; HEAD 400-as-absent undocumented in Supabase API). All non-blocking.
+- VERIFICATION-PENDING: Playwright execution against real Supabase (same gate as 5.1/5.2).
+- **Closes Group 5 (E2E, 3/3 passing). Branch state: 22/22 passing. Ready to invoke verification-before-completion.**
+- Next action: Invoke `spec-driven-dev:verification-before-completion`. Open issues to verify-or-defer at that stage:
+  1. Task 5.1 documented deviation: distance/elevation metadata card not rendered by 3.7 UploadPageClient — either update acceptance text or amend 3.7 to add the metadata block.
+  2. Task 5.2 Important: `seedRoute` duplicated between e2e/helpers/seed.ts and lib/admin-routes/__tests__/listExistingTags.integration.test.ts — extract to a shared location.
+  3. Task 3.7/4.x Important: Toaster mount in (admin) layout — already resolved in 4.1 commit 5857a2e.
+  4. Task 2.x integration execution VERIFICATION-PENDING — needs real Supabase.
+  5. Task 5.1/5.2/5.3 Playwright execution VERIFICATION-PENDING — needs real Supabase + admin user.
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

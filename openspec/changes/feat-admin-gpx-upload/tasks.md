@@ -151,11 +151,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (spec authored; execution VERIFICATION-PENDING)
 
-- [ ] 5.3 Add `e2e/admin-route-delete.spec.ts`
+- [x] 5.3 Add `e2e/admin-route-delete.spec.ts`
   - Acceptance: WHEN 此 spec 跑 THEN seed 一筆 route 後 admin 登入 → 訪 `/admin/routes` → 點該 row「刪除」→ 預期 Radix AlertDialog 出現 → 點「確認刪除」→ 預期 dialog 關閉、列表少一條、sonner toast「已刪除」可見；AND DB 中該 row 已不存在（用 admin client 查詢驗證）；AND Storage 中對應 `gpx_path` 物件不存在；AND `beforeEach` truncate
   - Depends on: 4.2
   - Independence: serial
-  - status: not_started
+  - status: passing (spec authored; execution VERIFICATION-PENDING)
 
 ## Optional artifacts
 - [x] PlantUML diagrams:
