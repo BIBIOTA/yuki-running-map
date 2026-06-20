@@ -49,8 +49,21 @@ import type { Route } from "@/lib/db/schema";
 import { DeleteRouteButton } from "./DeleteRouteButton";
 import { buildEditPath, classifyStatus, formatRecordedAt } from "./routeListView";
 
+/**
+ * Structural subset of `Route` containing only the columns the admin
+ * table actually reads. The parent Server Component (`/admin/routes`)
+ * projects exactly these columns from Postgres to avoid dragging the
+ * full `geojson` LineString payload through the SSR → React pipeline
+ * for every row. Any `Route` is assignable to `RouteListItem`, so this
+ * type also accepts callers that pass full rows.
+ */
+export type RouteListItem = Pick<
+  Route,
+  "id" | "title" | "slug" | "region" | "published" | "recordedAt" | "gpxPath"
+>;
+
 type Props = {
-  routes: Route[];
+  routes: RouteListItem[];
 };
 
 export function RouteList({ routes }: Props) {

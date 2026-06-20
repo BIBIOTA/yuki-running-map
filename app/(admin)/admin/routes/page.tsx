@@ -40,7 +40,25 @@ import {
 
 export default async function AdminRoutesPage() {
   const db = getDb();
-  const routesList = await db.select().from(routes).orderBy(desc(routes.createdAt));
+  // Explicit column projection: the `routes` table has a notNull `geojson`
+  // jsonb column storing the full LineString payload, but the admin table
+  // only ever reads id/title/slug/region/published/recordedAt/gpxPath.
+  // Selecting `*` would drag every GeoJSON payload through Postgres → Node
+  // → React serialisation and degrade as the route count grows, so we
+  // project only the seven columns `<RouteList>` (and the summary helper)
+  // actually consume.
+  const routesList = await db
+    .select({
+      id: routes.id,
+      title: routes.title,
+      slug: routes.slug,
+      region: routes.region,
+      published: routes.published,
+      recordedAt: routes.recordedAt,
+      gpxPath: routes.gpxPath,
+    })
+    .from(routes)
+    .orderBy(desc(routes.createdAt));
   const summary = summarizeRoutes(routesList);
 
   return (
