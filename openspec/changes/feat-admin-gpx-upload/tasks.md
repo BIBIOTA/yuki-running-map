@@ -99,11 +99,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (pure helpers fully tested; table DOM behaviour VERIFICATION-PENDING for E2E 5.1)
 
-- [ ] 3.7 Add `features/admin-routes/UploadPageClient.tsx` (Client Component)
+- [x] 3.7 Add `features/admin-routes/UploadPageClient.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<UploadPageClient existingTags={...} />` THEN 初始顯示 `<GpxDropzone>`；AND 收到 dropzone `onFile(file, parsed)` 後 THEN 渲染 `<RouteMapPreview geojson={parsed.geojson} bbox={parsed.bbox} />` 與 `<RouteMetadataForm mode="create" existingTags={...} onSubmit={...} />`；AND form `onSubmit` 透過 `useTransition` 呼叫 `createRoute(formData)`，`formData.append('gpxFile', file)`；AND `createRoute` 回 `{ ok: true, slug }` THEN `router.push('/admin/routes')` + sonner toast「已新增 {title}」 含「檢視」連結（指向 `/routes/${slug}`，僅 published=true 時可點）；AND 回 `{ ok: false, fieldErrors }` THEN 傳給 `<RouteMetadataForm>` 渲染錯誤；AND `pnpm typecheck` exit 0
   - Depends on: 2.1, 3.2, 3.3, 3.4
   - Independence: serial
-  - status: not_started
+  - status: passing (pure helpers fully tested; composition DOM behaviour VERIFICATION-PENDING for E2E 5.1)
 
 - [ ] 3.8 Add `features/admin-routes/EditPageClient.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<EditPageClient initial={route} existingTags={...} />` THEN 渲染 `<RouteMetadataForm mode="edit" initial={route} existingTags={...} onSubmit={...} />`；AND form `onSubmit` 透過 `useTransition` 呼叫 `updateRoute({ id: initial.id, ...values })`；AND 回 `{ ok: true }` THEN stay on page + sonner toast「已儲存」；AND 回 `{ ok: false, fieldErrors }` THEN 傳給 form 渲染錯誤；AND `pnpm typecheck` exit 0

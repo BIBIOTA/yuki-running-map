@@ -286,6 +286,27 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: table DOM behaviour (column rendering, draft chip visibility, edit-link href, empty-state CTA navigation) deferred to E2E task 5.1.
 - Next action: Resume SDD on task 3.7 `UploadPageClient.tsx` (depends on 2.1 + 3.2 + 3.3 + 3.4 — all ✅; serial; composes GpxDropzone + RouteMapPreview + RouteMetadataForm + createRoute submit handler).
 
+## Session 28 — 2026-06-20 08:00
+- Stage: SDD
+- Task: 3.7 Add `features/admin-routes/UploadPageClient.tsx` (Client Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer to build composition layer: GpxDropzone (file pickup) → RouteMapPreview (after parsed) → RouteMetadataForm (submit via useTransition → createRoute(formData) → toast.success + router.push). Extract pure values→FormData builder for unit tests.
+
+## Session 29 — 2026-06-20 08:35
+- Stage: SDD
+- Task: 3.7 Add `features/admin-routes/UploadPageClient.tsx` (Client Component)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 57badb7 feat(admin-routes): add UploadPageClient composition + FormData helpers
+  - Implementer deviation from spec wording: dropped `useTransition` because `<RouteMetadataForm>` already manages `submitting` via `await onSubmit(values)`. Spec-reviewer accepted (functionally identical; the disable behaviour matches the spec's intent); documented in `UploadPageClient.tsx:30-47` file-header comment.
+  - Implementer also did a benign rename to fix a case-collision: `features/admin-routes/routeMetadataForm.{ts,test.ts}` → `routeMetadataFormState.{ts,test.ts}`. Aligns with sibling state-file naming (`dropzoneState.ts`, `deleteButtonState.ts`, `mapPreview.ts`, `routeListView.ts`, `uploadPageState.ts`).
+  - Tests: 12 new pass on `uploadPageState.test.ts` (FormData wire-shape contract: 9 keys, JSON-stringified tags, `published` literal `'true'`/`'false'`, snake_case `duration_s`, empty boundaries); 12 renamed tests on `routeMetadataFormState.test.ts` still pass; full suite 154 passed + 12 skipped (no regression).
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (initial dropzone-only render, phase→loaded mounts map+form, FormData wire shape verified, ok:true with published→toast 「檢視」 action, ok:true without published→toast without action, ok:false→fieldErrors flow into form, no extras)
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 3 Minor (focus management on phase transition is a 5.x a11y concern; `setFieldErrors(undefined)` is race-free in React batching; uploadPageState.ts JSDoc duplicates contract but explicitly defers to createRoute.ts as the canonical source). Toast action shape verified against sonner's `{ action: { label, onClick } }` API; rename consistent with sibling state-file naming.
+- VERIFICATION-PENDING: phase transitions, file→map+form rendering, toast 「檢視」 action click behaviour, post-success navigation, fieldErrors flowing to form — all deferred to Playwright E2E task 5.1.
+- Next action: Resume SDD on task 3.8 `EditPageClient.tsx` (depends on 2.2 + 3.4 — both ✅; serial; final UI component in Group 3; smaller composition since no file pickup).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
