@@ -105,11 +105,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (pure helpers fully tested; composition DOM behaviour VERIFICATION-PENDING for E2E 5.1)
 
-- [ ] 3.8 Add `features/admin-routes/EditPageClient.tsx` (Client Component)
+- [x] 3.8 Add `features/admin-routes/EditPageClient.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<EditPageClient initial={route} existingTags={...} />` THEN 渲染 `<RouteMetadataForm mode="edit" initial={route} existingTags={...} onSubmit={...} />`；AND form `onSubmit` 透過 `useTransition` 呼叫 `updateRoute({ id: initial.id, ...values })`；AND 回 `{ ok: true }` THEN stay on page + sonner toast「已儲存」；AND 回 `{ ok: false, fieldErrors }` THEN 傳給 form 渲染錯誤；AND `pnpm typecheck` exit 0
   - Depends on: 2.2, 3.4
   - Independence: serial
-  - status: not_started
+  - status: passing (pure helpers fully tested; composition + READ-ONLY card DOM VERIFICATION-PENDING for E2E 5.2)
 
 ## 4. Page & nav integration
 

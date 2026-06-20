@@ -307,6 +307,28 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: phase transitions, file→map+form rendering, toast 「檢視」 action click behaviour, post-success navigation, fieldErrors flowing to form — all deferred to Playwright E2E task 5.1.
 - Next action: Resume SDD on task 3.8 `EditPageClient.tsx` (depends on 2.2 + 3.4 — both ✅; serial; final UI component in Group 3; smaller composition since no file pickup).
 
+## Session 30 — 2026-06-20 08:40
+- Stage: SDD
+- Task: 3.8 Add `features/admin-routes/EditPageClient.tsx` (Client Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer; smaller composition than 3.7 (no file pickup, no map preview); wraps `<RouteMetadataForm mode="edit">` + awaits `updateRoute({id, ...values})` + sonner toast 「已儲存」on success; extracts pure builders for unit tests; same useTransition trade-off as 3.7.
+
+## Session 31 — 2026-06-20 09:15
+- Stage: SDD
+- Task: 3.8 Add `features/admin-routes/EditPageClient.tsx` (Client Component)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 1ae0795 feat(admin-routes): add EditPageClient composition + form-payload helpers
+  - Reuses `formatRecordedAt` from `routeListView.ts` (DRY win between list and edit views).
+  - Same useTransition deviation as 3.7 (precedent documented in file header).
+  - Tests: 29 new pass on `editPageState.test.ts` covering: buildFormInitialFromRoute (null→empty, number→string), buildUpdateRoutePayload (snake_case `duration_s`, empty/NaN/whitespace→null, trim/empty description+region→null), formatDistance (toFixed(2) km), formatElevation (rounded m), countTrackpoints (6 boundary cases including null / missing geometry / non-object / non-array / string / populated). Full suite 183 passed + 12 skipped (no regression).
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (RouteMetadataForm composition + await updateRoute + ok:true→toast「已儲存」 + ok:false→fieldErrors; Figma frame 03 elements: breadcrumb + hero + 2-col grid + READ-ONLY card with 5 fields; no extras)
+  - Code-quality-reviewer: APPROVE — no Critical/Important/Minor; `buildUpdateRoutePayload` wire contract verified against updateRoute.ts METADATA_KEYS + validation.ts; `countTrackpoints` narrows `unknown` (Drizzle jsonb) without `any`; `description.trim() || null` matches `validateRouteMetadata` trim semantics; all 繁中 strings verbatim per Figma frame 03; READ-ONLY badge in-line with the `<h2>` heading; `<dl>/<dt>/<dd>` semantic markup
+- VERIFICATION-PENDING: breadcrumb link nav, hero render, GPX-derived card layout, toast firing path, fieldErrors prop flow to form — deferred to Playwright E2E task 5.2.
+- **Closes Group 3 (UI components, 8/8 passing). Branch state: 15/22 passing. Group 4 (Pages + nav) and Group 5 (E2E) remain.**
+- Next action: Resume SDD on task 4.1 `app/(admin)/admin/upload/page.tsx` (rewrite; depends on 1.3 + 3.7 ✅; Server Component page shell that calls `listExistingTags(db)` + renders `<UploadPageClient>`).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
