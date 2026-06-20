@@ -349,6 +349,29 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: SSR HTTP 200 + middleware guard against unauthenticated requests + tag prefetch wired into the form — deferred to Playwright E2E task 5.1.
 - Next action: Resume SDD on task 4.2 `app/(admin)/admin/routes/page.tsx` (NEW file; depends on 3.6 ✅; Server Component listing all routes via Drizzle + rendering RouteList).
 
+## Session 34 — 2026-06-20 09:35
+- Stage: SDD
+- Task: 4.2 Add `app/(admin)/admin/routes/page.tsx`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer to create NEW SSR page that `db.select().from(routes).orderBy(desc(routes.createdAt))` + renders RouteList; matches Figma frame 02 page hero (路線管理 + 計數副標 + 新增路線 CTA).
+
+## Session 35 — 2026-06-20 09:55
+- Stage: SDD
+- Task: 4.2 Add `app/(admin)/admin/routes/page.tsx`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits:
+    - 0818054 feat(admin): add /admin/routes SSR page + summary helpers
+    - 11e1401 perf(admin-routes): project only required columns in admin routes query
+  - Tests: 5 new pass on `routesPageSummary.test.ts`; full suite 188 passed + 12 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (populated + empty scenarios, Drizzle desc(createdAt), 「路線管理」+ summary template + 「+ 新增路線」 CTA per Figma frame 02, no extras)
+  - Code-quality-reviewer round 1: REQUEST_CHANGES — Important: page selected all columns including `geojson` jsonb (notNull, full LineString) but RouteList only reads 7 columns. Wasteful payload on a page that will grow as routes accumulate.
+  - Implementer fix (commit 11e1401): explicit 7-column Drizzle projection + widened `RouteList` Props to `RouteListItem = Pick<Route, ...>` for type safety. Backwards-compatible (full Route still assignable to RouteListItem[]).
+  - Code-quality-reviewer round 2: APPROVE — `geojson` excluded from projection along with 12 other unused columns; type widening is structural subset (no caller breakage); doc comments explain rationale. Carried-over Minors (createdAt-tie ordering, shell duplication, summarizeRoutes parameter shadowing) remain non-blocking.
+- VERIFICATION-PENDING: SSR HTTP 200 + RouteList populated/empty rendering + count summary accuracy — deferred to Playwright E2E task 5.2.
+- Next action: Resume SDD on task 4.3 `app/(admin)/admin/routes/[id]/page.tsx` (NEW dynamic route; depends on 1.3 + 3.8 ✅).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

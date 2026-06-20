@@ -119,11 +119,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (page + Toaster mount; SSR render VERIFICATION-PENDING for E2E 5.1; resolves 3.5 Toaster gap)
 
-- [ ] 4.2 Add `app/(admin)/admin/routes/page.tsx`
+- [x] 4.2 Add `app/(admin)/admin/routes/page.tsx`
   - Acceptance: WHEN admin GET `/admin/routes` THEN HTTP 200；AND SSR 內 `db.select().from(routes).orderBy(desc(routes.created_at))` 取全部 routes（admin RLS 看得到草稿）；AND 渲染 `<RouteList routes={...} />`；AND 未登入或非 admin 被 middleware 擋；AND `pnpm typecheck` exit 0
   - Depends on: 3.6
   - Independence: serial
-  - status: not_started
+  - status: passing (page + projection optimization; SSR render VERIFICATION-PENDING for E2E 5.2)
 
 - [ ] 4.3 Add `app/(admin)/admin/routes/[id]/page.tsx`
   - Acceptance: WHEN admin GET `/admin/routes/{id}` 對應到存在 route THEN HTTP 200；AND SSR 內以 `db.select().from(routes).where(eq(routes.id, id)).limit(1)` 取得 route，並呼叫 `listExistingTags(db)`；AND 渲染 `<EditPageClient initial={route} existingTags={...} />`；AND id 對應 0 rows THEN 呼叫 `notFound()` 回 404；AND 未登入或非 admin 被 middleware 擋；AND `pnpm typecheck` exit 0
