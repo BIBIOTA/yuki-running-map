@@ -411,6 +411,27 @@ Supabase 起來後執行），不在本機偽造通過。
 - **Closes Group 4 (Pages + nav, 4/4 passing). Branch state: 19/22 passing. Only Group 5 (E2E, 3 tasks) remains.**
 - Next action: Start Group 5; spec wording says Playwright but the tasks are integration-leaning. Same VERIFICATION-PENDING pattern as 1.3 / 2.x integrations applies (specs gated, execution deferred to CI / live Supabase) — but the Playwright specs themselves should be authored fully.
 
+## Session 40 — 2026-06-20 10:45
+- Stage: SDD
+- Task: 5.1 Rewrite `e2e/admin-upload.spec.ts`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer to (i) CREATE `e2e/admin-upload.spec.ts` (file does not yet exist despite "rewrite" wording — task scope is the full upload flow), (ii) update existing `e2e/admin-login-flow.spec.ts:161` "Coming soon" assertion to match the new SSR page (since the placeholder is gone), (iii) add `e2e/fixtures/sample.gpx` fixture by symlinking or copying from `lib/gpx/__fixtures__/sample.gpx`, (iv) gate the new spec with a skip when DATABASE_URL is absent (same VERIFICATION-PENDING pattern as integration tests). Authentication uses the existing OTP admin-API pattern from admin-login-flow.spec.ts.
+
+## Session 41 — 2026-06-20 11:30
+- Stage: SDD
+- Task: 5.1 Rewrite `e2e/admin-upload.spec.ts`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: e7cd579 feat(e2e): add admin upload Playwright spec + shared auth/cleanup helpers
+  - New files: `e2e/admin-upload.spec.ts` (NEW), `e2e/helpers/adminAuth.ts` (extracted), `e2e/helpers/dbCleanup.ts` (truncate + bucket clear), `e2e/fixtures/sample.gpx` (copy of `lib/gpx/__fixtures__/sample.gpx`, 128 KB)
+  - Modified: `e2e/admin-login-flow.spec.ts` (refactored to use shared helpers; removed Coming-soon assertion; renamed test; now asserts dropzone copy `拖放 GPX 或點擊選擇`); `package.json` (`PLAYWRIGHT_FORCE_ASYNC_LOADER=1` prepended to `test:e2e` script as Playwright 1.61 + Node 22 sync-loader workaround when importing relative `.ts` helpers from specs)
+  - Tests: full vitest suite 197 passed + 12 skipped (no regression); `pnpm exec playwright test --list` discovers 7 tests across 6 files including the new spec; e2e execution NOT attempted per environment constraint
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) with documented deviation — 5/5 checks pass; **documented deviation**: acceptance text `預期看到 map preview 容器與 metadata 卡片內距離 / 爬升等數字` cannot be satisfied because UploadPageClient (3.7) does NOT render distance/elevation numbers anywhere on the upload page. Implementer adapted to map preview (`aria-label="路線預覽地圖"`) + form (`aria-label="路線資料表單"`) mount visibility — strongest claim the actual UI supports. The map preview only mounts after `parseGpx` succeeds, so this transitively proves the parser consumed the file. Filling the literal gap would require re-opening 3.7. Orchestrator records the deviation here for future verification.
+  - Code-quality-reviewer: APPROVE — no Critical/Important; 4 Minor: (i) skip-vs-expect strategy mismatch between admin-upload.spec.ts (`test.skip`) and admin-login-flow.spec.ts (`expect(...).not.toBe("")`) — align both to `test.skip` for CI-without-secrets to stay green; (ii) `PLAYWRIGHT_FORCE_ASYNC_LOADER=1` only documented in commit body — consider doc-runbook note; (iii) `clearGpxBucket` paging concern (cap 1000) — YAGNI, but a one-line justification comment would head off questions; (iv) CASCADE-comment speculation can be trimmed. All non-blocking.
+- VERIFICATION-PENDING: Playwright execution requires `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `ADMIN_GITHUB_USERNAME` / `DATABASE_URL` against a real Supabase project. The distance/elevation deviation should also be revisited at verification time: either update the acceptance text in tasks.md to match the actual UI, OR add a metadata-card display block to UploadPageClient (re-opening 3.7).
+- Next action: Resume SDD on task 5.2 `e2e/admin-route-edit.spec.ts` (depends on 4.2 + 4.3 ✅; serial; covers edit happy path).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

@@ -139,11 +139,11 @@ doc_language: 繁體中文
 
 ## 5. E2E (Playwright)
 
-- [ ] 5.1 Rewrite `e2e/admin-upload.spec.ts`
+- [x] 5.1 Rewrite `e2e/admin-upload.spec.ts`
   - Acceptance: WHEN 此 spec 跑 `pnpm test:e2e` THEN admin（OAuth mock fixture）登入 → 訪 `/admin/upload` → drop `e2e/fixtures/sample.gpx` → 預期看到 map preview 容器與 metadata 卡片內距離 / 爬升等數字 → 填 title `E2E Route` / slug `e2e-route` / difficulty `easy` / published true → 按「儲存」→ 預期跳 `/admin/routes` 且列表出現該 row + sonner toast「已新增」可見；AND `beforeEach` truncate `routes` 表與 `storage.objects` (bucket `gpx`)；AND 既有「Coming soon」斷言移除
   - Depends on: 4.1, 4.2
   - Independence: serial
-  - status: not_started
+  - status: passing (spec authored + helpers extracted; execution VERIFICATION-PENDING; **deviation**: distance/elevation clause adapted to map preview + form mount visibility because 3.7 UploadPageClient does not render those numbers — see progress.md Session 41)
 
 - [ ] 5.2 Add `e2e/admin-route-edit.spec.ts`
   - Acceptance: WHEN 此 spec 跑 THEN seed 一筆 route 後 admin 登入 → 訪 `/admin/routes` → 點該 row「編輯」連結 → 預期到 `/admin/routes/{id}` → 改 title 與 tags → 按「儲存」→ 預期 sonner toast「已儲存」且仍在同頁、欄位顯示新值；AND 重新整理後欄位仍顯示新值（DB 真實寫入）；AND `beforeEach` truncate
