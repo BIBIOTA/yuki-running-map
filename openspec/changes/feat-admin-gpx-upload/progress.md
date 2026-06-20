@@ -432,6 +432,26 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: Playwright execution requires `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `ADMIN_GITHUB_USERNAME` / `DATABASE_URL` against a real Supabase project. The distance/elevation deviation should also be revisited at verification time: either update the acceptance text in tasks.md to match the actual UI, OR add a metadata-card display block to UploadPageClient (re-opening 3.7).
 - Next action: Resume SDD on task 5.2 `e2e/admin-route-edit.spec.ts` (depends on 4.2 + 4.3 ✅; serial; covers edit happy path).
 
+## Session 42 — 2026-06-20 11:35
+- Stage: SDD
+- Task: 5.2 Add `e2e/admin-route-edit.spec.ts`
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer for NEW spec covering edit happy path; reuse adminAuth + dbCleanup helpers; add a `seedRoute()` helper since seeding now appears in 2 specs (5.2 + 5.3). Use Drizzle from a Node script (postgres dynamic import like dbCleanup) to insert a fixture row with stable id/slug/gpx_path.
+
+## Session 43 — 2026-06-20 12:00
+- Stage: SDD
+- Task: 5.2 Add `e2e/admin-route-edit.spec.ts`
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 07c9289 feat(e2e): add admin route edit Playwright spec + seedRoute helper
+  - New files: `e2e/helpers/seed.ts` (raw-SQL INSERT with PostGIS `ST_GeomFromText` for bbox/start_point; returns `{id, slug, title, gpxPath}`); `e2e/admin-route-edit.spec.ts`
+  - Tests: full vitest 197 passed + 12 skipped (no regression); `pnpm exec playwright test --list` discovers the new spec
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (beforeEach truncate, seedRoute insert, signInAsAdmin, /admin/routes navigation, row-scoped 編輯 click, URL assertion to /admin/routes/{id}, title fill, tag add via getByRole "textbox" with name "標籤", 儲存 click, toast 已儲存 + still-on-page + new-value visible, reload + persistence; locators verified against TagsInput aria-label and RouteList row structure)
+  - Code-quality-reviewer: APPROVE — no Critical; 1 Important: **seedRoute duplication** between `e2e/helpers/seed.ts` (postgres + raw SQL) and `lib/admin-routes/__tests__/listExistingTags.integration.test.ts` (drizzle template) — flag for future consolidation into a shared `lib/db/test-utils` once a 3rd caller lands; non-blocking now. 4 Minor (SeedRouteOverrides surface YAGNI for 5.2 alone but 5.3 will exercise it, gpxPath returned but unused by 5.2, non-deterministic recordedAt default, redundant timeout: 5000 on toast assertion). All deferred.
+- VERIFICATION-PENDING: Playwright execution against real Supabase (same gate as 5.1; same env vars required).
+- Next action: Resume SDD on task 5.3 `e2e/admin-route-delete.spec.ts` (depends on 4.2 ✅; final task in Group 5).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)
