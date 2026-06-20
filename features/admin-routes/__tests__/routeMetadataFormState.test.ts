@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildInitialValues,
   hasAnyFieldError,
-} from "../routeMetadataForm";
+} from "../routeMetadataFormState";
 
 describe("buildInitialValues", () => {
   describe("Scenario: no initial value yields defaults", () => {

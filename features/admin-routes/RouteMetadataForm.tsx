@@ -38,8 +38,8 @@
  * Testability note: the React DOM behaviour is not unit-tested here
  * because the project deliberately runs vitest in the node environment
  * with no React testing library (CLAUDE.md forbids adding deps without
- * approval). All pure transitions live in `./routeMetadataForm.ts` and
- * are covered by `__tests__/routeMetadataForm.test.ts`; the full
+ * approval). All pure transitions live in `./routeMetadataFormState.ts`
+ * and are covered by `__tests__/routeMetadataFormState.test.ts`; the full
  * user-visible behaviour is exercised by the admin upload Playwright
  * spec (task 5.1).
  */
@@ -51,7 +51,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { TagsInput } from "./TagsInput";
-import { buildInitialValues } from "./routeMetadataForm";
+import { buildInitialValues } from "./routeMetadataFormState";
 import type { Difficulty, RouteMetadataValues } from "./types";
 
 type Props = {
