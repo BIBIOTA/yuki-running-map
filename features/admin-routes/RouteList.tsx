@@ -103,6 +103,7 @@ export function RouteList({ routes }: Props) {
               <tr key={route.id} className="border-t border-border">
                 <td className="px-4 py-3">
                   <span>{route.title}</span>
+                  {/* Double-label by design (Figma frame 02): inline 草稿 chip + 狀態 column ● 草稿. */}
                   {status.kind === "draft" ? (
                     <span className="ml-2 inline-flex rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                       草稿
