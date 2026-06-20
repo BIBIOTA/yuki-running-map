@@ -262,6 +262,30 @@ Supabase 起來後執行），不在本機偽造通過。
 - VERIFICATION-PENDING: Dialog open/close, sonner toast (after Toaster mount), `router.refresh()`, inline error rendering, accessibility focus management — all deferred to Playwright E2E task 5.1.
 - Next action: Resume SDD on task 3.6 `RouteList.tsx` (depends on 3.5 ✅; Server Component for `/admin/routes`).
 
+## Session 26 — 2026-06-20 07:30
+- Stage: SDD
+- Task: 3.6 Add `features/admin-routes/RouteList.tsx` (Server Component)
+- Transition: not_started → in_progress
+- Next action: Dispatch implementer; spec mentions shadcn Table but `@radix-ui/react-table` is N/A (Radix has no Table primitive — shadcn's Table is just styled `<table>`). Use plain HTML `<table>` with shadcn-style classes. Extract status-classification + recorded_at formatting to pure helper.
+
+## Session 27 — 2026-06-20 07:55
+- Stage: SDD
+- Task: 3.6 Add `features/admin-routes/RouteList.tsx` (Server Component)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits:
+    - e2400b3 feat(admin-routes): add RouteList Server Component + routeListView helpers
+    - 396c983 docs(admin-routes): justify draft-chip double-label per Figma frame 02
+  - Tests: 7 new pass on `routeListView.test.ts`; full suite 142 passed + 12 skipped (no regression)
+  - Typecheck: `pnpm typecheck` exit 0; Lint: `pnpm lint` clean
+  - Spec-reviewer: APPROVE (static) — 5/5 checks (6-col table 標題/Slug/區域/狀態/紀錄日/操作, draft chip in title cell + 狀態 column, 編輯 next/link + DeleteRouteButton in actions, empty-state CTA with required literals, no `"use client"`, semantic `<th scope="col">`, exact 繁中 strings, no extras)
+  - Code-quality-reviewer round 1: REQUEST_CHANGES — Important: appeared to be duplicate 草稿 chip rendering (title cell + status column)
+  - Orchestrator verified against Figma frame 02 screenshot: the 「夜跑體育館 5K」 draft row in the design **intentionally** shows both surfaces (inline title-cell chip + 狀態 column `● 草稿`) for admin scannability. Not a bug.
+  - Implementer fix (commit 396c983): single English comment above inline chip render block citing Figma frame 02 as design source. No logic change.
+  - Code-quality-reviewer round 2: APPROVE — comment correctly positioned and prevents accidental "cleanup" removal; both chips remain; full suite 142/12 unchanged. Prior Minor (classifyStatus YAGNI, doc-block length) remain non-blocking.
+- VERIFICATION-PENDING: table DOM behaviour (column rendering, draft chip visibility, edit-link href, empty-state CTA navigation) deferred to E2E task 5.1.
+- Next action: Resume SDD on task 3.7 `UploadPageClient.tsx` (depends on 2.1 + 3.2 + 3.3 + 3.4 — all ✅; serial; composes GpxDropzone + RouteMapPreview + RouteMetadataForm + createRoute submit handler).
+
 ## Session 19 — 2026-06-20 06:15
 - Stage: SDD (orchestrator audit trail amendment for task 3.2)
 - Task: 3.2 Add `features/admin-routes/GpxDropzone.tsx` (Client Component)

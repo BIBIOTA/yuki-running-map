@@ -93,11 +93,11 @@ doc_language: 繁體中文
   - Independence: serial
   - status: passing (pure helpers fully tested; Dialog DOM behaviour VERIFICATION-PENDING for E2E 5.1; **TRACKED follow-up: mount `<Toaster />` in `(admin)` layout — currently only mounted in `(public)` so `toast.success` no-ops in admin pages**)
 
-- [ ] 3.6 Add `features/admin-routes/RouteList.tsx` (Server Component)
+- [x] 3.6 Add `features/admin-routes/RouteList.tsx` (Server Component)
   - Acceptance: WHEN 從 Server Component 呼叫 `<RouteList routes={routes} />` THEN 渲染 shadcn Table 含欄：title / slug / region / published / recorded_at / actions；AND `published=false` 的 row 視覺上以「草稿」chip 標示；AND actions 欄含「編輯」連結（→ `/admin/routes/${id}`）與 `<DeleteRouteButton>`；AND 空 routes THEN 顯示「尚無路線，請至 /admin/upload 新增」CTA；AND `pnpm typecheck` exit 0
   - Depends on: 3.5
   - Independence: serial
-  - status: not_started
+  - status: passing (pure helpers fully tested; table DOM behaviour VERIFICATION-PENDING for E2E 5.1)
 
 - [ ] 3.7 Add `features/admin-routes/UploadPageClient.tsx` (Client Component)
   - Acceptance: WHEN 渲染 `<UploadPageClient existingTags={...} />` THEN 初始顯示 `<GpxDropzone>`；AND 收到 dropzone `onFile(file, parsed)` 後 THEN 渲染 `<RouteMapPreview geojson={parsed.geojson} bbox={parsed.bbox} />` 與 `<RouteMetadataForm mode="create" existingTags={...} onSubmit={...} />`；AND form `onSubmit` 透過 `useTransition` 呼叫 `createRoute(formData)`，`formData.append('gpxFile', file)`；AND `createRoute` 回 `{ ok: true, slug }` THEN `router.push('/admin/routes')` + sonner toast「已新增 {title}」 含「檢視」連結（指向 `/routes/${slug}`，僅 published=true 時可點）；AND 回 `{ ok: false, fieldErrors }` THEN 傳給 `<RouteMetadataForm>` 渲染錯誤；AND `pnpm typecheck` exit 0
