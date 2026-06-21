@@ -62,20 +62,3 @@ The system SHALL serve `/admin/login` as a public route (bypassed by the admin m
 
 > See: ../../diagrams/01-sequence-admin-oauth-flow.puml
 
-### Requirement: /admin/upload shows the Coming soon placeholder for authenticated admin
-The system SHALL serve `/admin/upload` as a protected route. For an authenticated admin (validated by middleware), the page SHALL render the "Coming soon · GPX 上傳開發中" message and a Sign out button that calls `supabase.auth.signOut()` then navigates to `/`. For any unauthenticated or non-admin client, the middleware contract handles the redirect (defined in the data-and-auth-infrastructure spec).
-
-#### Scenario: Authenticated admin sees the placeholder
-- **WHEN** an authenticated admin sends GET `/admin/upload`
-- **THEN** the response status is 200
-- **AND** the rendered page contains the text "Coming soon · GPX 上傳開發中"
-- **AND** the page contains a Sign out button
-
-#### Scenario: Sign out clears the session
-- **WHEN** the authenticated admin clicks the Sign out button
-- **THEN** `supabase.auth.signOut()` is called
-- **AND** the client navigates to `/`
-- **AND** subsequent GET `/admin/upload` is redirected to `/admin/login`
-
-> See: ../../diagrams/01-sequence-admin-oauth-flow.puml
-
