@@ -110,7 +110,10 @@ async function seedRoute(
       1000,
       0,
       ${new Date().toISOString()},
-      ${input.tags}::text[],
+      ARRAY[${sql.join(
+        input.tags.map((t) => sql`${t}`),
+        sql`, `,
+      )}]::text[],
       'easy',
       ${"gpx/2026/" + input.slug + ".gpx"},
       ${sql`'{"type":"Feature","geometry":{"type":"LineString","coordinates":[[121,25],[121.1,25.1]]},"properties":{}}'::jsonb`},

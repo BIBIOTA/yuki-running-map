@@ -114,7 +114,7 @@ export async function seedRoute(
         ${recordedAt.toISOString()},
         ${locationName},
         ${region},
-        ${tags},
+        ${sql.array(tags, 1009)},
         ${difficulty}::difficulty,
         ${gpxPath},
         ${'{"type":"Feature","geometry":{"type":"LineString","coordinates":[[121.5,25.0],[121.51,25.01]]},"properties":{}}'}::jsonb,

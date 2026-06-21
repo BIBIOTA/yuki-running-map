@@ -37,9 +37,23 @@ const PG_UNIQUE_VIOLATION = "23505";
  * a mismatched constraint. Never throws.
  */
 export function isPgUniqueViolation(error: unknown, constraintName: string): boolean {
-  if (typeof error !== "object" || error === null) {
-    return false;
+  // Walk the `cause` chain so we transparently unwrap Drizzle's
+  // `DrizzleQueryError` (which wraps the original `PostgresError` as `.cause`)
+  // and any other middleware wrapper. Cap the walk at 5 hops to defend
+  // against pathological cycles.
+  let current: unknown = error;
+  for (let i = 0; i < 5; i++) {
+    if (typeof current !== "object" || current === null) {
+      return false;
+    }
+    const record = current as Record<string, unknown>;
+    if (record.code === PG_UNIQUE_VIOLATION && record.constraint_name === constraintName) {
+      return true;
+    }
+    if (!("cause" in record) || record.cause === current) {
+      return false;
+    }
+    current = record.cause;
   }
-  const record = error as Record<string, unknown>;
-  return record.code === PG_UNIQUE_VIOLATION && record.constraint_name === constraintName;
+  return false;
 }
