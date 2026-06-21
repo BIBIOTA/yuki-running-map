@@ -58,6 +58,23 @@ export type CreateRouteResult =
   | { ok: false; fieldErrors: Record<string, string> };
 
 const STORAGE_BUCKET = "gpx";
+
+/**
+ * Convert the canonical DB-stored path (`gpx/{yyyy}/{uuid}.gpx`) into the
+ * bucket-relative key the Supabase Storage SDK expects (`{yyyy}/{uuid}.gpx`).
+ *
+ * `routes.gpx_path` stores the bucket-qualified path per the spec / design
+ * convention (so any caller reading the column gets a self-describing
+ * "where to find the GPX" reference). But `supabase.storage.from('gpx')` is
+ * already scoped to the bucket — its `.upload` / `.remove` arg is relative
+ * to the bucket. Without stripping, the SDK writes to `gpx/gpx/{yyyy}/...`
+ * and `.remove` silently no-ops on the wrong key. Tolerates either form.
+ */
+function bucketRelativeKey(path: string): string {
+  return path.startsWith(`${STORAGE_BUCKET}/`)
+    ? path.slice(STORAGE_BUCKET.length + 1)
+    : path;
+}
 const ROUTES_SLUG_UNIQUE = "routes_slug_unique";
 
 /**
@@ -177,7 +194,7 @@ export async function createRoute(formData: FormData): Promise<CreateRouteResult
   try {
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(path, buffer, {
+      .upload(bucketRelativeKey(path), buffer, {
         contentType: "application/gpx+xml",
         upsert: false,
       });
@@ -289,7 +306,7 @@ async function rollbackStorage(
   path: string,
 ): Promise<void> {
   try {
-    await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+    await supabase.storage.from(STORAGE_BUCKET).remove([bucketRelativeKey(path)]);
   } catch (rollbackError) {
     console.warn("createRoute: Storage rollback failed", path, rollbackError);
   }

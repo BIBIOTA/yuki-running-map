@@ -52,6 +52,18 @@ export type DeleteRouteResult = { ok: true } | { ok: false; message: string };
 
 const STORAGE_BUCKET = "gpx";
 
+/**
+ * Strip the `gpx/` prefix from `routes.gpx_path` to get the bucket-relative
+ * key the Supabase Storage SDK expects. See `createRoute.ts` for the full
+ * rationale — same bug source: DB stores `gpx/{yyyy}/{uuid}.gpx`, SDK wants
+ * `{yyyy}/{uuid}.gpx`.
+ */
+function bucketRelativeKey(path: string): string {
+  return path.startsWith(`${STORAGE_BUCKET}/`)
+    ? path.slice(STORAGE_BUCKET.length + 1)
+    : path;
+}
+
 export async function deleteRoute(input: {
   id: string;
 }): Promise<DeleteRouteResult> {
@@ -87,7 +99,7 @@ export async function deleteRoute(input: {
   try {
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .remove([gpxPath]);
+      .remove([bucketRelativeKey(gpxPath)]);
     if (error) {
       console.warn("orphan gpx file", gpxPath, error);
     }

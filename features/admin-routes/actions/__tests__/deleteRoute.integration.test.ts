@@ -189,7 +189,7 @@ describe("deleteRoute (non-DB regression)", () => {
       });
 
       expect(result).toEqual({ ok: true });
-      expect(removeSpy).toHaveBeenCalledWith(["gpx/2026/orphan.gpx"]);
+      expect(removeSpy).toHaveBeenCalledWith(["2026/orphan.gpx"]);
       expect(warnSpy).toHaveBeenCalledWith(
         "orphan gpx file",
         "gpx/2026/orphan.gpx",
@@ -243,7 +243,7 @@ describe("deleteRoute (non-DB regression)", () => {
       });
 
       expect(result).toEqual({ ok: true });
-      expect(removeSpy).toHaveBeenCalledWith(["gpx/2026/boom.gpx"]);
+      expect(removeSpy).toHaveBeenCalledWith(["2026/boom.gpx"]);
       expect(warnSpy).toHaveBeenCalledWith(
         "orphan gpx file",
         "gpx/2026/boom.gpx",
@@ -354,7 +354,7 @@ describe.skipIf(!process.env.DATABASE_URL)("deleteRoute (integration)", () => {
       expect(rows.length).toBe(0);
 
       // Storage remove was called with the exact gpx_path.
-      expect(removeSpy).toHaveBeenCalledWith(["gpx/2026/happy.gpx"]);
+      expect(removeSpy).toHaveBeenCalledWith(["2026/happy.gpx"]);
 
       // revalidatePath fired for /routes, /routes/<slug>, /admin/routes.
       const calls = vi.mocked(revalidatePath).mock.calls.map((c) => c[0]);
