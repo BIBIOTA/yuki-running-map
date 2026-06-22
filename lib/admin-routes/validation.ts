@@ -10,18 +10,12 @@
 
 const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
-const DIFFICULTIES = ["easy", "medium", "hard"] as const;
-type Difficulty = (typeof DIFFICULTIES)[number];
-
 /** Normalised metadata shape; field names match `lib/db/schema.ts`. */
 export interface RouteMetadataInput {
   title: string;
   slug: string;
   description: string | null;
-  region: string | null;
   tags: string[];
-  difficulty: Difficulty;
-  durationS: number | null;
   published: boolean;
 }
 
@@ -32,7 +26,6 @@ export type ValidateRouteMetadataResult =
 const TITLE_MAX = 200;
 const SLUG_MAX = 80;
 const DESCRIPTION_MAX = 5000;
-const REGION_MAX = 50;
 const TAG_MAX_LENGTH = 30;
 const TAGS_MAX_COUNT = 20;
 
@@ -90,21 +83,6 @@ export function validateRouteMetadata(input: unknown): ValidateRouteMetadataResu
     }
   }
 
-  // region — optional, length <= 50
-  let region: string | null = null;
-  if (input.region !== undefined && input.region !== null) {
-    if (typeof input.region !== "string") {
-      fieldErrors.region = "地區格式不正確";
-    } else {
-      const trimmed = input.region.trim();
-      if (trimmed.length > REGION_MAX) {
-        fieldErrors.region = `地區長度不可超過 ${REGION_MAX} 字`;
-      } else {
-        region = trimmed.length > 0 ? trimmed : null;
-      }
-    }
-  }
-
   // tags — array; trim -> drop empty -> dedup; <= 20 items; each <= 30 chars
   let tags: string[] = [];
   if (input.tags !== undefined && input.tags !== null) {
@@ -129,24 +107,11 @@ export function validateRouteMetadata(input: unknown): ValidateRouteMetadataResu
     }
   }
 
-  // difficulty — required, enum
-  let difficulty: Difficulty = "easy";
-  if (typeof input.difficulty !== "string" || !isDifficulty(input.difficulty)) {
-    fieldErrors.difficulty = "難度必須為 easy、medium 或 hard";
-  } else {
-    difficulty = input.difficulty;
-  }
-
-  // duration_s — optional, positive integer
-  let durationS: number | null = null;
-  if (input.duration_s !== undefined && input.duration_s !== null) {
-    const value = input.duration_s;
-    if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
-      fieldErrors.duration_s = "時長必須為正整數（秒）";
-    } else {
-      durationS = value;
-    }
-  }
+  // Legacy keys (difficulty / duration_s / region) removed by
+  // feat-gpx-driven-route-metadata. Older clients that still send them are
+  // silently ignored at the property-pick step below; no validation runs and
+  // no fieldErrors entry is emitted, per the spec MODIFIED Requirement
+  // "Legacy fields are silently ignored".
 
   // published — required boolean
   let published = false;
@@ -162,10 +127,6 @@ export function validateRouteMetadata(input: unknown): ValidateRouteMetadataResu
 
   return {
     ok: true,
-    value: { title, slug, description, region, tags, difficulty, durationS, published },
+    value: { title, slug, description, tags, published },
   };
-}
-
-function isDifficulty(value: string): value is Difficulty {
-  return (DIFFICULTIES as readonly string[]).includes(value);
 }
