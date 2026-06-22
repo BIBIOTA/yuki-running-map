@@ -46,6 +46,7 @@ import Link from "next/link";
 import { RouteRegions } from "@/components/RouteRegions";
 import { Button } from "@/components/ui/button";
 import type { Route } from "@/lib/db/schema";
+import type { Region } from "@/lib/regions/types";
 
 import { DeleteRouteButton } from "./DeleteRouteButton";
 import { buildEditPath, classifyStatus, formatRecordedAt } from "./routeListView";
@@ -65,7 +66,7 @@ export type RouteListItem = Pick<
   /** Detected admin_units for this row, mapped to the public Region shape.
    *  Populated by the admin routes page join (task 3.17). Empty array when
    *  the row has zero `route_admin_units` join rows. */
-  regions?: import("@/lib/regions/types").Region[];
+  regions?: Region[];
 };
 
 type Props = {
