@@ -11,15 +11,10 @@
  * `<Input>` and parsed by the caller before submission.
  */
 
-export type Difficulty = "easy" | "medium" | "hard";
-
 export type RouteMetadataValues = {
   title: string;
   slug: string;
   description: string;
-  region: string;
   tags: string[];
-  difficulty: Difficulty;
-  durationS: string;
   published: boolean;
 };

@@ -23,10 +23,7 @@ describe("buildInitialValues", () => {
         title: "",
         slug: "",
         description: "",
-        region: "",
         tags: [],
-        difficulty: "easy",
-        durationS: "",
         published: false,
       });
     });

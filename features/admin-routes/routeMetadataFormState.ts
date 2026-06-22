@@ -17,10 +17,7 @@ const DEFAULT_VALUES: RouteMetadataValues = {
   title: "",
   slug: "",
   description: "",
-  region: "",
   tags: [],
-  difficulty: "easy",
-  durationS: "",
   published: false,
 };
 

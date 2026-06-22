@@ -1,44 +1,28 @@
 /**
  * Pure helpers for `<EditPageClient>`.
  *
- * The component itself owns no business logic — all transformations
- * that can be unit-tested without mounting React live here, so the
- * vitest node runner (no React testing library; see CLAUDE.md re:
- * deps) can cover them. The DOM interaction is exercised end-to-end
- * by the admin edit Playwright spec (task 5.2).
- *
- * Spec:  openspec/changes/feat-admin-gpx-upload/specs/admin-routes-crud/spec.md
- *        §"/admin/routes/[id] renders the metadata edit form" (line 41)
- *        §"updateRoute Server Action" (allow-list contract)
- * Tasks: openspec/changes/feat-admin-gpx-upload/tasks.md §3.8
- * Figma: openspec/changes/feat-admin-gpx-upload/designs/figma.md frame 03
- *        - `screenshots/03-routes-edit.png` — breadcrumb / hero / 2-col
- *          layout with the right column READ-ONLY GPX-derived card.
+ * Spec:  openspec/changes/feat-gpx-driven-route-metadata/specs/admin-routes-crud/spec.md
+ *        MODIFIED Requirement "/admin/routes/[id] renders the metadata edit form"
+ *        MODIFIED Requirement "updateRoute Server Action mutates metadata only"
+ * Tasks: openspec/changes/feat-gpx-driven-route-metadata/tasks.md §1.4
  *
  * Boundary translations performed here:
  *
  *   - `buildFormInitialFromRoute(route)` maps a Drizzle `Route` row →
  *     `Partial<RouteMetadataValues>` (the form-state shape).
- *     `description` / `region`: `null` → '' (form-state is non-null
- *     strings; `RouteMetadataForm` round-trips empty strings).
- *     `durationS`: `number | null` → string ('' when null).
+ *     `description`: `null` → '' (form-state is non-null strings; the
+ *     form round-trips empty strings).
  *   - `buildUpdateRoutePayload(id, values)` maps form-state →
  *     `updateRoute({ id, ...payload })` input shape:
- *     · `description` / `region`: trim; empty string → `null`
- *       (matches `validateRouteMetadata`'s null/optional handling and
- *       keeps the eventual `routes.description` column NULL rather
- *       than '' for vacant submissions).
- *     · `durationS` → `duration_s` (snake_case) as `number | null`.
- *       Empty string and NaN both fold to `null`; valid numeric
- *       strings parse via `Number()`. validateRouteMetadata enforces
- *       positive-integer semantics on the server.
- *     · `tags` / `published` / `difficulty` pass through verbatim.
+ *     · `description`: trim; empty string → `null` (matches the
+ *       validator's null/optional handling and keeps the eventual
+ *       `routes.description` column NULL rather than '' for vacant
+ *       submissions).
+ *     · `tags` / `published` pass through verbatim.
  *
- * The shape we hand to `updateRoute` matches the allow-list keys in
- * `features/admin-routes/actions/updateRoute.ts :: METADATA_KEYS`.
- * Any extra keys (e.g. GPX-derived columns echoed back from the row)
- * are silently stripped by `stripToMetadataOnly`, so this helper only
- * needs to emit the metadata subset.
+ * Legacy keys (`difficulty` / `duration_s` / `region`) were removed by
+ * feat-gpx-driven-route-metadata; they are not part of either the row
+ * mapping or the wire payload.
  */
 
 import type { Route } from "@/lib/db/schema";
@@ -53,19 +37,15 @@ export function buildFormInitialFromRoute(
     title: route.title,
     slug: route.slug,
     description: route.description ?? "",
-    region: route.region ?? "",
     tags: route.tags,
-    difficulty: route.difficulty,
-    durationS: route.durationS === null ? "" : String(route.durationS),
     published: route.published,
   };
 }
 
 /**
- * Build the structured payload passed to
- * `updateRoute({ id, ...payload })`. Translates camelCase form-state
- * into the snake_case wire shape consumed by
- * `validateRouteMetadata` (which reads `duration_s`).
+ * Build the structured payload passed to `updateRoute({ id, ...payload })`.
+ * The accepted metadata keys are exactly title / slug / description / tags /
+ * published — same allow-list `updateRoute` enforces server-side.
  */
 export function buildUpdateRoutePayload(
   id: string,
@@ -75,27 +55,17 @@ export function buildUpdateRoutePayload(
   title: string;
   slug: string;
   description: string | null;
-  region: string | null;
   tags: string[];
-  difficulty: "easy" | "medium" | "hard";
-  duration_s: number | null;
   published: boolean;
 } {
   const description = values.description.trim();
-  const region = values.region.trim();
-  const durationRaw = values.durationS.trim();
-  const parsed = durationRaw === "" ? Number.NaN : Number(durationRaw);
-  const duration_s = Number.isFinite(parsed) ? parsed : null;
 
   return {
     id,
     title: values.title,
     slug: values.slug,
     description: description.length === 0 ? null : description,
-    region: region.length === 0 ? null : region,
     tags: values.tags,
-    difficulty: values.difficulty,
-    duration_s,
     published: values.published,
   };
 }

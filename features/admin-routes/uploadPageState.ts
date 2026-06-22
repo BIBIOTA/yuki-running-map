@@ -17,19 +17,20 @@ import type { RouteMetadataValues } from "./types";
 /**
  * Build the FormData payload `createRoute(formData)` expects.
  *
- * The wire-shape contract is owned by
- * `features/admin-routes/actions/createRoute.ts` :: `parseMetadataFromFormData`:
+ * Wire-shape contract owned by
+ * `features/admin-routes/actions/createRoute.ts :: parseMetadataFromFormData`:
  *
  *   - `gpxFile`     → the raw `File` (Blob-checked server-side)
  *   - `title`       → string
  *   - `slug`        → string
  *   - `description` → string (possibly empty)
- *   - `region`      → string (possibly empty)
  *   - `tags`        → JSON-stringified `string[]`
- *   - `difficulty`  → `'easy' | 'medium' | 'hard'`
- *   - `duration_s`  → numeric string (snake_case key; the form state uses
- *                     camelCase `durationS` — this helper does the rename)
  *   - `published`   → literal `'true'` or `'false'`
+ *
+ * Legacy keys (`difficulty` / `duration_s` / `region`) were removed by
+ * feat-gpx-driven-route-metadata. They are NOT emitted here and the
+ * Action's validator silently ignores any older client that still sends
+ * them (per spec admin-routes-crud "Legacy fields are silently ignored").
  *
  * `tags` is JSON-stringified rather than appended N times because the
  * Action parses it via `JSON.parse(tagsRaw)` and treats any deviation as
@@ -44,11 +45,7 @@ export function buildCreateRouteFormData(
   formData.append("title", values.title);
   formData.append("slug", values.slug);
   formData.append("description", values.description);
-  formData.append("region", values.region);
   formData.append("tags", JSON.stringify(values.tags));
-  formData.append("difficulty", values.difficulty);
-  // snake_case key intentional — matches the Action's `formData.get('duration_s')`.
-  formData.append("duration_s", values.durationS);
   formData.append("published", values.published ? "true" : "false");
   return formData;
 }
