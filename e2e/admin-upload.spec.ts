@@ -79,6 +79,10 @@ test.describe("admin upload flow", () => {
     //    must stay in sync with RouteMetadataForm.tsx.
     await page.getByLabel("標題").fill("E2E Route");
     await page.getByLabel("網址代稱（slug）").fill("e2e-route");
+    // Ensure deprecated fields really are gone from the form.
+    await expect(page.locator("#difficulty")).toHaveCount(0);
+    await expect(page.locator("#duration_s")).toHaveCount(0);
+    await expect(page.locator("#region")).toHaveCount(0);
     await page.getByLabel("已發佈").check();
 
     // 6. Submit. The button text flips to 「儲存中…」 during the
@@ -92,5 +96,17 @@ test.describe("admin upload flow", () => {
       timeout: 5000,
     });
     await expect(page.getByRole("cell", { name: "E2E Route" })).toBeVisible();
+
+    // 8. The published route detail page renders the elevation section —
+    //    either the SVG (when GPX has <ele>) or the empty hint. The sample
+    //    fixture (lib/gpx/__fixtures__/sample.gpx) carries <ele> so the
+    //    SVG branch is the expected one, but assert the union so the
+    //    test does not break if the fixture is ever swapped.
+    await page.goto("/routes/e2e-route");
+    const elevationSvg = page.getByTestId("elevation-profile");
+    const elevationEmpty = page.getByTestId("elevation-empty");
+    await expect(elevationSvg.or(elevationEmpty)).toBeVisible({
+      timeout: 5000,
+    });
   });
 });
