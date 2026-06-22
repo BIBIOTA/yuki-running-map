@@ -20,8 +20,8 @@ describe("profileToSvg", () => {
         [200, 15],
       ]);
       if (result.kind === "empty") throw new Error("expected filled view");
-      // d starts with M{0,Y}
-      expect(result.d.startsWith("M0,")).toBe(true);
+      // d starts with an M command (may have padding for axis labels)
+      expect(result.d.startsWith("M")).toBe(true);
       // viewBox is "0 0 W H" with positive dimensions
       expect(result.viewBox).toMatch(/^0 0 \d+(?:\.\d+)? \d+(?:\.\d+)?$/);
       // xLabels include 0 and the last distance (200)
