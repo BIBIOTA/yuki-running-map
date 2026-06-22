@@ -35,7 +35,6 @@ export const routes = pgTable(
       .$type<Array<[number, number]>>(),
     recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
     locationName: text("location_name"),
-    region: text("region"),
     tags: text("tags")
       .array()
       .notNull()

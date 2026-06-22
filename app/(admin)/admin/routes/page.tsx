@@ -42,17 +42,17 @@ export default async function AdminRoutesPage() {
   const db = getDb();
   // Explicit column projection: the `routes` table has a notNull `geojson`
   // jsonb column storing the full LineString payload, but the admin table
-  // only ever reads id/title/slug/region/published/recordedAt/gpxPath.
-  // Selecting `*` would drag every GeoJSON payload through Postgres → Node
-  // → React serialisation and degrade as the route count grows, so we
-  // project only the seven columns `<RouteList>` (and the summary helper)
-  // actually consume.
+  // only ever reads id/title/slug/published/recordedAt/gpxPath. Selecting
+  // `*` would drag every GeoJSON payload through Postgres → Node → React
+  // serialisation and degrade as the route count grows, so we project only
+  // the six columns `<RouteList>` (and the summary helper) actually consume.
+  // The `regions` column is filled in task 3.17 via leftJoin on
+  // route_admin_units × admin_units.
   const routesList = await db
     .select({
       id: routes.id,
       title: routes.title,
       slug: routes.slug,
-      region: routes.region,
       published: routes.published,
       recordedAt: routes.recordedAt,
       gpxPath: routes.gpxPath,

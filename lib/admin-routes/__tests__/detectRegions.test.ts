@@ -33,7 +33,7 @@ describe("detectRegions", () => {
       coordinates: [
         [121.515, 25.04],
         [121.535, 25.04],
-      ],
+      ] satisfies Array<[number, number]>,
     };
 
     const result = await detectRegions(tx, geojson);
@@ -59,7 +59,7 @@ describe("detectRegions", () => {
       coordinates: [
         [124.0, 24.0],
         [125.0, 24.0],
-      ],
+      ] satisfies Array<[number, number]>,
     });
     expect(result).toEqual([]);
   });
@@ -73,7 +73,7 @@ describe("detectRegions", () => {
         coordinates: [
           [0, 0],
           [1, 1],
-        ],
+        ] satisfies Array<[number, number]>,
       }),
     ).rejects.toBe(boom);
   });

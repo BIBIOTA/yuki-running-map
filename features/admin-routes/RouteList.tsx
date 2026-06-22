@@ -59,8 +59,13 @@ import { buildEditPath, classifyStatus, formatRecordedAt } from "./routeListView
  */
 export type RouteListItem = Pick<
   Route,
-  "id" | "title" | "slug" | "region" | "published" | "recordedAt" | "gpxPath"
->;
+  "id" | "title" | "slug" | "published" | "recordedAt" | "gpxPath"
+> & {
+  /** Detected admin_units for this row, mapped to the public Region shape.
+   *  Populated by the admin routes page join (task 3.17). Empty array when
+   *  the row has zero `route_admin_units` join rows. */
+  regions?: import("@/lib/regions/types").Region[];
+};
 
 type Props = {
   routes: RouteListItem[];
@@ -124,7 +129,13 @@ export function RouteList({ routes }: Props) {
                   ) : null}
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{route.slug}</td>
-                <td className="px-4 py-3">{route.region ?? "—"}</td>
+                <td className="px-4 py-3">
+                  {/* Inline truncated RouteRegions lands in task 3.14;
+                      placeholder keeps cell density consistent. */}
+                  {route.regions && route.regions.length > 0
+                    ? route.regions.map((r) => r.name).join("、")
+                    : "—"}
+                </td>
                 <td className="px-4 py-3">
                   {status.kind === "published" ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">

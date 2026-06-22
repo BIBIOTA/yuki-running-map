@@ -41,7 +41,6 @@ export interface SeedRouteOverrides {
   gpxPath?: string;
   published?: boolean;
   description?: string | null;
-  region?: string | null;
   locationName?: string | null;
 }
 
@@ -75,7 +74,6 @@ export async function seedRoute(
   const gpxPath = overrides.gpxPath ?? "gpx/2026/seed.gpx";
   const published = overrides.published ?? false;
   const description = overrides.description ?? null;
-  const region = overrides.region ?? null;
   const locationName = overrides.locationName ?? null;
 
   // Lazy-import: same reasoning as `dbCleanup.truncateRoutes()` —
@@ -92,7 +90,6 @@ export async function seedRoute(
         elevation_gain_m,
         recorded_at,
         location_name,
-        region,
         tags,
         gpx_path,
         geojson,
@@ -107,7 +104,6 @@ export async function seedRoute(
         ${elevationGainM},
         ${recordedAt.toISOString()},
         ${locationName},
-        ${region},
         ${sql.array(tags, 1009)},
         ${gpxPath},
         ${'{"type":"Feature","geometry":{"type":"LineString","coordinates":[[121.5,25.0],[121.51,25.01]]},"properties":{}}'}::jsonb,

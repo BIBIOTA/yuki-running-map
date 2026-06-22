@@ -81,7 +81,6 @@ async function seedRoute(
       distanceM: 10000,
       elevationGainM: 30,
       recordedAt: new Date("2026-05-11T06:30:00.000Z"),
-      region: null,
       tags: [],
       gpxPath: "gpx/2026/seed.gpx",
       geojson: SEED_GEOJSON,
@@ -174,7 +173,6 @@ describe("updateRoute (non-DB regression)", () => {
         // ── legacy fields stripped by feat-gpx-driven-route-metadata ────
         difficulty: "medium",
         duration_s: 1800,
-        region: null,
       });
 
       expect(result.ok).toBe(true);

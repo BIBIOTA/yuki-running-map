@@ -24,7 +24,6 @@ function makeRoute(overrides: Partial<Route> = {}): Route {
     elevationProfile: [],
     recordedAt: new Date("2025-01-15T06:00:00Z"),
     locationName: null,
-    region: "台北市",
     tags: ["河濱", "LSD"],
     gpxPath: "routes/abc.gpx",
     geojson: {
