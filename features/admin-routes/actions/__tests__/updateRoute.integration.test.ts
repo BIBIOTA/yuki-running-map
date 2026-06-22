@@ -117,7 +117,6 @@ describe("updateRoute (non-DB regression)", () => {
         id: "00000000-0000-0000-0000-000000000001",
         title: "Some title",
         slug: "INVALID SLUG", // uppercase + space
-        difficulty: "easy",
         published: true,
       });
 
@@ -161,10 +160,7 @@ describe("updateRoute (non-DB regression)", () => {
         title: "Updated title",
         slug: "updated-slug",
         description: null,
-        region: null,
         tags: ["foo"],
-        difficulty: "medium",
-        duration_s: 1800,
         published: true,
         // ── locked / GPX-derived keys the client tried to sneak in ──────
         gpx_path: "evil.gpx",
@@ -175,6 +171,10 @@ describe("updateRoute (non-DB regression)", () => {
         elevation_gain_m: 12345,
         recorded_at: new Date("2000-01-01T00:00:00.000Z"),
         created_at: new Date("2000-01-01T00:00:00.000Z"),
+        // ── legacy fields stripped by feat-gpx-driven-route-metadata ────
+        difficulty: "medium",
+        duration_s: 1800,
+        region: null,
       });
 
       expect(result.ok).toBe(true);
@@ -245,9 +245,7 @@ describe.skipIf(!process.env.DATABASE_URL)("updateRoute (integration)", () => {
         title: "Renamed",
         slug: "new-slug",
         description: "新描述",
-        region: "台北",
         tags: ["河濱"],
-        difficulty: "medium",
         published: true,
       });
 
@@ -258,18 +256,16 @@ describe.skipIf(!process.env.DATABASE_URL)("updateRoute (integration)", () => {
         slug: string;
         title: string;
         description: string | null;
-        difficulty: string;
         distance_m: number;
         gpx_path: string;
       }>(
-        sql`SELECT slug, title, description, difficulty, distance_m, gpx_path FROM routes WHERE id = ${seeded.id}`,
+        sql`SELECT slug, title, description, distance_m, gpx_path FROM routes WHERE id = ${seeded.id}`,
       );
       expect(rows.length).toBe(1);
       const row = rows[0]!;
       expect(row.slug).toBe("new-slug");
       expect(row.title).toBe("Renamed");
       expect(row.description).toBe("新描述");
-      expect(row.difficulty).toBe("medium");
       // GPX-derived columns should retain seeded values.
       expect(row.distance_m).toBe(10000);
       expect(row.gpx_path).toBe("gpx/2026/seed.gpx");
@@ -295,7 +291,6 @@ describe.skipIf(!process.env.DATABASE_URL)("updateRoute (integration)", () => {
         id: seeded.id,
         title: "Renamed Only",
         slug: "stable-slug", // identical
-        difficulty: "easy",
         published: true,
       });
 
@@ -320,7 +315,6 @@ describe.skipIf(!process.env.DATABASE_URL)("updateRoute (integration)", () => {
         id: rowA.id,
         title: "Row A Renamed",
         slug: "b", // collide with Row B's slug
-        difficulty: "easy",
         published: true,
       });
 

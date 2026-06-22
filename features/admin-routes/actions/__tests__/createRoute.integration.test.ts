@@ -63,10 +63,7 @@ async function makeGpxFormData(
     title: string;
     slug: string;
     description: string;
-    region: string;
     tags: string[];
-    difficulty: string;
-    duration_s: string;
     published: string;
   }> = {},
 ): Promise<FormData> {
@@ -74,10 +71,7 @@ async function makeGpxFormData(
   fd.append("title", overrides.title ?? "Sample Route");
   fd.append("slug", overrides.slug ?? "sample-route");
   if (overrides.description !== undefined) fd.append("description", overrides.description);
-  if (overrides.region !== undefined) fd.append("region", overrides.region);
   fd.append("tags", JSON.stringify(overrides.tags ?? ["河濱"]));
-  fd.append("difficulty", overrides.difficulty ?? "easy");
-  if (overrides.duration_s !== undefined) fd.append("duration_s", overrides.duration_s);
   fd.append("published", overrides.published ?? "true");
 
   const file = new File([new Uint8Array(buffer)], "sample.gpx", {
@@ -118,7 +112,6 @@ describe("createRoute (parse-boundary)", () => {
       fd.append("title", "Malformed Tags");
       fd.append("slug", "malformed-tags");
       fd.append("tags", "{broken"); // malformed JSON — not parseable
-      fd.append("difficulty", "easy");
       fd.append("published", "true");
       const file = new File([new Uint8Array(Buffer.from("ignored"))], "sample.gpx", {
         type: "application/gpx+xml",
