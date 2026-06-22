@@ -30,6 +30,12 @@ export interface GpxMetadata {
   distanceM: number;
   /** Sum of positive elevation deltas in metres. `0` when no `<ele>` tags. */
   elevationGainM: number;
+  /**
+   * Distance-vs-elevation series: `[cumulativeDistanceMetres, elevationMetres]`
+   * pairs simplified to ≤ 300 points via 2D Ramer–Douglas–Peucker. Always
+   * starts at `[0, *]`. Empty when the GPX has no usable `<ele>` data.
+   */
+  elevationProfile: Array<[number, number]>;
   /** `[minLng, minLat, maxLng, maxLat]` over all trackpoints. */
   bbox: BBox2D;
   /** First trackpoint as `[lng, lat]`. */

@@ -3,7 +3,7 @@ import type { BBox2D, GpxMetadata, LngLat } from "./types";
 
 import { XMLParser } from "fast-xml-parser";
 
-import { simplifyLineString } from "./simplify";
+import { ramerDouglasPeucker, simplifyLineString } from "./simplify";
 
 /**
  * Earth's mean radius in metres. Used by the Haversine distance formula.
@@ -148,6 +148,77 @@ function computeElevationGainM(points: ReadonlyArray<TrackPoint>): number {
   return gain;
 }
 
+/**
+ * Build the `[cumulativeDistanceMetres, elevationMetres]` series.
+ *
+ * - Distance accumulates over ALL trackpoints (even those without `<ele>`)
+ *   so the series stays consistent with the real ground distance.
+ * - Trackpoints without `<ele>` are skipped (no pair is emitted); their
+ *   travelled distance is still folded into the running counter for the
+ *   next with-elevation point.
+ * - When fewer than two valid pairs remain, return `[]` — the detail
+ *   page's `<ElevationProfile profile={[]} />` branch renders the
+ *   "此路線無海拔資料" empty-state.
+ * - Otherwise simplify with 2D Ramer–Douglas–Peucker at tol 0.5 m; if the
+ *   result is still > 300 points the tolerance is doubled iteratively
+ *   (12 retries is plenty for any realistic track).
+ * - Values are rounded for storage compactness — distance to integer
+ *   metres, elevation to 0.1 m.
+ *
+ * Spec: route-elevation-profile capability,
+ *       "parseGpx computes elevation_profile from trackpoints"
+ */
+function computeElevationProfile(
+  points: ReadonlyArray<TrackPoint>,
+): Array<[number, number]> {
+  const raw: Array<[number, number]> = [];
+  let cumulative = 0;
+  let previous: TrackPoint | undefined;
+
+  for (const point of points) {
+    if (previous !== undefined) {
+      cumulative += haversineMetres(previous, point);
+    }
+    if (point.ele !== undefined) {
+      raw.push([cumulative, point.ele]);
+    }
+    previous = point;
+  }
+
+  if (raw.length < 2) return [];
+
+  // Force the first emitted pair's distance to be exactly 0; the geometry
+  // simplification expects a starting offset rather than wherever the first
+  // <ele> happens to sit on the track.
+  const offset = raw[0]?.[0] ?? 0;
+  const shifted: Array<[number, number]> = raw.map(([d, e]) => [d - offset, e]);
+
+  const distance2D = (
+    p: readonly [number, number],
+    a: readonly [number, number],
+    b: readonly [number, number],
+  ): number => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    if (dx === 0 && dy === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+    const num = Math.abs(dx * (a[1] - p[1]) - (a[0] - p[0]) * dy);
+    return num / Math.hypot(dx, dy);
+  };
+
+  let tolerance = 0.5;
+  let simplified = ramerDouglasPeucker(shifted, distance2D, tolerance);
+  const MAX_POINTS = 300;
+  for (let i = 0; i < 12 && simplified.length > MAX_POINTS; i++) {
+    tolerance *= 2;
+    simplified = ramerDouglasPeucker(shifted, distance2D, tolerance);
+  }
+
+  return simplified.map(([d, e]) => [
+    Math.round(d),
+    Math.round(e * 10) / 10,
+  ]);
+}
+
 function computeBbox(points: ReadonlyArray<TrackPoint>): BBox2D {
   const first = points[0];
   if (!first) {
@@ -205,6 +276,7 @@ export function parseGpx(input: Uint8Array | string): GpxMetadata {
 
   const distanceM = computeDistanceM(points);
   const elevationGainM = computeElevationGainM(points);
+  const elevationProfile = computeElevationProfile(points);
   const bbox = computeBbox(points);
   const startPoint: LngLat = [firstPoint.lng, firstPoint.lat];
 
@@ -224,6 +296,7 @@ export function parseGpx(input: Uint8Array | string): GpxMetadata {
     geojson,
     distanceM,
     elevationGainM,
+    elevationProfile,
     bbox,
     startPoint,
     recordedAt,
