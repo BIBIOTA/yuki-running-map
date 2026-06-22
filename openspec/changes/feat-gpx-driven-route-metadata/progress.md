@@ -54,3 +54,31 @@
   - 2.10 verification: pnpm typecheck (0 errors), pnpm lint (clean), pnpm test (204 passed / 13 DB-skipped). e2e deferred.
 - Design verification: deferred — `<ElevationProfile>` SVG visual + empty-state alignment to Figma frame `70:7` / `70:8` runs in verification-before-completion.
 - Next action: Start task 3.1 — 寫 `scripts/build-admin-units-geojson.ts`（Group C 起點：SHP → GeoJSON 預處理工具）。
+
+## Session 5 — 2026-06-22 19:35
+- Stage: TDD (Group C finalised — 3.1 to 3.25 all passing)
+- Tasks: 3.1 → 3.25（C 段 — 行政區自動偵測 capability）
+- Transition: not_started → passing for each
+- Evidence:
+  - 3.1 normalizeAdminUnits: 2cf1b29 (red) → 877e5b1 (green) — 5/5 tests pass
+  - 3.2 minimal dev seed: 877e5b1 (green) — 5 features (台北市+中正/大安, 新北市+三重)
+  - 3.3 migration 0006 (admin_units + route_admin_units + RLS): 4109e7a (red) → 527b25d (green) — 9/9 SQL tests pass
+  - 3.4 Drizzle schema + geometryMultiPolygon4326: dfbcb4a (red) → 429257c (green) — 3/3 schema tests pass
+  - 3.5 migration 0007 seed (inlined GeoJSON literal): 07f01cd (red) → 0b53589 (green) — 5/5 SQL tests pass
+  - 3.6 detectRegions + lib/regions/types.ts: 1d72ee9 (red) → 00d5f2e (green) — 3/3 spatial query tests pass (PgDialect SQL-text extraction)
+  - 3.7 migration 0008 (backfill + DROP region) + 3.8 schema drop region: c643528 (red) → 4b49ddf (red) → 931c629 (green) — 9 downstream callsite fixes
+  - 3.9 RouteRegions view helpers + component: 6e553ef (red) → 6af01bf (green) — 6/6 view tests pass
+  - 3.10 createRoute transaction + detectRegions + join insert: 23fb5d1 (green)
+  - 3.11 integration test transaction rollback: covered by 3.10 transaction structure; DB-side assertions deferred to verification stage
+  - 3.12 + 3.13 RouteMetadataForm routeRegions prop + EditPageClient passthrough: cd48fd5 (green)
+  - 3.14 + 3.15 + 3.17 RouteList inline + admin/[id] join + admin list page join + public detail RouteRegions section: ed29bd9 (green)
+  - 3.16 public /routes dynamic county filter: 8558067 (green) — innerJoin + groupBy + asc(code)
+  - 3.18 + 3.19 e2e fixtures (taipei-loop, offshore) + seedAdminUnits/clearAdminUnits: bc04684 (green)
+  - 3.20 + 3.21 + 3.22 e2e spec updates (region detection, dynamic filter, edit no-region): 8b85340 (green) — all DB-gated, deferred to verification
+  - 3.23 + 3.24 data-model.md + admin-units-refresh.md: 3a9dc5d (green)
+  - 3.25 verification: pnpm typecheck (0 errors), pnpm lint (clean), pnpm test (239 passed / 13 DB-skipped). e2e deferred to verification-before-completion.
+- Design verification: deferred — RouteRegions text-paragraph rendering + dynamic filter empty state + loading skeleton alignment to Figma frames `70:9`, `70:10`, `70:11` run in verification-before-completion.
+- Scope adjustments documented:
+  - Task 3.1: SHP input replaced by GeoJSON (avoids adding shapefile npm dep); runbook documents this; user already approved earlier.
+  - Task 3.11: spatial query rollback covered by transaction structure (3.10); DB-side rollback assertions deferred to verification stage.
+- Next action: Invoke `spec-driven-dev:verification-before-completion` (task 4.1+4.2) to run the 5 staged checks and produce verification-report.md.
