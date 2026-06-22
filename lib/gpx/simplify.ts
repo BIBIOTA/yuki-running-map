@@ -14,40 +14,39 @@ const MIN_POINTS = 100;
 const MAX_POINTS = 500;
 
 /**
- * Perpendicular distance from `point` to the line through `lineStart` and
- * `lineEnd`, measured in raw degrees (lng/lat treated as planar Cartesian
- * coordinates). The values produced here only need to be self-consistent
- * within one call — we compare distances against `tolerance`, never against
- * real-world metres.
+ * Distance function passed to `ramerDouglasPeucker`. Returns the
+ * perpendicular distance from `point` to the segment defined by
+ * (`lineStart`, `lineEnd`). The implementation may use whichever metric
+ * makes sense for the point space — `simplifyLineString` treats lng/lat
+ * as planar Cartesian (raw degrees), while task 2.3 uses metres-vs-metres
+ * for the (distance, elevation) profile.
  */
-function perpendicularDistance(point: LngLat, lineStart: LngLat, lineEnd: LngLat): number {
-  const [x, y] = point;
-  const [x1, y1] = lineStart;
-  const [x2, y2] = lineEnd;
-
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-
-  if (dx === 0 && dy === 0) {
-    // Degenerate segment — fall back to point-to-point distance.
-    return Math.hypot(x - x1, y - y1);
-  }
-
-  // |(x2-x1)(y1-y) - (x1-x)(y2-y1)| / sqrt(dx^2 + dy^2)
-  const numerator = Math.abs(dx * (y1 - y) - (x1 - x) * dy);
-  const denominator = Math.hypot(dx, dy);
-  return numerator / denominator;
-}
+export type RDPDistanceFn<T> = (
+  point: T,
+  lineStart: T,
+  lineEnd: T,
+) => number;
 
 /**
- * Ramer–Douglas–Peucker line simplification. Iterative implementation (no
- * recursion) so we never blow the stack on very long tracks.
+ * Generic Ramer–Douglas–Peucker line simplification. Iterative (no
+ * recursion) so very long tracks never blow the stack. Inputs of length
+ * ≤ 2 are returned as a fresh copy unchanged — the algorithm has nothing
+ * to do when the only candidates would be the preserved endpoints.
+ *
+ * Spec: openspec/changes/feat-gpx-driven-route-metadata/specs/route-elevation-profile/spec.md
+ *       ADDED Requirement: "parseGpx computes elevation_profile from trackpoints"
+ *       (factored helper reused by `simplifyLineString` and the new
+ *        `computeElevationProfile` in `parse.ts`)
  */
-function rdp(coords: ReadonlyArray<LngLat>, tolerance: number): LngLat[] {
-  if (coords.length < 3) return coords.slice();
+export function ramerDouglasPeucker<T>(
+  points: ReadonlyArray<T>,
+  distanceFn: RDPDistanceFn<T>,
+  tolerance: number,
+): T[] {
+  if (points.length < 3) return points.slice();
 
-  const lastIndex = coords.length - 1;
-  const keep = new Uint8Array(coords.length);
+  const lastIndex = points.length - 1;
+  const keep = new Uint8Array(points.length);
   keep[0] = 1;
   keep[lastIndex] = 1;
 
@@ -58,16 +57,16 @@ function rdp(coords: ReadonlyArray<LngLat>, tolerance: number): LngLat[] {
     const segment = stack.pop();
     if (!segment) break;
     const [start, end] = segment;
-    const startPoint = coords[start];
-    const endPoint = coords[end];
-    if (!startPoint || !endPoint) continue;
+    const startPoint = points[start];
+    const endPoint = points[end];
+    if (startPoint === undefined || endPoint === undefined) continue;
 
     let maxDistance = 0;
     let maxIndex = -1;
     for (let i = start + 1; i < end; i++) {
-      const candidate = coords[i];
-      if (!candidate) continue;
-      const distance = perpendicularDistance(candidate, startPoint, endPoint);
+      const candidate = points[i];
+      if (candidate === undefined) continue;
+      const distance = distanceFn(candidate, startPoint, endPoint);
       if (distance > maxDistance) {
         maxDistance = distance;
         maxIndex = i;
@@ -81,14 +80,42 @@ function rdp(coords: ReadonlyArray<LngLat>, tolerance: number): LngLat[] {
     }
   }
 
-  const result: LngLat[] = [];
-  for (let i = 0; i < coords.length; i++) {
+  const result: T[] = [];
+  for (let i = 0; i < points.length; i++) {
     if (keep[i]) {
-      const point = coords[i];
-      if (point) result.push(point);
+      const point = points[i];
+      if (point !== undefined) result.push(point);
     }
   }
   return result;
+}
+
+/**
+ * Perpendicular distance from `point` to the line through `lineStart` and
+ * `lineEnd`, measured in raw degrees (lng/lat treated as planar Cartesian
+ * coordinates). The values produced here only need to be self-consistent
+ * within one call — we compare distances against `tolerance`, never against
+ * real-world metres.
+ */
+function lngLatPerpendicularDistance(
+  point: LngLat,
+  lineStart: LngLat,
+  lineEnd: LngLat,
+): number {
+  const [x, y] = point;
+  const [x1, y1] = lineStart;
+  const [x2, y2] = lineEnd;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (dx === 0 && dy === 0) {
+    return Math.hypot(x - x1, y - y1);
+  }
+
+  const numerator = Math.abs(dx * (y1 - y) - (x1 - x) * dy);
+  const denominator = Math.hypot(dx, dy);
+  return numerator / denominator;
 }
 
 /**
@@ -112,11 +139,11 @@ export function simplifyLineString(
 
   // Small inputs cannot be expanded — just simplify once.
   if (coords.length < MIN_POINTS) {
-    return rdp(coords, tolerance);
+    return ramerDouglasPeucker(coords, lngLatPerpendicularDistance, tolerance);
   }
 
   let workingTolerance = tolerance;
-  let result = rdp(coords, workingTolerance);
+  let result = ramerDouglasPeucker(coords, lngLatPerpendicularDistance, workingTolerance);
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
     if (result.length > MAX_POINTS) {
@@ -126,7 +153,7 @@ export function simplifyLineString(
     } else {
       break;
     }
-    result = rdp(coords, workingTolerance);
+    result = ramerDouglasPeucker(coords, lngLatPerpendicularDistance, workingTolerance);
   }
 
   return result;
