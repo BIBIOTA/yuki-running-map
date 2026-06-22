@@ -9,11 +9,11 @@ doc_language: zh-TW
 
 ## 1. Group A — 移除手填欄位（PR-A）
 
-- [ ] 1.1 寫 migration `0004_drop_route_difficulty_and_duration.sql`
+- [x] 1.1 寫 migration `0004_drop_route_difficulty_and_duration.sql`
   - Acceptance: WHEN `pnpm db:migrate` 在 fresh DB 跑完 THEN `routes` 表已無 `difficulty` 與 `duration_s` columns AND `difficulty` enum type 已 DROP AND `pnpm db:generate --strict` 對 schema.ts 不產出新 migration（drift = 0）
   - Depends on: -
   - Independence: independent
-  - status: not_started
+  - status: passing
 
 - [ ] 1.2 更新 `lib/db/schema.ts`：刪 `difficulty` / `durationS` columns 與 `difficultyEnum` export
   - Acceptance: WHEN `pnpm typecheck` 跑 THEN 0 error AND `Route` / `NewRoute` types 不再含 `difficulty` / `durationS`
