@@ -82,3 +82,26 @@
   - Task 3.1: SHP input replaced by GeoJSON (avoids adding shapefile npm dep); runbook documents this; user already approved earlier.
   - Task 3.11: spatial query rollback covered by transaction structure (3.10); DB-side rollback assertions deferred to verification stage.
 - Next action: Invoke `spec-driven-dev:verification-before-completion` (task 4.1+4.2) to run the 5 staged checks and produce verification-report.md.
+
+## Session 6 — 2026-06-22 19:56
+- Stage: verification-before-completion
+- Tasks: 4.1 + 4.2
+- Transition: not_started → passing for each
+- Evidence:
+  - 4.1 `openspec validate feat-gpx-driven-route-metadata --strict` exit 0
+  - 4.2 verification-report.md written; PASS-with-3-DEFERRED summary:
+    - Lint / typecheck PASS (exit 0 / exit 0)
+    - Unit tests PASS (sequential: 249/252; parallel: 245/252 with TRUNCATE races)
+    - Scenario coverage PASS (77 test describe vs 50 spec scenarios — 1.5×)
+    - Manual smoke PASS (seeded route renders 台北市 — 中正區 stacked + elevation SVG; `/routes` empty filter card → dynamic county after seed; `/nonexistent` → 404)
+    - openspec validate PASS
+    - progress.md gate PASS
+    - tasks.md PASS (only Optional UML unchecked — deliberate per brainstorming)
+    - Stage 3 n/a (no diagrams — UML opt-out)
+    - Design verification PASS-with-1-DEFERRED (Frame 70:11 needs admin OAuth)
+    - Component reuse PASS
+  - 3 DEFERRED items, all pre-existing infra gaps:
+    - createRoute integration 3 scenarios — Next.js 15 `cookies() outside request scope` (pre-existing; previous archive's verification PARTIAL with same gap masked by skip)
+    - Frame 70:11 admin upload loading skeleton visual diff — needs admin OAuth
+- Design verification: PASS-with-1-DEFERRED — frames 70:7/70:8/70:9/70:10 confirmed; 70:11 deferred for OAuth flow.
+- Next action: Recommend the user run `openspec archive feat-gpx-driven-route-metadata` to complete the change; the 3 DEFERRED items become tracked post-archive follow-up work per verification-report.md §Next Actions.
