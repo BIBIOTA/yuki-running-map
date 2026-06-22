@@ -109,5 +109,11 @@ test.describe("admin route edit flow", () => {
     await expect(page.getByLabel("標題")).toHaveValue("Edited Route Title");
     // The new tag chip is rendered as a `<span>` by `<TagsInput>`.
     await expect(page.getByText("夜跑", { exact: true })).toBeVisible();
+
+    // 10. The legacy region / difficulty / duration_s inputs are gone
+    //     entirely; the form must not render any of them.
+    await expect(page.locator("#region")).toHaveCount(0);
+    await expect(page.locator("#difficulty")).toHaveCount(0);
+    await expect(page.locator("#duration_s")).toHaveCount(0);
   });
 });

@@ -108,5 +108,14 @@ test.describe("admin upload flow", () => {
     await expect(elevationSvg.or(elevationEmpty)).toBeVisible({
       timeout: 5000,
     });
+
+    // 9. With the migration 0007 seed already loaded (台北市 + 中正區/大安區,
+    //    新北市 + 三重區), the sample GPX intersects 台北市 — the public
+    //    detail page should surface the 「途經區域」 section. We assert
+    //    the heading; the exact text content depends on the fixture's
+    //    intersection profile and is covered by integration assertions
+    //    in createRoute.integration.test.ts (DB-gated).
+    const regionsHeading = page.getByRole("heading", { name: "途經區域" });
+    await expect(regionsHeading).toBeVisible();
   });
 });
