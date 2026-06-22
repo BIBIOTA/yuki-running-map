@@ -76,13 +76,19 @@ import {
 import { formatRecordedAt } from "./routeListView";
 import { RouteMetadataForm } from "./RouteMetadataForm";
 import type { RouteMetadataValues } from "./types";
+import type { Region } from "@/lib/regions/types";
 
 type Props = {
   initial: Route;
   existingTags: string[];
+  /**
+   * Detected admin_units for this route, joined server-side by the page
+   * (task 3.13). Rendered read-only inside `<RouteMetadataForm>`.
+   */
+  routeRegions?: Region[];
 };
 
-export function EditPageClient({ initial, existingTags }: Props) {
+export function EditPageClient({ initial, existingTags, routeRegions }: Props) {
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string> | undefined
   >(undefined);
@@ -118,6 +124,7 @@ export function EditPageClient({ initial, existingTags }: Props) {
           initial={buildFormInitialFromRoute(initial)}
           fieldErrors={fieldErrors}
           cancelHref="/admin/routes"
+          routeRegions={routeRegions}
         />
         <aside className="space-y-4 rounded-md border border-border bg-muted/30 p-6">
           <h2 className="text-sm font-medium text-muted-foreground">
