@@ -18,6 +18,7 @@ describe("routes table schema", () => {
       "description",
       "distance_m",
       "elevation_gain_m",
+      "elevation_profile",
       "recorded_at",
       "location_name",
       "region",
@@ -46,6 +47,15 @@ describe("routes table schema", () => {
     // Removed by migration 0004 (design.md §3.1) — Drizzle introspect must match.
     expect(columnByName.has("difficulty")).toBe(false);
     expect(columnByName.has("duration_s")).toBe(false);
+  });
+
+  it("elevation_profile column is jsonb NOT NULL", () => {
+    // Spec: route-elevation-profile capability,
+    //       "routes.elevation_profile jsonb column stores the per-route profile"
+    const col = columnByName.get("elevation_profile");
+    expect(col).toBeDefined();
+    expect(col?.notNull).toBe(true);
+    expect(col?.getSQLType()).toBe("jsonb");
   });
 
   it("schema module no longer exports difficultyEnum", () => {
