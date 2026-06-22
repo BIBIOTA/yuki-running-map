@@ -21,6 +21,7 @@ function makeRoute(overrides: Partial<Route> = {}): Route {
     description: "晨跑路線。",
     distanceM: 5200,
     elevationGainM: 42,
+    elevationProfile: [],
     recordedAt: new Date("2025-01-15T06:00:00Z"),
     locationName: null,
     region: "台北市",

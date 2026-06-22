@@ -23,6 +23,10 @@ export const routes = pgTable(
     description: text("description"),
     distanceM: integer("distance_m").notNull(),
     elevationGainM: integer("elevation_gain_m").notNull(),
+    elevationProfile: jsonb("elevation_profile")
+      .notNull()
+      .default(sql`'[]'::jsonb`)
+      .$type<Array<[number, number]>>(),
     recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
     locationName: text("location_name"),
     region: text("region"),
