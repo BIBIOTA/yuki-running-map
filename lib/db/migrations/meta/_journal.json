@@ -43,6 +43,13 @@
       "when": 1782345700000,
       "tag": "0005_add_elevation_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782345800000,
+      "tag": "0006_add_admin_units",
+      "breakpoints": true
     }
   ]
 }
