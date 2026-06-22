@@ -1,6 +1,14 @@
+import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it, vi } from "vitest";
 
 import { detectRegions } from "../detectRegions";
+
+/** Drizzle's SQL object stringifies to `[object Object]`; use the
+ *  PgDialect to extract the rendered SQL string for assertion. */
+function sqlText(query: unknown): string {
+  const dialect = new PgDialect();
+  return dialect.sqlToQuery(query as Parameters<PgDialect["sqlToQuery"]>[0]).sql;
+}
 
 /**
  * Spec: openspec/changes/feat-gpx-driven-route-metadata/specs/route-administrative-regions/spec.md
@@ -38,12 +46,10 @@ describe("detectRegions", () => {
     expect(execute).toHaveBeenCalledTimes(1);
     const query = execute.mock.calls[0]?.[0];
     expect(query).toBeDefined();
-    // Drizzle's sql template tag yields a SQL object; serialise via a small
-    // adapter to get the text + the inlined values.
-    const queryString = String(query);
-    expect(queryString).toMatch(/ST_Intersects/i);
-    expect(queryString).toMatch(/admin_units/i);
-    expect(queryString).toMatch(/ST_GeomFromGeoJSON/i);
+    const text = sqlText(query);
+    expect(text).toMatch(/ST_Intersects/i);
+    expect(text).toMatch(/admin_units/i);
+    expect(text).toMatch(/ST_GeomFromGeoJSON/i);
   });
 
   it("returns [] when the spatial query yields zero rows (offshore line)", async () => {
