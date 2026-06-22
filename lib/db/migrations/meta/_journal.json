@@ -36,6 +36,13 @@
       "when": 1782345600000,
       "tag": "0004_drop_route_difficulty_and_duration",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782345700000,
+      "tag": "0005_add_elevation_profile",
+      "breakpoints": true
     }
   ]
 }
