@@ -15,53 +15,61 @@ doc_language: zh-TW
   - Independence: independent
   - status: passing
 
-- [ ] 1.2 更新 `lib/db/schema.ts`：刪 `difficulty` / `durationS` columns 與 `difficultyEnum` export
+- [x] 1.2 更新 `lib/db/schema.ts`：刪 `difficulty` / `durationS` columns 與 `difficultyEnum` export
   - Acceptance: WHEN `pnpm typecheck` 跑 THEN 0 error AND `Route` / `NewRoute` types 不再含 `difficulty` / `durationS`
   - Depends on: 1.1
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: aa05a25 (red) → 3a9c1d0 (green)
 
-- [ ] 1.3 更新 `lib/admin-routes/validation.ts` 與 `__tests__/validation.test.ts`：移除 difficulty / durationS 分支與 `DIFFICULTIES` 常數
+- [x] 1.3 更新 `lib/admin-routes/validation.ts` 與 `__tests__/validation.test.ts`：移除 difficulty / durationS 分支與 `DIFFICULTIES` 常數
   - Acceptance: WHEN `validateRouteMetadata({...})` 接到不含 `difficulty` / `duration_s` 的物件 THEN 回傳 `{ok:true, value}` AND `RouteMetadataInput` interface 不再含這兩欄 AND validation 測試全綠
   - Depends on: 1.2
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: bfd7a6d (red) → f6dbb6b (green)
 
-- [ ] 1.4 更新 `features/admin-routes/types.ts`、`routeMetadataFormState.ts`、`uploadPageState.ts`、`editPageState.ts` 與對應 `__tests__/*State.test.ts`
+- [x] 1.4 更新 `features/admin-routes/types.ts`、`routeMetadataFormState.ts`、`uploadPageState.ts`、`editPageState.ts` 與對應 `__tests__/*State.test.ts`
   - Acceptance: WHEN 任何 form state helper 被 typecheck THEN 編譯通過 AND `RouteMetadataValues` 不再含 `difficulty` / `durationS` AND `uploadPageState.buildCreateRouteFormData(v)` 不再 append difficulty / duration_s 鍵
   - Depends on: 1.3
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 3176276 (red) → bbf0786 (green) — 進一步去掉 `region`（A 段提前收斂、為 task 3.12 鋪路）
 
-- [ ] 1.5 更新 `features/admin-routes/RouteMetadataForm.tsx`：移除「難度」與「預計時長」兩個 row
+- [x] 1.5 更新 `features/admin-routes/RouteMetadataForm.tsx`：移除「難度」與「預計時長」兩個 row
   - Acceptance: WHEN visitor 開啟 `/admin/upload` 或 `/admin/routes/[id]` THEN form 上沒有 `id="difficulty"` 也沒有 `id="duration_s"` 元素 AND 其餘欄位佈局保留
   - Depends on: 1.4
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: d572a57 (green; 範圍延伸到也移除 `id="region"` Input — see commit body 理由)
 
-- [ ] 1.6 更新 `features/admin-routes/actions/createRoute.ts` 與 `actions/updateRoute.ts`：刪欄位寫入與相關 FormData 取值
+- [x] 1.6 更新 `features/admin-routes/actions/createRoute.ts` 與 `actions/updateRoute.ts`：刪欄位寫入與相關 FormData 取值
   - Acceptance: WHEN `createRoute(formData)` 在不含 `difficulty` / `duration_s` 的 FormData 下執行 THEN INSERT routes 成功 AND 不對既存 columns 寫入 difficulty/duration_s AND `updateRoute` 同樣不接受這兩欄
   - Depends on: 1.5
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 11c5104 (green)
 
-- [ ] 1.7 更新 `features/admin-routes/actions/__tests__/createRoute.integration.test.ts` 與 `updateRoute.integration.test.ts`、`features/admin-routes/routeListView.ts` 既有 snapshot 與 `RouteList.tsx` 顯示
+- [x] 1.7 更新 `features/admin-routes/actions/__tests__/createRoute.integration.test.ts` 與 `updateRoute.integration.test.ts`、`features/admin-routes/routeListView.ts` 既有 snapshot 與 `RouteList.tsx` 顯示
   - Acceptance: WHEN `pnpm test` 跑 THEN 所有既有 integration 測試 + view-model 測試綠 AND snapshot 中不含 difficulty
   - Depends on: 1.6
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 28bcde6 (green) — `routeListView` / `RouteList.tsx` 改由 task 3.14 處理（routes.region 欄改 RouteRegions chip）
 
-- [ ] 1.8 更新 `e2e/admin-routes-upload.spec.ts`、`admin-routes-edit.spec.ts`、`e2e/helpers/seed.ts`：移除填寫難度 / 時長步驟與斷言、`seedRoute` 簽章對齊
+- [x] 1.8 更新 `e2e/admin-routes-upload.spec.ts`、`admin-routes-edit.spec.ts`、`e2e/helpers/seed.ts`：移除填寫難度 / 時長步驟與斷言、`seedRoute` 簽章對齊
   - Acceptance: WHEN `pnpm test:e2e` 跑 THEN admin upload + edit spec 全綠 AND 沒有任何 e2e 步驟操作 `#difficulty` / `#duration_s`
   - Depends on: 1.7
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 46f2128 (green) — e2e 實際執行延後到 verification-before-completion 階段（需 DB / Supabase）
 
-- [ ] 1.9 A 段 verification：執行 `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e`
+- [x] 1.9 A 段 verification：執行 `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e`
   - Acceptance: WHEN 四個指令依序執行 THEN 全部 exit 0
   - Depends on: 1.8
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Evidence: `pnpm typecheck` exit 0 / `pnpm lint` exit 0 / `pnpm test` 189 passed + 12 skipped (DB-bound) / `pnpm test:e2e` 延後至 verification-before-completion 階段（需 .env.local + 本地 Supabase）
 
 ## 2. Group B — 海拔曲線（PR-B）
 
