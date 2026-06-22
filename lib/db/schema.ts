@@ -4,13 +4,19 @@ import {
   index,
   integer,
   jsonb,
+  pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { geometryPoint4326, geometryPolygon4326 } from "./postgis";
+import {
+  geometryMultiPolygon4326,
+  geometryPoint4326,
+  geometryPolygon4326,
+} from "./postgis";
 
 export const routes = pgTable(
   "routes",
@@ -57,3 +63,44 @@ export const routes = pgTable(
 
 export type Route = typeof routes.$inferSelect;
 export type NewRoute = typeof routes.$inferInsert;
+
+export const adminLevelEnum = pgEnum("admin_level", ["county", "township"]);
+
+export const adminUnits = pgTable(
+  "admin_units",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    code: text("code").unique().notNull(),
+    level: adminLevelEnum("level").notNull(),
+    name: text("name").notNull(),
+    // Self-FK to admin_units(code); county rows have parent_code NULL.
+    parentCode: text("parent_code"),
+    geom: geometryMultiPolygon4326("geom").notNull(),
+  },
+  (t) => [
+    index("admin_units_geom_gist").using("gist", t.geom),
+    index("admin_units_level_idx").on(t.level),
+  ],
+);
+
+export type AdminUnit = typeof adminUnits.$inferSelect;
+export type NewAdminUnit = typeof adminUnits.$inferInsert;
+
+export const routeAdminUnits = pgTable(
+  "route_admin_units",
+  {
+    routeId: uuid("route_id")
+      .notNull()
+      .references(() => routes.id, { onDelete: "cascade" }),
+    adminUnitId: uuid("admin_unit_id")
+      .notNull()
+      .references(() => adminUnits.id, { onDelete: "restrict" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.routeId, t.adminUnitId] }),
+    index("route_admin_units_admin_unit_idx").on(t.adminUnitId),
+  ],
+);
+
+export type RouteAdminUnit = typeof routeAdminUnits.$inferSelect;
+export type NewRouteAdminUnit = typeof routeAdminUnits.$inferInsert;

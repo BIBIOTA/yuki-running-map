@@ -20,7 +20,7 @@
  */
 
 import { customType } from "drizzle-orm/pg-core";
-import type { Point, Polygon } from "geojson";
+import type { MultiPolygon, Point, Polygon } from "geojson";
 
 function polygonToEwkt(polygon: Polygon): string {
   const ring = polygon.coordinates[0];
@@ -34,6 +34,18 @@ function polygonToEwkt(polygon: Polygon): string {
 function pointToEwkt(point: Point): string {
   const [lng, lat] = point.coordinates;
   return `SRID=4326;POINT(${lng} ${lat})`;
+}
+
+function multiPolygonToEwkt(mp: MultiPolygon): string {
+  const polygons = mp.coordinates.map((polygon) => {
+    const ring = polygon[0];
+    if (!ring || ring.length === 0) {
+      throw new Error("geometryMultiPolygon4326.toDriver: empty polygon ring");
+    }
+    const points = ring.map(([lng, lat]) => `${lng} ${lat}`).join(", ");
+    return `((${points}))`;
+  });
+  return `SRID=4326;MULTIPOLYGON(${polygons.join(", ")})`;
 }
 
 export const geometryPolygon4326 = customType<{
@@ -57,5 +69,17 @@ export const geometryPoint4326 = customType<{
   },
   toDriver(value: Point): string {
     return pointToEwkt(value);
+  },
+});
+
+export const geometryMultiPolygon4326 = customType<{
+  data: MultiPolygon;
+  driverData: string;
+}>({
+  dataType() {
+    return "geometry(MultiPolygon, 4326)";
+  },
+  toDriver(value: MultiPolygon): string {
+    return multiPolygonToEwkt(value);
   },
 });
