@@ -45,11 +45,12 @@ import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
 
+import { detectRegions } from "@/lib/admin-routes/detectRegions";
 import { derivePathFromUuid } from "@/lib/admin-routes/gpxFile";
 import { validateRouteMetadata } from "@/lib/admin-routes/validation";
 import { getDb } from "@/lib/db/client";
 import { isPgUniqueViolation } from "@/lib/db/errors";
-import { routes } from "@/lib/db/schema";
+import { routeAdminUnits, routes } from "@/lib/db/schema";
 import { parseGpx } from "@/lib/gpx/parse";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -199,64 +200,88 @@ export async function createRoute(formData: FormData): Promise<CreateRouteResult
     };
   }
 
-  // ── ⑤ INSERT routes row (Drizzle; rollback Storage on any throw) ────────
+  // ── ⑤ INSERT routes + detectRegions + INSERT route_admin_units within a
+  //    single transaction (Drizzle; rollback Storage + transaction on any
+  //    throw). The spatial query must see the just-inserted row; we don't
+  //    need it to, since detectRegions runs against admin_units regardless
+  //    of the new row, but we keep the whole pipeline atomic so a failure
+  //    after routes INSERT does not leave a routes row without join rows.
   let insertedId: string;
   let insertedSlug: string;
+  let spatialQueryThrew = false;
   try {
     const db = getDb();
-    const rows = await db
-      .insert(routes)
-      .values({
-        id,
-        slug: meta.slug,
-        title: meta.title,
-        description: meta.description,
-        distanceM: Math.round(gpx.distanceM),
-        elevationGainM: Math.round(gpx.elevationGainM),
-        elevationProfile: gpx.elevationProfile,
-        recordedAt: gpx.recordedAt,
-        // routes.region column is still present at this point (DROP COLUMN
-        // lands in migration 0008 / task 3.7). The new RouteMetadataInput
-        // shape no longer carries region, so leave the column unset on
-        // INSERT — its default value (NULL) is fine for transitional rows.
-        tags: meta.tags,
-        gpxPath: path,
-        geojson: gpx.geojson,
-        // PostGIS geometry columns expect GeoJSON Polygon/Point — the
-        // `geometryPolygon4326` / `geometryPoint4326` customTypes round-trip
-        // these via the driver.
-        bbox: {
-          type: "Polygon",
-          coordinates: [
-            [
-              [gpx.bbox[0], gpx.bbox[1]],
-              [gpx.bbox[2], gpx.bbox[1]],
-              [gpx.bbox[2], gpx.bbox[3]],
-              [gpx.bbox[0], gpx.bbox[3]],
-              [gpx.bbox[0], gpx.bbox[1]],
+    const result = await db.transaction(async (tx) => {
+      const rows = await tx
+        .insert(routes)
+        .values({
+          id,
+          slug: meta.slug,
+          title: meta.title,
+          description: meta.description,
+          distanceM: Math.round(gpx.distanceM),
+          elevationGainM: Math.round(gpx.elevationGainM),
+          elevationProfile: gpx.elevationProfile,
+          recordedAt: gpx.recordedAt,
+          tags: meta.tags,
+          gpxPath: path,
+          geojson: gpx.geojson,
+          // PostGIS geometry columns expect GeoJSON Polygon/Point — the
+          // `geometryPolygon4326` / `geometryPoint4326` customTypes round-trip
+          // these via the driver.
+          bbox: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [gpx.bbox[0], gpx.bbox[1]],
+                [gpx.bbox[2], gpx.bbox[1]],
+                [gpx.bbox[2], gpx.bbox[3]],
+                [gpx.bbox[0], gpx.bbox[3]],
+                [gpx.bbox[0], gpx.bbox[1]],
+              ],
             ],
-          ],
-        },
-        startPoint: {
-          type: "Point",
-          coordinates: [gpx.startPoint[0], gpx.startPoint[1]],
-        },
-        published: meta.published,
-      })
-      .returning({ id: routes.id, slug: routes.slug });
+          },
+          startPoint: {
+            type: "Point",
+            coordinates: [gpx.startPoint[0], gpx.startPoint[1]],
+          },
+          published: meta.published,
+        })
+        .returning({ id: routes.id, slug: routes.slug });
 
-    const inserted = rows[0];
-    if (!inserted) {
-      // Treat empty returning() as a generic INSERT failure and rollback.
-      await rollbackStorage(supabase, path);
-      console.error("createRoute: INSERT returning() produced no rows");
-      return {
-        ok: false,
-        fieldErrors: { _form: "寫入失敗：INSERT 未回傳新列" },
-      };
-    }
-    insertedId = inserted.id;
-    insertedSlug = inserted.slug;
+      const inserted = rows[0];
+      if (!inserted) {
+        throw new Error("INSERT 未回傳新列");
+      }
+
+      // Spatial detection: use the simplified LineString geometry from
+      // parseGpx (never the raw trackpoints). Catch + tag so we can
+      // distinguish 行政區判斷失敗 from generic INSERT failures upstream.
+      let adminUnitIds: string[] = [];
+      try {
+        adminUnitIds = await detectRegions(tx, {
+          type: "LineString",
+          coordinates: gpx.geojson.geometry.coordinates as Array<[number, number]>,
+        });
+      } catch (e) {
+        spatialQueryThrew = true;
+        throw e;
+      }
+
+      if (adminUnitIds.length > 0) {
+        await tx.insert(routeAdminUnits).values(
+          adminUnitIds.map((adminUnitId) => ({
+            routeId: inserted.id,
+            adminUnitId,
+          })),
+        );
+      }
+
+      return { id: inserted.id, slug: inserted.slug };
+    });
+
+    insertedId = result.id;
+    insertedSlug = result.slug;
   } catch (e) {
     // Rollback the orphaned Storage object first.
     await rollbackStorage(supabase, path);
@@ -269,6 +294,12 @@ export async function createRoute(formData: FormData): Promise<CreateRouteResult
     }
     console.error(e);
     const message = e instanceof Error ? e.message : String(e);
+    if (spatialQueryThrew) {
+      return {
+        ok: false,
+        fieldErrors: { _form: `行政區判斷失敗：${message}` },
+      };
+    }
     return {
       ok: false,
       fieldErrors: { _form: `寫入失敗：${message}` },
