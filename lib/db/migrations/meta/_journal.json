@@ -29,6 +29,13 @@
       "when": 1782050000000,
       "tag": "0003_fix_gpx_admin_select_and_public_path",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782345600000,
+      "tag": "0004_drop_route_difficulty_and_duration",
+      "breakpoints": true
     }
   ]
 }
