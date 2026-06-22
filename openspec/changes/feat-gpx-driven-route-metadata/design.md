@@ -81,7 +81,7 @@ doc_language: zh-TW
 **Frontend**
 - `features/route-detail/elevationProfileView.ts`（純邏輯：profile → SVG `d` 字串、viewBox、座標標籤）。
 - `features/route-detail/ElevationProfile.tsx`（server component，輸入 profile，render `<svg>`）。
-- `app/(public)/routes/[slug]/page.tsx` 從 placeholder 升級為真資料；嵌入 `<ElevationProfile>` + `<RegionChips>`（C 段提供）。
+- `app/(public)/routes/[slug]/page.tsx` 從 placeholder 升級為真資料；嵌入 `<ElevationProfile>` + `<RouteRegions>`（C 段提供）。
 
 **Tests**
 - `lib/gpx/__tests__/parse.test.ts` 補「無高度」「正常高度」fixture。
@@ -105,11 +105,11 @@ doc_language: zh-TW
 - `updateRoute` 不 re-detect（GPX 不可換；要 re-detect 走「刪除重建」）。
 
 **Frontend**
-- `RouteMetadataForm.tsx` 移除手填 region Input；改 read-only `<RegionChips regions={...}>`。
-- `components/RegionChips.tsx`（generic 元件，admin + public 共用）。
+- `RouteMetadataForm.tsx` 移除手填 region Input；改 read-only `<RouteRegions regions={...}>`。
+- `components/RouteRegions.tsx`（generic 文字列元件，admin + public 共用；以「縣市 — 鄉鎮、鄉鎮」格式逐縣市一行 stack；非 chip badge）。
 - `lib/regions/types.ts` 純型別 `Region = { code; level; name }`。
 - `app/(public)/routes/page.tsx` `REGION_FILTERS` SSR 從 `admin_units` 取縣市清單（過濾「至少一條 published route 對應」）。
-- `app/(public)/routes/[slug]/page.tsx` 顯示 `<RegionChips>`。
+- `app/(public)/routes/[slug]/page.tsx` 顯示 `<RouteRegions>`。
 - `app/(admin)/admin/routes/page.tsx` 列表頁 `region` 欄改顯示 chips（前 N 個 + 「+M」）。
 
 **Tests**
@@ -330,7 +330,7 @@ db.select({route, regions: ...})
    ▼
 groupBy id → {route, regions: [{code, level, name}, ...]}
    ▼
-<RegionChips regions={...} />
+<RouteRegions regions={...} />
 ```
 
 **Public list filter**：
@@ -357,9 +357,9 @@ EditPageClient (server-loaded)
    ▼
 {route, detectedRegions: [{level, name}, ...]}
    ▼
-<RouteMetadataForm regionChips={detectedRegions} />
+<RouteMetadataForm routeRegions={detectedRegions} />
    - 不顯示 region <Input>
-   - <RegionChips read-only />
+   - <RouteRegions read-only />
 ```
 
 ### 4.4 Transaction 邊界小結
@@ -399,7 +399,7 @@ EditPageClient (server-loaded)
 | `lib/admin-routes/__tests__/detectRegions.integration.test.ts` | NEW | C | mini admin_unit fixture |
 | `lib/admin-routes/__tests__/detectRegionsView.test.ts` | NEW | C | 純邏輯部分 |
 | `lib/regions/types.ts` | NEW | C | `Region` type |
-| `components/RegionChips.tsx` | NEW | C | generic chip 元件 |
+| `components/RouteRegions.tsx` | NEW | C | generic 文字列元件（縣市 — 鄉鎮、鄉鎮 逐行 stack） |
 | `features/admin-routes/types.ts` | MODIFY | A+C | 去欄位、加 detectedRegions |
 | `features/admin-routes/RouteMetadataForm.tsx` | MODIFY | A+C | 刪 2 row + 刪 region Input + 加 chip |
 | `features/admin-routes/routeMetadataFormState.ts` | MODIFY | A | 對齊 shape |
@@ -441,9 +441,9 @@ C 段 PR 可內部再切「C1 schema + seed migration」「C2 detectRegions + Se
 
 ### 5.3 Folder boundary
 
-- `components/RegionChips.tsx`：generic 視覺元件，與 shadcn primitive 並排。
+- `components/RouteRegions.tsx`：generic 視覺元件，與 shadcn primitive 並排。
 - `lib/regions/types.ts`：純型別。
-- `features/admin-routes/` / `features/route-detail/` 兩個 feature 都 `import` `components/RegionChips`，不互 import（符合 AGENTS.md folder-boundaries 約束）。
+- `features/admin-routes/` / `features/route-detail/` 兩個 feature 都 `import` `components/RouteRegions`，不互 import（符合 AGENTS.md folder-boundaries 約束）。
 
 ---
 
@@ -475,7 +475,7 @@ C 段 PR 可內部再切「C1 schema + seed migration」「C2 detectRegions + Se
 
 | 狀況 | 處理 |
 |---|---|
-| GPX 完全在海上 / 國外（0 交集） | `route_admin_units` 0 rows；UI 不顯示 RegionChips；不阻擋上傳。 |
+| GPX 完全在海上 / 國外（0 交集） | `route_admin_units` 0 rows；UI 不顯示 RouteRegions；不阻擋上傳。 |
 | GPX 跨多區（沿河跑穿 5 區） | 全部 INSERT；UI 顯示前 N 個 + 「+M」（N 由 Figma 階段決定，preset 3）。 |
 | Admin 改路線 GPX | 不支援；走「刪除重建」流程（沿用既有約定）。 |
 | Spatial query 慢 | `admin_units` ~370 polygon + GIST index；單條 LineString 預期 < 50ms。verification 階段量測。 |
@@ -536,7 +536,7 @@ C 段 PR 可內部再切「C1 schema + seed migration」「C2 detectRegions + Se
 
 ### 7.5 「不測」清單
 
-- `<ElevationProfile>` 與 `<RegionChips>` 的 DOM render — 邏輯抽 view file；DOM 不單測（CLAUDE.md 約束）。
+- `<ElevationProfile>` 與 `<RouteRegions>` 的 DOM render — 邏輯抽 view file；DOM 不單測（CLAUDE.md 約束）。
 - 內政部 SHP 原檔解析 — `scripts/build-admin-units-geojson.ts` 不在 spec 範圍。
 - 大檔 GPX 效能 — verification 階段 ad-hoc 量測，spec 不強制。
 - Visual regression — 無 snapshot infra；本案不引入。
@@ -547,8 +547,8 @@ C 段 PR 可內部再切「C1 schema + seed migration」「C2 detectRegions + Se
 
 本案接 `spec-driven-dev:writing-figma`，預計產出三類 frame：
 
-- 公開 detail 頁整體版面（含 `<ElevationProfile>` 區塊 + `<RegionChips>` 區塊；Trail Vintage 線條 / 配色）。
-- `<RegionChips>` variant set（admin form read-only、public detail、admin list 三處）。
+- 公開 detail 頁整體版面（含 `<ElevationProfile>` 區塊 + `<RouteRegions>` 區塊；Trail Vintage 線條 / 配色）。
+- `<RouteRegions>` variant set（admin form read-only、public detail、admin list 三處）。
 - 公開列表頁 `REGION_FILTERS` 動態狀態（0/N/M 個 county）。
 
 Figma 階段細節由 `writing-figma` skill 主導。
@@ -563,6 +563,10 @@ Figma 階段細節由 `writing-figma` skill 主導。
 - **Figma**：採用。`writing-plans` → `writing-figma` → `writing-spec` → `subagent-driven-development` 或 `test-driven-development`。
 
 ---
+
+## Designs
+
+- [Figma Designs](./designs/figma.md) — 5 wireframe frames for feat-gpx-driven-route-metadata（detail happy / detail empty / RouteRegions 三 surface 對照 / RegionFilter 動態 / loading skeleton）。
 
 ## 10. Out-of-scope（明確劃線）
 

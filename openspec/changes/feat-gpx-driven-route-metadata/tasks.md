@@ -175,8 +175,8 @@ doc_language: zh-TW
   - Independence: serial
   - status: not_started
 
-- [ ] 3.9 新增 `components/RegionChips.tsx`（generic 元件，admin form + public detail + admin list 共用）
-  - Acceptance: WHEN render `<RegionChips regions={[]}>` THEN 回傳 `null`（component 完全不渲染） AND WHEN render with `[{level:'county', name:'台北市'}, {level:'township', name:'中正區'}]` THEN 輸出 `<ul>` 包含兩個 chip `<li>` 各含對應 name 文字
+- [ ] 3.9 新增 `components/RouteRegions.tsx`（generic 元件，admin form + public detail + admin list 共用）
+  - Acceptance: WHEN render `<RouteRegions regions={[]}>` THEN 回傳 `null`（component 完全不渲染） AND WHEN render with `[{level:'county', code:'63000', name:'台北市'}, {level:'township', parent_code:'63000', name:'中正區'}]` THEN 輸出文字段落 `台北市 — 中正區`（縣市以 Inter Medium + 森綠強調、鄉鎮以 Inter Regular + 墨黑、連字號 ` — ` 區隔）AND 多縣市時逐行 stack（每縣市一段）
   - Depends on: 3.4
   - Independence: parallel-safe
   - status: not_started
@@ -193,25 +193,25 @@ doc_language: zh-TW
   - Independence: serial
   - status: not_started
 
-- [ ] 3.12 更新 `features/admin-routes/types.ts` 與 `RouteMetadataForm.tsx`：刪 `region` 欄、加 `regionChips?: Region[]` prop、render `<RegionChips>` read-only
-  - Acceptance: WHEN admin form render（含 preview 階段）THEN 沒有 `id="region"` 的 `<input>` AND `regionChips` 非空時 render `<RegionChips>`；空陣列或 undefined 時整個 chip area 不渲染
+- [ ] 3.12 更新 `features/admin-routes/types.ts` 與 `RouteMetadataForm.tsx`：刪 `region` 欄、加 `routeRegions?: Region[]` prop、render `<RouteRegions>` read-only
+  - Acceptance: WHEN admin form render（含 preview 階段）THEN 沒有 `id="region"` 的 `<input>` AND `routeRegions` 非空時 render `<RouteRegions>`；空陣列或 undefined 時整段「途經區域」section 不渲染
   - Depends on: 3.9, 3.10
   - Independence: serial
   - status: not_started
 
 - [ ] 3.13 更新 `features/admin-routes/UploadPageClient.tsx`（preview 階段 chips 為空 / 上傳成功後從 server response 帶 detected regions）與 `EditPageClient.tsx`（server-loaded `detectedRegions` 傳入 form）
-  - Acceptance: WHEN edit 頁 SSR THEN `<RegionMetadataForm regionChips={detected} />` 顯示該 route 已存的 regions AND upload 頁 preview phase 不嘗試 client-side detect
+  - Acceptance: WHEN edit 頁 SSR THEN `<RegionMetadataForm routeRegions={detected} />` 顯示該 route 已存的 regions AND upload 頁 preview phase 不嘗試 client-side detect
   - Depends on: 3.12
   - Independence: serial
   - status: not_started
 
-- [ ] 3.14 更新 `features/admin-routes/RouteList.tsx` 與 `routeListView.ts`：`region` 欄改顯示 chips（前 3 + `+M` 摘要）
-  - Acceptance: WHEN admin route list render THEN 每 row region 欄顯示 chip 列（最多 3）+ `+M`（若多）AND 0 region 顯示 `—` AND view-model `routeListView` 輸出含 `regions: Region[]`
+- [ ] 3.14 更新 `features/admin-routes/RouteList.tsx` 與 `routeListView.ts`：`region` 欄改顯示 RouteRegions 單行壓縮 `{縣市} {鄉鎮…} / {縣市} {鄉鎮…}` 並 CSS truncate（`white-space:nowrap; overflow:hidden; text-overflow:ellipsis`）
+  - Acceptance: WHEN admin route list render THEN 每 row region 欄顯示單行壓縮文字並截斷 AND 0 region 顯示 `—` AND view-model `routeListView` 輸出含 `regions: Region[]`
   - Depends on: 3.10
   - Independence: parallel-safe
   - status: not_started
 
-- [ ] 3.15 升級 `app/(public)/routes/[slug]/page.tsx`：以 leftJoin 抓 regions、render `<RegionChips>`（與 B 的 elevation 區塊並存）
+- [ ] 3.15 升級 `app/(public)/routes/[slug]/page.tsx`：以 leftJoin 抓 regions、render `<RouteRegions>`（與 B 的 elevation 區塊並存）
   - Acceptance: WHEN visitor 打開已 published route detail THEN regions chip 區塊在頁面上 AND 0 region 時不渲染整塊
   - Depends on: 3.9, 2.8
   - Independence: serial
@@ -241,8 +241,8 @@ doc_language: zh-TW
   - Independence: serial
   - status: not_started
 
-- [ ] 3.20 更新 `e2e/admin-routes-upload.spec.ts`：上傳 `taipei-loop.gpx` 後斷言至少 1 個 region chip 出現於 admin form；published 後造訪 public detail 頁亦見 chip
-  - Acceptance: WHEN upload spec 跑 THEN admin form 在上傳成功後顯示 region chip ≥ 1 AND public detail 頁顯示 chip ≥ 1
+- [ ] 3.20 更新 `e2e/admin-routes-upload.spec.ts`：上傳 `taipei-loop.gpx` 後斷言 admin form 顯示「途經區域」section 含至少 1 個縣市文字；published 後造訪 public detail 頁亦見對應文字
+  - Acceptance: WHEN upload spec 跑 THEN admin form 在上傳成功後「途經區域」section 文字含 seed 縣市名（如 "台北市"）AND public detail 頁同樣顯示
   - Depends on: 3.18, 3.19, 3.13, 3.15
   - Independence: serial
   - status: not_started
@@ -253,8 +253,8 @@ doc_language: zh-TW
   - Independence: parallel-safe
   - status: not_started
 
-- [ ] 3.22 更新 `e2e/admin-routes-edit.spec.ts`：斷言 edit 頁顯示 read-only RegionChips
-  - Acceptance: WHEN edit spec 跑 THEN form 顯示 `<RegionChips>` 至少 1 chip AND 沒有可填的 region input
+- [ ] 3.22 更新 `e2e/admin-routes-edit.spec.ts`：斷言 edit 頁顯示 read-only RouteRegions
+  - Acceptance: WHEN edit spec 跑 THEN form 顯示 `<RouteRegions>` 至少 1 個縣市文字段落 AND 沒有可填的 region input
   - Depends on: 3.13
   - Independence: parallel-safe
   - status: not_started
@@ -294,4 +294,4 @@ doc_language: zh-TW
 ## Optional artifacts
 
 - [ ] PlantUML diagrams (spec-driven-dev:writing-uml)
-- [x] Figma designs (spec-driven-dev:writing-figma) — 預計覆蓋：公開 detail 頁版面（含 `<ElevationProfile>` + `<RegionChips>` 區塊）、`<RegionChips>` variant set（admin form / public detail / admin list 三處）、公開列表頁 `REGION_FILTERS` 動態狀態（0 / N / M county）
+- [x] Figma designs (spec-driven-dev:writing-figma) — 預計覆蓋：公開 detail 頁版面（含 `<ElevationProfile>` + `<RouteRegions>` 區塊）、`<RouteRegions>` variant set（admin form / public detail / admin list 三處）、公開列表頁 `REGION_FILTERS` 動態狀態（0 / N / M county）
