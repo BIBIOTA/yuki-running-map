@@ -31,6 +31,73 @@
 
 import { DATABASE_URL } from "./adminAuth";
 
+export interface AdminUnitFixture {
+  code: string;
+  level: "county" | "township";
+  name: string;
+  parent_code?: string | null;
+  /** GeoJSON MultiPolygon coordinates, e.g. [[[[lon,lat],...]]]. */
+  coordinates: number[][][][];
+}
+
+/**
+ * Insert one or more admin_units rows for an e2e test. Returns the IDs in
+ * the same order the fixtures were supplied.
+ *
+ * The migration-time seed (0007) covers 5 features that the production
+ * spec relies on; this helper exists for tests that need a tiny isolated
+ * dataset (e.g., to assert spatial detection against a known mini polygon).
+ */
+export async function seedAdminUnits(
+  fixtures: AdminUnitFixture[],
+): Promise<string[]> {
+  if (!DATABASE_URL) {
+    throw new Error("DATABASE_URL must be set to seed admin_units");
+  }
+  const { default: postgres } = await import("postgres");
+  const sql = postgres(DATABASE_URL, { prepare: false });
+  try {
+    const ids: string[] = [];
+    for (const fixture of fixtures) {
+      const geojson = JSON.stringify({
+        type: "MultiPolygon",
+        coordinates: fixture.coordinates,
+      });
+      const rows = await sql<Array<{ id: string }>>`
+        INSERT INTO admin_units (code, level, name, parent_code, geom)
+        VALUES (
+          ${fixture.code},
+          ${fixture.level}::admin_level,
+          ${fixture.name},
+          ${fixture.parent_code ?? null},
+          ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(${geojson}), 4326))::geometry(MultiPolygon, 4326)
+        )
+        RETURNING id
+      `;
+      const row = rows[0];
+      if (!row) throw new Error("seedAdminUnits: INSERT returned no row");
+      ids.push(row.id);
+    }
+    return ids;
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
+
+export async function clearAdminUnits(): Promise<void> {
+  if (!DATABASE_URL) {
+    throw new Error("DATABASE_URL must be set to clear admin_units");
+  }
+  const { default: postgres } = await import("postgres");
+  const sql = postgres(DATABASE_URL, { prepare: false });
+  try {
+    // TRUNCATE CASCADE wipes route_admin_units join rows too.
+    await sql`TRUNCATE TABLE admin_units CASCADE`;
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
+
 export interface SeedRouteOverrides {
   slug?: string;
   title?: string;

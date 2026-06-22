@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="run-map-fixture-generator" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Taipei loop fixture (crosses 中正區 + 大安區)</name>
+    <time>2026-04-15T06:00:00.000Z</time>
+  </metadata>
+  <trk>
+    <name>Taipei loop</name>
+    <trkseg>
+      <trkpt lat="25.050" lon="121.510"><ele>10</ele><time>2026-04-15T06:00:00.000Z</time></trkpt>
+      <trkpt lat="25.048" lon="121.515"><ele>12</ele><time>2026-04-15T06:00:30.000Z</time></trkpt>
+      <trkpt lat="25.045" lon="121.520"><ele>15</ele><time>2026-04-15T06:01:00.000Z</time></trkpt>
+      <trkpt lat="25.040" lon="121.525"><ele>18</ele><time>2026-04-15T06:01:30.000Z</time></trkpt>
+      <trkpt lat="25.035" lon="121.530"><ele>20</ele><time>2026-04-15T06:02:00.000Z</time></trkpt>
+      <trkpt lat="25.030" lon="121.535"><ele>22</ele><time>2026-04-15T06:02:30.000Z</time></trkpt>
+      <trkpt lat="25.025" lon="121.540"><ele>25</ele><time>2026-04-15T06:03:00.000Z</time></trkpt>
+      <trkpt lat="25.030" lon="121.545"><ele>22</ele><time>2026-04-15T06:03:30.000Z</time></trkpt>
+      <trkpt lat="25.035" lon="121.550"><ele>20</ele><time>2026-04-15T06:04:00.000Z</time></trkpt>
+      <trkpt lat="25.040" lon="121.545"><ele>18</ele><time>2026-04-15T06:04:30.000Z</time></trkpt>
+      <trkpt lat="25.045" lon="121.540"><ele>15</ele><time>2026-04-15T06:05:00.000Z</time></trkpt>
+      <trkpt lat="25.050" lon="121.535"><ele>12</ele><time>2026-04-15T06:05:30.000Z</time></trkpt>
+      <trkpt lat="25.050" lon="121.510"><ele>10</ele><time>2026-04-15T06:06:00.000Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

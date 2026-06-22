@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="run-map-fixture-generator" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Offshore swim fixture (no land intersection)</name>
+    <time>2026-02-05T07:18:00.000Z</time>
+  </metadata>
+  <trk>
+    <name>Offshore swim drill</name>
+    <trkseg>
+      <trkpt lat="24.500" lon="124.000"><time>2026-02-05T07:18:00.000Z</time></trkpt>
+      <trkpt lat="24.501" lon="124.001"><time>2026-02-05T07:18:30.000Z</time></trkpt>
+      <trkpt lat="24.502" lon="124.002"><time>2026-02-05T07:19:00.000Z</time></trkpt>
+      <trkpt lat="24.503" lon="124.003"><time>2026-02-05T07:19:30.000Z</time></trkpt>
+      <trkpt lat="24.504" lon="124.004"><time>2026-02-05T07:20:00.000Z</time></trkpt>
+      <trkpt lat="24.505" lon="124.005"><time>2026-02-05T07:20:30.000Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
