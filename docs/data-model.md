@@ -6,26 +6,75 @@ Mirrors `openspec/changes/bootstrap-yuki-running-map/design.md` §4 and the `rou
 
 ```ts
 id              uuid PRIMARY KEY DEFAULT gen_random_uuid()
-slug            text UNIQUE NOT NULL          -- 'tamsui-river-15k'
-title           text NOT NULL                 -- '淡水河左岸 15K'
-description     text                          -- markdown
-distance_m      int  NOT NULL                 -- 公尺
-elevation_gain_m int NOT NULL                 -- 累積爬升
-duration_s      int                           -- 可選 (紀錄時的耗時)
+slug            text UNIQUE NOT NULL              -- 'tamsui-river-15k'
+title           text NOT NULL                     -- '淡水河左岸 15K'
+description     text                              -- markdown
+distance_m      int  NOT NULL                     -- 公尺
+elevation_gain_m int NOT NULL                     -- 累積爬升
+elevation_profile jsonb NOT NULL DEFAULT '[]'     -- [[distance_m, ele_m], ...] ≤ 300 points
 recorded_at     timestamptz NOT NULL
-location_name   text                          -- '淡水河左岸'
-region          text                          -- '台北' '東京' (篩選用)
-tags            text[] NOT NULL DEFAULT '{}'  -- ['河濱','LSD','夜跑']
-difficulty      enum('easy','medium','hard') NOT NULL
-gpx_path        text NOT NULL                 -- 'gpx/2025/abc-def-123.gpx'
-geojson         jsonb NOT NULL                -- 簡化後的 LineString (給列表 thumbnail)
-bbox            geometry(Polygon,4326) NOT NULL  -- PostGIS · 地圖框選搜尋
-start_point     geometry(Point,4326)   NOT NULL  -- 「距我最近」排序
-cover_image     text                          -- 可選封面圖 URL
+location_name   text                              -- '淡水河左岸'
+tags            text[] NOT NULL DEFAULT '{}'      -- ['河濱','LSD','夜跑']
+gpx_path        text NOT NULL                     -- 'gpx/2025/abc-def-123.gpx'
+geojson         jsonb NOT NULL                    -- 簡化後的 LineString (給列表 thumbnail)
+bbox            geometry(Polygon,4326) NOT NULL   -- PostGIS · 地圖框選搜尋
+start_point     geometry(Point,4326)   NOT NULL   -- 「距我最近」排序
+cover_image     text                              -- 可選封面圖 URL
 published       boolean NOT NULL DEFAULT false
 created_at      timestamptz NOT NULL DEFAULT now()
 updated_at      timestamptz NOT NULL DEFAULT now()
 ```
+
+> **Schema history**: `feat-gpx-driven-route-metadata` (2026-06-22) DROPed
+> `duration_s`, `difficulty`, and `region` columns (migrations 0004 and 0008).
+> 行政區資訊改由 `admin_units` / `route_admin_units` 表承載；困難度與時長則
+> 從 GPX 自動推得（爬升 → 困難度感覺、`<time>` 末減首 → 耗時）。`region`
+> 從手填 free text 升級為 spatial-detected 多筆關聯。
+
+## `admin_units` table
+
+```ts
+id          uuid PRIMARY KEY DEFAULT gen_random_uuid()
+code        text UNIQUE NOT NULL               -- 內政部代碼 ('63000' / '63000010')
+level       enum('county','township') NOT NULL
+name        text NOT NULL                       -- '台北市' / '中正區'
+parent_code text REFERENCES admin_units(code)
+            DEFERRABLE INITIALLY DEFERRED       -- township → county; county → NULL
+geom        geometry(MultiPolygon,4326) NOT NULL -- 含外島或多塊地（連江最明顯）
+```
+
+### Indexes
+
+| Index                      | Purpose                                                              |
+| -------------------------- | -------------------------------------------------------------------- |
+| `GIST(geom)`               | `ST_Intersects` against the simplified GPX LineString in createRoute |
+| `btree(level)`             | 列表頁 filter 只取 county-level rows                                  |
+
+### RLS
+
+- `anon SELECT(true)` — 公開參考資料；行政區界給訪客篩選用。
+- 寫入只在 migration 時發生；no admin write policy at runtime。
+
+## `route_admin_units` join table
+
+```ts
+route_id      uuid NOT NULL REFERENCES routes(id) ON DELETE CASCADE
+admin_unit_id uuid NOT NULL REFERENCES admin_units(id) ON DELETE RESTRICT
+PRIMARY KEY (route_id, admin_unit_id)
+```
+
+### Indexes
+
+| Index                                | Purpose                                       |
+| ------------------------------------ | --------------------------------------------- |
+| `btree(admin_unit_id)`               | 反查：某行政區下有哪些路線（filter EXISTS） |
+
+### RLS
+
+- `anon SELECT` 只看 `EXISTS(SELECT 1 FROM routes WHERE id=route_id AND published=true)`。
+- Admin full access via `app_admin_github_username()`（與 routes 的 admin policy 對稱）。
+- ON DELETE CASCADE on route side, RESTRICT on admin_unit side（行政區年改 migration 要先清 join 才能 DROP/REPLACE admin_units）。
+
 
 ## Indexes
 
