@@ -43,6 +43,7 @@
 import { FolderIcon } from "lucide-react";
 import Link from "next/link";
 
+import { RouteRegions } from "@/components/RouteRegions";
 import { Button } from "@/components/ui/button";
 import type { Route } from "@/lib/db/schema";
 
@@ -129,12 +130,11 @@ export function RouteList({ routes }: Props) {
                   ) : null}
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{route.slug}</td>
-                <td className="px-4 py-3">
-                  {/* Inline truncated RouteRegions lands in task 3.14;
-                      placeholder keeps cell density consistent. */}
-                  {route.regions && route.regions.length > 0
-                    ? route.regions.map((r) => r.name).join("、")
-                    : "—"}
+                <td className="max-w-[28ch] px-4 py-3">
+                  <RouteRegions
+                    regions={route.regions ?? []}
+                    variant="inline"
+                  />
                 </td>
                 <td className="px-4 py-3">
                   {status.kind === "published" ? (

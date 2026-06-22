@@ -49,7 +49,8 @@ import { notFound } from "next/navigation";
 import { EditPageClient } from "@/features/admin-routes/EditPageClient";
 import { listExistingTags } from "@/lib/admin-routes/listExistingTags";
 import { getDb } from "@/lib/db/client";
-import { routes } from "@/lib/db/schema";
+import { adminUnits, routeAdminUnits, routes } from "@/lib/db/schema";
+import type { Region } from "@/lib/regions/types";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -72,9 +73,31 @@ export default async function AdminEditRoutePage({ params }: Props) {
   // `noUncheckedIndexedAccess` rule without an extra runtime guard.
   const route = routeRows[0]!;
 
+  // LeftJoin admin_units for the read-only RouteRegions section in the form.
+  const joinedRegions = await db
+    .select({
+      code: adminUnits.code,
+      level: adminUnits.level,
+      name: adminUnits.name,
+      parentCode: adminUnits.parentCode,
+    })
+    .from(routeAdminUnits)
+    .innerJoin(adminUnits, eq(adminUnits.id, routeAdminUnits.adminUnitId))
+    .where(eq(routeAdminUnits.routeId, route.id));
+  const routeRegions: Region[] = joinedRegions.map((r) => ({
+    code: r.code,
+    level: r.level,
+    name: r.name,
+    parent_code: r.parentCode,
+  }));
+
   return (
     <section className="mx-auto w-full max-w-6xl px-6 py-12">
-      <EditPageClient initial={route} existingTags={existingTags} />
+      <EditPageClient
+        initial={route}
+        existingTags={existingTags}
+        routeRegions={routeRegions}
+      />
     </section>
   );
 }

@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { RouteRegions } from "@/components/RouteRegions";
 import { Button } from "@/components/ui/button";
 import { ElevationProfile } from "@/features/route-detail/ElevationProfile";
 import { getDb } from "@/lib/db/client";
-import { routes } from "@/lib/db/schema";
+import { adminUnits, routeAdminUnits, routes } from "@/lib/db/schema";
+import type { Region } from "@/lib/regions/types";
 
 interface RouteDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -22,6 +24,7 @@ async function loadPublishedRoute(slug: string) {
   const db = getDb();
   const rows = await db
     .select({
+      id: routes.id,
       slug: routes.slug,
       title: routes.title,
       description: routes.description,
@@ -37,7 +40,25 @@ async function loadPublishedRoute(slug: string) {
     .limit(1);
   const row = rows[0];
   if (!row || !row.published) return null;
-  return row;
+
+  const joined = await db
+    .select({
+      code: adminUnits.code,
+      level: adminUnits.level,
+      name: adminUnits.name,
+      parentCode: adminUnits.parentCode,
+    })
+    .from(routeAdminUnits)
+    .innerJoin(adminUnits, eq(adminUnits.id, routeAdminUnits.adminUnitId))
+    .where(eq(routeAdminUnits.routeId, row.id));
+  const regions: Region[] = joined.map((r) => ({
+    code: r.code,
+    level: r.level,
+    name: r.name,
+    parent_code: r.parentCode,
+  }));
+
+  return { ...row, regions };
 }
 
 export async function generateMetadata({ params }: RouteDetailPageProps): Promise<Metadata> {
@@ -98,6 +119,18 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
           </dd>
         </div>
       </dl>
+
+      {row.regions.length > 0 ? (
+        <section aria-labelledby="regions-heading" className="space-y-2">
+          <h2
+            id="regions-heading"
+            className="font-mono text-xs tracking-widest text-muted-foreground uppercase"
+          >
+            途經區域
+          </h2>
+          <RouteRegions regions={row.regions} />
+        </section>
+      ) : null}
 
       <section aria-labelledby="elevation-heading" className="space-y-3">
         <h2

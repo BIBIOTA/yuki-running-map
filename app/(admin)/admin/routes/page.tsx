@@ -25,12 +25,13 @@
  *
  * 繁體中文 strings 「路線管理」 / 「+ 新增路線」 are load-bearing.
  */
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { getDb } from "@/lib/db/client";
-import { routes } from "@/lib/db/schema";
+import { adminUnits, routeAdminUnits, routes } from "@/lib/db/schema";
+import type { Region } from "@/lib/regions/types";
 
 import { RouteList } from "@/features/admin-routes/RouteList";
 import {
@@ -61,6 +62,39 @@ export default async function AdminRoutesPage() {
     .orderBy(desc(routes.createdAt));
   const summary = summarizeRoutes(routesList);
 
+  // Second SELECT projects every join row + admin_unit name so the table
+  // cell can render the inline RouteRegions summary. A single SELECT with
+  // a leftJoin would multiply each route row by its join cardinality, so
+  // we paginate by route_id in memory instead. The total result size is
+  // O(routes × avg regions per route) which is fine for the admin list.
+  const regionsByRoute = new Map<string, Region[]>();
+  if (routesList.length > 0) {
+    const joinRows = await db
+      .select({
+        routeId: routeAdminUnits.routeId,
+        code: adminUnits.code,
+        level: adminUnits.level,
+        name: adminUnits.name,
+        parentCode: adminUnits.parentCode,
+      })
+      .from(routeAdminUnits)
+      .innerJoin(adminUnits, eq(adminUnits.id, routeAdminUnits.adminUnitId));
+    for (const row of joinRows) {
+      const bucket = regionsByRoute.get(row.routeId) ?? [];
+      bucket.push({
+        code: row.code,
+        level: row.level,
+        name: row.name,
+        parent_code: row.parentCode,
+      });
+      regionsByRoute.set(row.routeId, bucket);
+    }
+  }
+  const routesListWithRegions = routesList.map((route) => ({
+    ...route,
+    regions: regionsByRoute.get(route.id) ?? [],
+  }));
+
   return (
     <section className="mx-auto w-full max-w-6xl px-6 py-12">
       <div className="mb-8 flex items-start justify-between">
@@ -72,7 +106,7 @@ export default async function AdminRoutesPage() {
           <Link href="/admin/upload">+ 新增路線</Link>
         </Button>
       </div>
-      <RouteList routes={routesList} />
+      <RouteList routes={routesListWithRegions} />
     </section>
   );
 }
