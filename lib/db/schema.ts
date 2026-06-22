@@ -4,7 +4,6 @@ import {
   index,
   integer,
   jsonb,
-  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -12,8 +11,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { geometryPoint4326, geometryPolygon4326 } from "./postgis";
-
-export const difficultyEnum = pgEnum("difficulty", ["easy", "medium", "hard"]);
 
 export const routes = pgTable(
   "routes",
@@ -26,7 +23,6 @@ export const routes = pgTable(
     description: text("description"),
     distanceM: integer("distance_m").notNull(),
     elevationGainM: integer("elevation_gain_m").notNull(),
-    durationS: integer("duration_s"),
     recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
     locationName: text("location_name"),
     region: text("region"),
@@ -34,7 +30,6 @@ export const routes = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
-    difficulty: difficultyEnum("difficulty").notNull(),
     gpxPath: text("gpx_path").notNull(),
     geojson: jsonb("geojson").notNull(),
     bbox: geometryPolygon4326("bbox").notNull(),
