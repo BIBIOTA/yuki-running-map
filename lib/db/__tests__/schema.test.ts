@@ -21,7 +21,6 @@ describe("routes table schema", () => {
       "elevation_profile",
       "recorded_at",
       "location_name",
-      "region",
       "tags",
       "gpx_path",
       "geojson",
@@ -42,11 +41,11 @@ describe("routes table schema", () => {
     expect(columnByName.get("published")?.notNull).toBe(true);
   });
 
-  it("routes table no longer exposes difficulty / duration_s columns", () => {
-    // Spec: openspec/changes/feat-gpx-driven-route-metadata/specs/admin-routes-crud/spec.md
-    // Removed by migration 0004 (design.md §3.1) — Drizzle introspect must match.
+  it("routes table no longer exposes difficulty / duration_s / region columns", () => {
+    // Removed by migrations 0004 (difficulty/duration_s) and 0008 (region).
     expect(columnByName.has("difficulty")).toBe(false);
     expect(columnByName.has("duration_s")).toBe(false);
+    expect(columnByName.has("region")).toBe(false);
   });
 
   it("elevation_profile column is jsonb NOT NULL", () => {
