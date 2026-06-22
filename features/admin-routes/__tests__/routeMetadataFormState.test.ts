@@ -13,10 +13,7 @@ describe("buildInitialValues", () => {
         title: "",
         slug: "",
         description: "",
-        region: "",
         tags: [],
-        difficulty: "easy",
-        durationS: "",
         published: false,
       });
     });
@@ -42,10 +39,7 @@ describe("buildInitialValues", () => {
         title: "foo",
         slug: "",
         description: "",
-        region: "",
         tags: [],
-        difficulty: "easy",
-        durationS: "",
         published: true,
       });
     });
@@ -53,13 +47,6 @@ describe("buildInitialValues", () => {
     it("respects an overridden tags array", () => {
       const values = buildInitialValues({ tags: ["河濱"] });
       expect(values.tags).toEqual(["河濱"]);
-      expect(values.title).toBe("");
-      expect(values.difficulty).toBe("easy");
-    });
-
-    it("respects a non-default difficulty", () => {
-      const values = buildInitialValues({ difficulty: "hard" });
-      expect(values.difficulty).toBe("hard");
       expect(values.title).toBe("");
     });
   });
@@ -70,20 +57,14 @@ describe("buildInitialValues", () => {
         title: "陽明山主峰",
         slug: "yangmingshan-main-peak",
         description: "高難度，總爬升 800m。",
-        region: "台北市",
         tags: ["山徑", "高強度"],
-        difficulty: "hard",
-        durationS: "5400",
         published: true,
       });
       expect(values).toEqual({
         title: "陽明山主峰",
         slug: "yangmingshan-main-peak",
         description: "高難度，總爬升 800m。",
-        region: "台北市",
         tags: ["山徑", "高強度"],
-        difficulty: "hard",
-        durationS: "5400",
         published: true,
       });
     });

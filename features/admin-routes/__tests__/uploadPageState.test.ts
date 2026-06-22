@@ -20,10 +20,7 @@ function makeValues(
     title: "河濱晨跑",
     slug: "riverside-morning",
     description: "晨跑路線。",
-    region: "台北市",
     tags: ["河濱", "LSD"],
-    difficulty: "medium",
-    durationS: "3600",
     published: true,
     ...overrides,
   };
@@ -38,13 +35,11 @@ describe("buildCreateRouteFormData", () => {
       expect(entry).toBe(file);
     });
 
-    it("appends title / slug / description / region / difficulty as plain strings", () => {
+    it("appends title / slug / description as plain strings", () => {
       const fd = buildCreateRouteFormData(makeValues(), makeFile());
       expect(fd.get("title")).toBe("河濱晨跑");
       expect(fd.get("slug")).toBe("riverside-morning");
       expect(fd.get("description")).toBe("晨跑路線。");
-      expect(fd.get("region")).toBe("台北市");
-      expect(fd.get("difficulty")).toBe("medium");
     });
 
     it("appends tags as a JSON-stringified array", () => {
@@ -70,42 +65,27 @@ describe("buildCreateRouteFormData", () => {
       expect(fd.get("published")).toBe("false");
     });
 
-    it("renames the camelCase durationS field to snake_case duration_s", () => {
-      const fd = buildCreateRouteFormData(
-        makeValues({ durationS: "5400" }),
-        makeFile(),
-      );
-      expect(fd.get("duration_s")).toBe("5400");
-      // The Action reads `duration_s` exclusively — `durationS` must NOT
-      // leak through, otherwise the value would be silently dropped and
-      // the route would be inserted with a null duration.
-      expect(fd.get("durationS")).toBeNull();
+    it("does NOT emit legacy difficulty / duration_s / region keys", () => {
+      const fd = buildCreateRouteFormData(makeValues(), makeFile());
+      expect(fd.has("difficulty")).toBe(false);
+      expect(fd.has("duration_s")).toBe(false);
+      expect(fd.has("durationS")).toBe(false);
+      expect(fd.has("region")).toBe(false);
     });
   });
 
   describe("Scenario: boundary — empty optional strings round-trip as empty", () => {
-    it("appends empty description / region as empty strings, not null", () => {
+    it("appends empty description as empty string, not null", () => {
       const fd = buildCreateRouteFormData(
-        makeValues({ description: "", region: "" }),
+        makeValues({ description: "" }),
         makeFile(),
       );
-      // FormData.get returns the appended value verbatim; the Action's
-      // `formString` helper trims/keeps these as-is.
       expect(fd.get("description")).toBe("");
-      expect(fd.get("region")).toBe("");
     });
 
     it("appends an empty tags array as the JSON literal '[]'", () => {
       const fd = buildCreateRouteFormData(makeValues({ tags: [] }), makeFile());
       expect(fd.get("tags")).toBe("[]");
-    });
-
-    it("appends an empty durationS as the empty string", () => {
-      const fd = buildCreateRouteFormData(
-        makeValues({ durationS: "" }),
-        makeFile(),
-      );
-      expect(fd.get("duration_s")).toBe("");
     });
   });
 
@@ -116,11 +96,8 @@ describe("buildCreateRouteFormData", () => {
       expect(keys.sort()).toEqual(
         [
           "description",
-          "difficulty",
-          "duration_s",
           "gpxFile",
           "published",
-          "region",
           "slug",
           "tags",
           "title",

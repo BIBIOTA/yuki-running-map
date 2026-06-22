@@ -21,12 +21,10 @@ function makeRoute(overrides: Partial<Route> = {}): Route {
     description: "晨跑路線。",
     distanceM: 5200,
     elevationGainM: 42,
-    durationS: 1800,
     recordedAt: new Date("2025-01-15T06:00:00Z"),
     locationName: null,
     region: "台北市",
     tags: ["河濱", "LSD"],
-    difficulty: "medium",
     gpxPath: "routes/abc.gpx",
     geojson: {
       type: "Feature",
@@ -50,10 +48,7 @@ function makeValues(
     title: "河濱晨跑",
     slug: "riverside-morning",
     description: "晨跑路線。",
-    region: "台北市",
     tags: ["河濱", "LSD"],
-    difficulty: "medium",
-    durationS: "1800",
     published: true,
     ...overrides,
   };
@@ -61,18 +56,12 @@ function makeValues(
 
 describe("buildFormInitialFromRoute", () => {
   describe("Scenario: full route row maps to form-state shape", () => {
-    it("preserves title / slug / tags / difficulty / published verbatim", () => {
+    it("preserves title / slug / tags / published verbatim", () => {
       const out = buildFormInitialFromRoute(makeRoute());
       expect(out.title).toBe("河濱晨跑");
       expect(out.slug).toBe("riverside-morning");
       expect(out.tags).toEqual(["河濱", "LSD"]);
-      expect(out.difficulty).toBe("medium");
       expect(out.published).toBe(true);
-    });
-
-    it("stringifies a numeric durationS", () => {
-      const out = buildFormInitialFromRoute(makeRoute({ durationS: 3600 }));
-      expect(out.durationS).toBe("3600");
     });
   });
 
@@ -80,16 +69,6 @@ describe("buildFormInitialFromRoute", () => {
     it("maps null description to empty string", () => {
       const out = buildFormInitialFromRoute(makeRoute({ description: null }));
       expect(out.description).toBe("");
-    });
-
-    it("maps null region to empty string", () => {
-      const out = buildFormInitialFromRoute(makeRoute({ region: null }));
-      expect(out.region).toBe("");
-    });
-
-    it("maps null durationS to empty string", () => {
-      const out = buildFormInitialFromRoute(makeRoute({ durationS: null }));
-      expect(out.durationS).toBe("");
     });
   });
 
@@ -103,56 +82,16 @@ describe("buildFormInitialFromRoute", () => {
 
 describe("buildUpdateRoutePayload", () => {
   describe("Scenario: regular values produce the wire shape updateRoute expects", () => {
-    it("merges the id, parses duration_s, and passes scalars through", () => {
+    it("merges the id and passes scalars through", () => {
       const out = buildUpdateRoutePayload("id-1", makeValues());
       expect(out).toEqual({
         id: "id-1",
         title: "河濱晨跑",
         slug: "riverside-morning",
         description: "晨跑路線。",
-        region: "台北市",
         tags: ["河濱", "LSD"],
-        difficulty: "medium",
-        duration_s: 1800,
         published: true,
       });
-    });
-
-    it("renames camelCase durationS to snake_case duration_s", () => {
-      const out = buildUpdateRoutePayload(
-        "id-1",
-        makeValues({ durationS: "120" }),
-      );
-      expect(out.duration_s).toBe(120);
-      // `durationS` must NOT leak through, otherwise the validator would
-      // accept the row with a null duration silently.
-      expect((out as Record<string, unknown>).durationS).toBeUndefined();
-    });
-  });
-
-  describe("Scenario: durationS edge cases fold to null", () => {
-    it("maps empty durationS to null", () => {
-      const out = buildUpdateRoutePayload(
-        "id-1",
-        makeValues({ durationS: "" }),
-      );
-      expect(out.duration_s).toBeNull();
-    });
-
-    it("maps NaN durationS to null", () => {
-      const out = buildUpdateRoutePayload(
-        "id-1",
-        makeValues({ durationS: "abc" }),
-      );
-      expect(out.duration_s).toBeNull();
-    });
-
-    it("maps whitespace-only durationS to null", () => {
-      const out = buildUpdateRoutePayload(
-        "id-1",
-        makeValues({ durationS: "   " }),
-      );
-      expect(out.duration_s).toBeNull();
     });
   });
 
@@ -180,19 +119,6 @@ describe("buildUpdateRoutePayload", () => {
       );
       expect(out.description).toBeNull();
     });
-
-    it("maps empty region to null", () => {
-      const out = buildUpdateRoutePayload("id-1", makeValues({ region: "" }));
-      expect(out.region).toBeNull();
-    });
-
-    it("trims surrounding whitespace on region", () => {
-      const out = buildUpdateRoutePayload(
-        "id-1",
-        makeValues({ region: "  台北市  " }),
-      );
-      expect(out.region).toBe("台北市");
-    });
   });
 
   describe("Scenario: passthroughs", () => {
@@ -207,6 +133,16 @@ describe("buildUpdateRoutePayload", () => {
         makeValues({ published: false }),
       );
       expect(out.published).toBe(false);
+    });
+  });
+
+  describe("Scenario: legacy keys are not emitted", () => {
+    it("payload does NOT contain difficulty / duration_s / region", () => {
+      const out = buildUpdateRoutePayload("id-1", makeValues());
+      expect("difficulty" in out).toBe(false);
+      expect("duration_s" in out).toBe(false);
+      expect("durationS" in out).toBe(false);
+      expect("region" in out).toBe(false);
     });
   });
 });
