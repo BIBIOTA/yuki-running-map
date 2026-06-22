@@ -6,7 +6,7 @@
  * Coverage:
  *   admin OAuth-mock fixture → /admin/upload → drop sample.gpx
  *   → assert map preview container + metadata form mount →
- *   fill title / slug / difficulty / published →
+ *   fill title / slug / published →
  *   click 「儲存」 → assert navigation to /admin/routes,
  *   sonner toast 「已新增「E2E Route」」 visible, and the new
  *   row appears in the table.
@@ -79,7 +79,6 @@ test.describe("admin upload flow", () => {
     //    must stay in sync with RouteMetadataForm.tsx.
     await page.getByLabel("標題").fill("E2E Route");
     await page.getByLabel("網址代稱（slug）").fill("e2e-route");
-    await page.getByLabel("難度").selectOption("easy");
     await page.getByLabel("已發佈").check();
 
     // 6. Submit. The button text flips to 「儲存中…」 during the

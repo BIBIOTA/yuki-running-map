@@ -20,9 +20,10 @@
  *
  * The default values satisfy every `NOT NULL` column without a default
  * (slug / title / distance_m / elevation_gain_m / recorded_at /
- * difficulty / gpx_path / geojson / bbox / start_point). Defaults take
- * care of `id` (gen_random_uuid), `published` (false), `tags` ('{}'),
- * `created_at`, `updated_at`.
+ * gpx_path / geojson / bbox / start_point). Defaults take care of
+ * `id` (gen_random_uuid), `published` (false), `tags` ('{}'),
+ * `created_at`, `updated_at`. Legacy difficulty / duration_s columns
+ * are dropped by migration 0004.
  *
  * RETURNING gives back the server-generated `id` (uuid) so the caller
  * can navigate to `/admin/routes/{id}` without an extra SELECT.
@@ -37,13 +38,11 @@ export interface SeedRouteOverrides {
   elevationGainM?: number;
   recordedAt?: Date;
   tags?: string[];
-  difficulty?: "easy" | "medium" | "hard";
   gpxPath?: string;
   published?: boolean;
   description?: string | null;
   region?: string | null;
   locationName?: string | null;
-  durationS?: number | null;
 }
 
 export interface SeededRoute {
@@ -73,13 +72,11 @@ export async function seedRoute(
   const elevationGainM = overrides.elevationGainM ?? 100;
   const recordedAt = overrides.recordedAt ?? new Date();
   const tags = overrides.tags ?? ["河濱"];
-  const difficulty = overrides.difficulty ?? "easy";
   const gpxPath = overrides.gpxPath ?? "gpx/2026/seed.gpx";
   const published = overrides.published ?? false;
   const description = overrides.description ?? null;
   const region = overrides.region ?? null;
   const locationName = overrides.locationName ?? null;
-  const durationS = overrides.durationS ?? null;
 
   // Lazy-import: same reasoning as `dbCleanup.truncateRoutes()` —
   // keep `postgres` out of Playwright's `--list` static analysis.
@@ -93,12 +90,10 @@ export async function seedRoute(
         description,
         distance_m,
         elevation_gain_m,
-        duration_s,
         recorded_at,
         location_name,
         region,
         tags,
-        difficulty,
         gpx_path,
         geojson,
         bbox,
@@ -110,12 +105,10 @@ export async function seedRoute(
         ${description},
         ${distanceM},
         ${elevationGainM},
-        ${durationS},
         ${recordedAt.toISOString()},
         ${locationName},
         ${region},
         ${sql.array(tags, 1009)},
-        ${difficulty}::difficulty,
         ${gpxPath},
         ${'{"type":"Feature","geometry":{"type":"LineString","coordinates":[[121.5,25.0],[121.51,25.01]]},"properties":{}}'}::jsonb,
         ST_GeomFromText('POLYGON((121.5 25, 121.51 25, 121.51 25.01, 121.5 25.01, 121.5 25))', 4326),
