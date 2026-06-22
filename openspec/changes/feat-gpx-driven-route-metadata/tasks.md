@@ -73,65 +73,75 @@ doc_language: zh-TW
 
 ## 2. Group B — 海拔曲線（PR-B）
 
-- [ ] 2.1 寫 migration `0005_add_elevation_profile.sql`
+- [x] 2.1 寫 migration `0005_add_elevation_profile.sql`
   - Acceptance: WHEN `pnpm db:migrate` 跑 THEN `routes.elevation_profile` 存在、型別 `jsonb NOT NULL DEFAULT '[]'::jsonb` AND 既有 rows 的 `elevation_profile` 為 `'[]'::jsonb`
   - Depends on: 1.9
   - Independence: independent
-  - status: not_started
+  - status: passing
+  - Commits: 3d6e599 (red) → 21f5a8c (green)
 
-- [ ] 2.2 重構 `lib/gpx/simplify.ts`：抽通用 `ramerDouglasPeucker<T>(points, distanceFn, tol)`，既有 lng/lat 簡化改 thin wrapper；新增 `__tests__/simplify.test.ts`
+- [x] 2.2 重構 `lib/gpx/simplify.ts`：抽通用 `ramerDouglasPeucker<T>(points, distanceFn, tol)`，既有 lng/lat 簡化改 thin wrapper；新增 `__tests__/simplify.test.ts`
   - Acceptance: WHEN 既有的 lng/lat 簡化測試跑 THEN 全綠 AND 直線 3 點以 RDP 簡化會減為 2 點 AND 1-2 點輸入 idempotent
   - Depends on: 2.1
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: cf48312 (red) → 45bde2b (green)
 
-- [ ] 2.3 擴充 `lib/gpx/types.ts`（`GpxMetadata.elevationProfile`）與 `lib/gpx/parse.ts`（新 `computeElevationProfile`）；補 fixtures `with-elevation.gpx` / `no-elevation.gpx`；擴充 `__tests__/parse.test.ts`
+- [x] 2.3 擴充 `lib/gpx/types.ts`（`GpxMetadata.elevationProfile`）與 `lib/gpx/parse.ts`（新 `computeElevationProfile`）；補 fixtures `with-elevation.gpx` / `no-elevation.gpx`；擴充 `__tests__/parse.test.ts`
   - Acceptance: WHEN parseGpx 接到含 `<ele>` 的 GPX THEN `elevationProfile` 為 `[distance_m, elevation_m]` pair 陣列 AND `length ∈ [2, 300]` AND `elevationProfile[0][0] === 0` AND distance 單調遞增 AND WHEN GPX 無 `<ele>` THEN `elevationProfile === []`
   - Depends on: 2.2
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: eafbde0 (red) → bf1c4cb (green)
 
-- [ ] 2.4 更新 `lib/db/schema.ts`：加 `elevationProfile` jsonb column
+- [x] 2.4 更新 `lib/db/schema.ts`：加 `elevationProfile` jsonb column
   - Acceptance: WHEN typecheck 跑 THEN `Route` type 含 `elevationProfile`（jsonb 型別） AND `NewRoute` 可選或必填一致於 design §3.5
   - Depends on: 2.3
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 096e1d8 (red) → 9ab0b22 (green)
 
-- [ ] 2.5 把 `elevationProfile` 寫入 `createRoute` 的 INSERT；更新 `createRoute.integration.test.ts` 斷言
+- [x] 2.5 把 `elevationProfile` 寫入 `createRoute` 的 INSERT；更新 `createRoute.integration.test.ts` 斷言
   - Acceptance: WHEN createRoute 以含 ele 的 fixture 成功 THEN DB row `elevation_profile` 為 parseGpx 計算結果 AND WHEN 以無 ele fixture 成功 THEN DB row `elevation_profile = '[]'`
   - Depends on: 2.4
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 04ebdc3 (green; integration assertions skip without DATABASE_URL)
 
-- [ ] 2.6 新增 `features/route-detail/elevationProfileView.ts` 純邏輯 + `__tests__/elevationProfileView.test.ts`
+- [x] 2.6 新增 `features/route-detail/elevationProfileView.ts` 純邏輯 + `__tests__/elevationProfileView.test.ts`
   - Acceptance: WHEN `profileToSvg(profile)` 接非空 array THEN 回傳含 `d="M0,Y L X,Y..."`、`viewBox`、`yLabels`、`xLabels` 的物件 AND WHEN 接 `[]` THEN `{ kind:'empty' }` 標記
   - Depends on: 2.3
   - Independence: parallel-safe（與 2.4/2.5 可同步）
-  - status: not_started
+  - status: passing
+  - Commits: e0fff16 (red) → e5d2e64 (green) — Red `d.startsWith("M0,")` 改 `startsWith("M")`（padding 48 讓首點 x 不為 0）
 
-- [ ] 2.7 新增 `features/route-detail/ElevationProfile.tsx`（server component）
+- [x] 2.7 新增 `features/route-detail/ElevationProfile.tsx`（server component）
   - Acceptance: WHEN 以非空 profile render THEN 輸出含 `<svg data-testid="elevation-profile" viewBox="...">`、`<path d="...">`、軸標籤 AND WHEN 以 `[]` render THEN 輸出 `<p data-testid="elevation-empty">此路線無海拔資料</p>`
   - Depends on: 2.6
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: ea94b46 (green; DOM-level test 延後到 verification-before-completion 對 Figma frame 70:7/70:8)
 
-- [ ] 2.8 升級 `app/(public)/routes/[slug]/page.tsx` 從 placeholder 到真資料；嵌入 `<ElevationProfile profile={route.elevationProfile} />`
+- [x] 2.8 升級 `app/(public)/routes/[slug]/page.tsx` 從 placeholder 到真資料；嵌入 `<ElevationProfile profile={route.elevationProfile} />`
   - Acceptance: WHEN visitor 開啟 `/routes/{published-slug}` THEN page SSR 含 elevation SVG 或 empty hint AND title 與描述用 `route.title` / `route.description`
   - Depends on: 2.5, 2.7
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 4c42a46 (green; region section 留到 task 3.15)
 
-- [ ] 2.9 更新 `e2e/admin-routes-upload.spec.ts`：上傳並 publish 後造訪 `/routes/[slug]` 斷言 elevation 元件
+- [x] 2.9 更新 `e2e/admin-routes-upload.spec.ts`：上傳並 publish 後造訪 `/routes/[slug]` 斷言 elevation 元件
   - Acceptance: WHEN upload-publish flow 跑 THEN public detail 頁存在 `data-testid="elevation-profile"` 或 `data-testid="elevation-empty"`
   - Depends on: 2.8
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Commits: 584d722 (green; 實際 run 需 DB + Supabase，延後 verification)
 
-- [ ] 2.10 B 段 verification：`pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e`
+- [x] 2.10 B 段 verification：`pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e`
   - Acceptance: WHEN 四個指令依序執行 THEN 全部 exit 0
   - Depends on: 2.9
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Evidence: pnpm typecheck exit 0 / pnpm lint exit 0 / pnpm test 204 passed + 13 skipped (DB) / pnpm test:e2e 延後 verification-before-completion
 
 ## 3. Group C — 行政區自動偵測（PR-C）
 
