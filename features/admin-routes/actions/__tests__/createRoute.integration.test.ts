@@ -193,18 +193,54 @@ describe.skipIf(!process.env.DATABASE_URL)("createRoute (integration)", () => {
       );
 
       // Row landed
-      const rows = await db.execute<{ slug: string; gpx_path: string }>(
-        sql`SELECT slug, gpx_path FROM routes WHERE slug = 'happy-path'`,
+      const rows = await db.execute<{
+        slug: string;
+        gpx_path: string;
+        elevation_profile: Array<[number, number]>;
+      }>(
+        sql`SELECT slug, gpx_path, elevation_profile FROM routes WHERE slug = 'happy-path'`,
       );
       expect(rows.length).toBe(1);
       const row = rows[0]!;
       expect(row.gpx_path).toMatch(/^gpx\/\d{4}\/[0-9a-f-]+\.gpx$/);
+
+      // Sample fixture has continuous <ele>; expect a non-empty profile that
+      // starts at distance 0 and respects the [2, 300] simplification band.
+      expect(Array.isArray(row.elevation_profile)).toBe(true);
+      expect(row.elevation_profile.length).toBeGreaterThanOrEqual(2);
+      expect(row.elevation_profile.length).toBeLessThanOrEqual(300);
+      expect(row.elevation_profile[0]?.[0]).toBe(0);
 
       // revalidatePath called for all three URLs
       const calls = vi.mocked(revalidatePath).mock.calls.map((c) => c[0]);
       expect(calls).toContain("/routes");
       expect(calls).toContain("/routes/happy-path");
       expect(calls).toContain("/admin/routes");
+    });
+
+    it("persists elevation_profile = [] for GPX without <ele>", async () => {
+      const { createRoute } = await import("../createRoute");
+      const noEleBuffer = await readFile(
+        path.resolve(
+          __dirname,
+          "../../../../lib/gpx/__fixtures__/no-elevation.gpx",
+        ),
+      );
+      const formData = await makeGpxFormData(noEleBuffer, {
+        slug: "offshore-swim",
+        title: "Offshore Swim",
+      });
+
+      const result = await createRoute(formData);
+      expect(result.ok).toBe(true);
+
+      const rows = await db.execute<{
+        elevation_profile: Array<[number, number]>;
+      }>(
+        sql`SELECT elevation_profile FROM routes WHERE slug = 'offshore-swim'`,
+      );
+      expect(rows.length).toBe(1);
+      expect(rows[0]?.elevation_profile).toEqual([]);
     });
   });
 

@@ -213,6 +213,7 @@ export async function createRoute(formData: FormData): Promise<CreateRouteResult
         description: meta.description,
         distanceM: Math.round(gpx.distanceM),
         elevationGainM: Math.round(gpx.elevationGainM),
+        elevationProfile: gpx.elevationProfile,
         recordedAt: gpx.recordedAt,
         // routes.region column is still present at this point (DROP COLUMN
         // lands in migration 0008 / task 3.7). The new RouteMetadataInput
