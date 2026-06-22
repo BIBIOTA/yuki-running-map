@@ -255,3 +255,7 @@ type RegionsState =
 - 坡度圖位置 = 重用 `<ElevationProfile>`，於地圖預覽下方加 section。
 - 縣市鄉鎮時機 = 送出前 Server Action 試算。
 - edit 頁 = 同步拆 tags + 加海拔曲線。
+
+## Designs
+
+- [Figma Designs](./designs/figma.md) — frames and acceptance criteria for refactor-upload-metadata-fields. AC-3 adds a chrome refactor: extract `<RouteRegionsSection>` so 「途經區域」 heading is shared between `/admin/upload`, `/admin/routes/[id]`, and the public `/routes/[slug]` pages (no UI drift).

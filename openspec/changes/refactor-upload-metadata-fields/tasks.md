@@ -48,11 +48,17 @@
   - Independence: serial
   - Figma: upload preview layout (designs/figma.md frame "upload-preview")
   - status: not_started
-- [ ] 3.4 Render regions slot with three-state UI (`loading | ready | error`)
-  - Acceptance: WHEN `regionsState.kind === 'loading'` THEN a skeleton + 「正在判斷區域…」 string render with `data-testid="upload-regions-state"` and `data-state="loading"`; WHEN `'ready'` and `regions.length > 0` THEN `<RouteRegions regions={...} />` renders with `data-state="ready"`; WHEN `'ready'` and `regions.length === 0` THEN a muted-text hint 「此路線未涵蓋任何已知行政區」 renders with `data-state="ready-empty"`; WHEN `'error'` THEN a muted alert 「無法預覽區域：{message}」 renders with `data-state="error"` AND the submit button stays enabled.
-  - Depends on: 3.1
+- [ ] 3.4 Render regions slot with four-state UI (`loading | ready | ready-empty | error`)
+  - Acceptance: WHEN `regionsState.kind === 'loading'` THEN a paragraph-shaped skeleton line + 「正在判斷區域…」 hint render inside `<RouteRegionsSection>` with `data-testid="upload-regions-state"` and `data-state="loading"`; WHEN `'ready'` and `regions.length > 0` THEN `<RouteRegions variant="stacked" regions={...} />` renders with `data-state="ready"` (paragraph form, NOT chips — see designs/figma.md AC-4); WHEN `'ready'` and `regions.length === 0` THEN a muted-text hint 「此路線未涵蓋任何已知行政區。」 renders with `data-state="ready-empty"`; WHEN `'error'` THEN a red-tinted alert 「✕ 無法預覽區域」 with body 「行政區預覽暫時無法使用…」 renders with `data-state="error"` AND the submit button stays enabled.
+  - Depends on: 3.1, 3.5
   - Independence: serial
-  - Figma: regions slot three states (designs/figma.md frame "regions-states")
+  - Figma: regions slot four states (designs/figma.md frames 02-05)
+  - status: not_started
+- [ ] 3.5 Extract `<RouteRegionsSection>` shared chrome
+  - Acceptance: WHEN the public detail page (`app/(public)/routes/[slug]/page.tsx`) is read THEN the `<section aria-labelledby="regions-heading">` + 「途經區域」 `<h2 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">` wrapper is moved into a new exported `<RouteRegionsSection>` co-located with `<RouteRegions>` in `components/RouteRegions.tsx`; WHEN the upload preview, edit page, and public detail page render their regions block THEN they all import and use `<RouteRegionsSection>` so the heading chrome cannot drift; WHEN the public detail page has `regions.length === 0` THEN `<RouteRegionsSection>` returns `null` (matches existing detail behaviour); WHEN the upload preview has `regions.length === 0` in `ready` state THEN `<RouteRegionsSection>` renders the heading + admin-only empty hint (so the empty-state copy diverges by surface, while the heading chrome stays identical); WHEN `RouteMetadataForm` is read THEN the inline 「途經區域」 block (with `<span className="text-sm font-medium">途經區域</span>` + `<RouteRegions />`) is REMOVED along with the `routeRegions` prop — the parent (`UploadPageClient` / `EditPageClient`) now renders `<RouteRegionsSection>` as a sibling of the form (not inside it) so all surfaces share the same chrome.
+  - Depends on: -
+  - Independence: independent
+  - Figma: designs/figma.md AC-3 + Implementation note
   - status: not_started
 
 ## 4. `RouteMetadataForm` + form-state cleanup (drop tags)
