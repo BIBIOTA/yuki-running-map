@@ -115,10 +115,7 @@ function parseMetadataFromFormData(formData: FormData): ParseMetadataResult {
   const title = formString(formData, "title") ?? "";
   const slug = formString(formData, "slug") ?? "";
   const description = formString(formData, "description");
-  const region = formString(formData, "region");
-  const difficulty = formString(formData, "difficulty") ?? "";
   const publishedRaw = formString(formData, "published");
-  const durationRaw = formString(formData, "duration_s");
   const tagsRaw = formString(formData, "tags");
 
   let tags: unknown = [];
@@ -130,23 +127,13 @@ function parseMetadataFromFormData(formData: FormData): ParseMetadataResult {
     }
   }
 
-  let durationS: number | null = null;
-  if (durationRaw !== null && durationRaw.length > 0) {
-    const n = Number(durationRaw);
-    // Pass through whatever we got; validateRouteMetadata is the gatekeeper.
-    durationS = Number.isFinite(n) ? n : Number.NaN;
-  }
-
   return {
     ok: true,
     value: {
       title,
       slug,
       description,
-      region,
       tags,
-      difficulty,
-      duration_s: durationS,
       published: publishedRaw === "true",
     },
   };
@@ -226,11 +213,12 @@ export async function createRoute(formData: FormData): Promise<CreateRouteResult
         description: meta.description,
         distanceM: Math.round(gpx.distanceM),
         elevationGainM: Math.round(gpx.elevationGainM),
-        durationS: meta.durationS,
         recordedAt: gpx.recordedAt,
-        region: meta.region,
+        // routes.region column is still present at this point (DROP COLUMN
+        // lands in migration 0008 / task 3.7). The new RouteMetadataInput
+        // shape no longer carries region, so leave the column unset on
+        // INSERT — its default value (NULL) is fine for transitional rows.
         tags: meta.tags,
-        difficulty: meta.difficulty,
         gpxPath: path,
         geojson: gpx.geojson,
         // PostGIS geometry columns expect GeoJSON Polygon/Point — the

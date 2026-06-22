@@ -140,10 +140,7 @@ export async function updateRoute(
         title: meta.title,
         slug: meta.slug,
         description: meta.description,
-        region: meta.region,
         tags: meta.tags,
-        difficulty: meta.difficulty,
-        durationS: meta.durationS,
         published: meta.published,
         updatedAt: new Date(),
       })

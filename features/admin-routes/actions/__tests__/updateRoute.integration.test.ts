@@ -65,7 +65,6 @@ const SEED_GEOJSON = {
 interface SeedOverrides {
   slug?: string;
   title?: string;
-  difficulty?: "easy" | "medium" | "hard";
   published?: boolean;
 }
 
@@ -81,11 +80,9 @@ async function seedRoute(
       description: null,
       distanceM: 10000,
       elevationGainM: 30,
-      durationS: null,
       recordedAt: new Date("2026-05-11T06:30:00.000Z"),
       region: null,
       tags: [],
-      difficulty: overrides.difficulty ?? "easy",
       gpxPath: "gpx/2026/seed.gpx",
       geojson: SEED_GEOJSON,
       bbox: SEED_BBOX,
