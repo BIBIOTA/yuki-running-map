@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="run-map-fixture-generator" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Offshore swim drill (no elevation fixture)</name>
+    <time>2026-02-05T07:18:00.000Z</time>
+  </metadata>
+  <trk>
+    <name>Offshore swim drill</name>
+    <trkseg>
+    <trkpt lat="25.0000000" lon="121.4000000"><time>2026-02-05T07:18:00.000Z</time></trkpt>
+    <trkpt lat="25.0001000" lon="121.4001000"><time>2026-02-05T07:18:05.000Z</time></trkpt>
+    <trkpt lat="25.0002000" lon="121.4002000"><time>2026-02-05T07:18:10.000Z</time></trkpt>
+    <trkpt lat="25.0003000" lon="121.4003000"><time>2026-02-05T07:18:15.000Z</time></trkpt>
+    <trkpt lat="25.0004000" lon="121.4004000"><time>2026-02-05T07:18:20.000Z</time></trkpt>
+    <trkpt lat="25.0005000" lon="121.4005000"><time>2026-02-05T07:18:25.000Z</time></trkpt>
+    <trkpt lat="25.0006000" lon="121.4006000"><time>2026-02-05T07:18:30.000Z</time></trkpt>
+    <trkpt lat="25.0007000" lon="121.4007000"><time>2026-02-05T07:18:35.000Z</time></trkpt>
+    <trkpt lat="25.0008000" lon="121.4008000"><time>2026-02-05T07:18:40.000Z</time></trkpt>
+    <trkpt lat="25.0009000" lon="121.4009000"><time>2026-02-05T07:18:45.000Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
