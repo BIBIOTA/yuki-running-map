@@ -52,7 +52,7 @@ import { Input } from "@/components/ui/input";
 
 import { TagsInput } from "./TagsInput";
 import { buildInitialValues } from "./routeMetadataFormState";
-import type { Difficulty, RouteMetadataValues } from "./types";
+import type { RouteMetadataValues } from "./types";
 
 type Props = {
   mode: "create" | "edit";
@@ -159,16 +159,6 @@ export function RouteMetadataForm({
           />
         </Field>
 
-        <Field label="地區" id="region" error={fieldErrors?.region}>
-          <Input
-            id="region"
-            name="region"
-            value={values.region}
-            onChange={(event) => setField("region", event.target.value)}
-            aria-invalid={fieldErrors?.region ? true : undefined}
-          />
-        </Field>
-
         <Field label="標籤" id="tags" error={fieldErrors?.tags}>
           <TagsInput
             value={values.tags}
@@ -176,48 +166,6 @@ export function RouteMetadataForm({
             existingTags={existingTags}
           />
         </Field>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field
-            label="難度"
-            id="difficulty"
-            required
-            error={fieldErrors?.difficulty}
-          >
-            <select
-              id="difficulty"
-              name="difficulty"
-              value={values.difficulty}
-              onChange={(event) =>
-                setField("difficulty", event.target.value as Difficulty)
-              }
-              aria-invalid={fieldErrors?.difficulty ? true : undefined}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
-            >
-              <option value="easy">easy（輕鬆）</option>
-              <option value="medium">medium（中等）</option>
-              <option value="hard">hard（困難）</option>
-            </select>
-          </Field>
-
-          <Field
-            label="預計時長（秒）"
-            id="duration_s"
-            error={fieldErrors?.duration_s}
-          >
-            <Input
-              id="duration_s"
-              name="duration_s"
-              type="number"
-              min={1}
-              step={1}
-              inputMode="numeric"
-              value={values.durationS}
-              onChange={(event) => setField("durationS", event.target.value)}
-              aria-invalid={fieldErrors?.duration_s ? true : undefined}
-            />
-          </Field>
-        </div>
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3">
