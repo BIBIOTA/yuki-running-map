@@ -301,14 +301,15 @@ doc_language: zh-TW
   - Acceptance: WHEN `openspec validate feat-gpx-driven-route-metadata --strict` 跑 THEN exit 0 AND 無 warning
   - Depends on: 3.25
   - Independence: serial
-  - status: not_started
+  - status: passing
+  - Evidence: `Change 'feat-gpx-driven-route-metadata' is valid` (exit 0)
 
 - [x] 4.2 視覺與 deferred 驗證（含 Figma 對齊與 detail 頁實機檢視）由 `spec-driven-dev:verification-before-completion` 主導
   - Acceptance: WHEN verification-before-completion 跑完 THEN 產出 `openspec/changes/feat-gpx-driven-route-metadata/verification-report.md` AND 報告中 5 個 staged check 全 pass
   - Depends on: 4.1
   - Independence: serial
-  - status: not_started
   - status: passing
+  - Evidence: verification-report.md PASS-with-3-DEFERRED (commit e571d11). 3 deferred items match the previous archive's pattern (createRoute Next.js 15 cookies() infra + Frame 70:11 admin OAuth gate).
 
 ## Optional artifacts
 
