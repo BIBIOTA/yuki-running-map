@@ -50,6 +50,13 @@
       "when": 1782345800000,
       "tag": "0006_add_admin_units",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782345900000,
+      "tag": "0007_seed_taiwan_admin_units",
+      "breakpoints": true
     }
   ]
 }
