@@ -30,11 +30,12 @@
   - status: passing
 
 ## 3. Refresh + commit the seed
-- [ ] 3.1 Run `pnpm refresh:admin-units` and commit the resulting seed
+- [x] 3.1 Run `pnpm refresh:admin-units` and commit the resulting seed
   - Acceptance: WHEN the script completes THEN `lib/db/migrations/seed/taiwan-admin-units.geojson` contains 22 county features + ~360-380 township features (total ~390); WHEN `git status` is checked THEN the file diff shows the stub 5-feature placeholder replaced by the real dataset; WHEN the commit lands THEN the file is staged together with any script wiring it depends on.
+  - Verification: `pnpm refresh:admin-units` printed `Wrote 399 features ...`. Python probe confirmed 22 county + 377 township; `瑞芳區` (code `10001033`, parent `10001001` = `新北市`) is present.
   - Depends on: 2.1, 2.2, 2.3
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 4. Migration 0010 + journal
 - [ ] 4.1 Write `lib/db/migrations/0010_refresh_taiwan_admin_units.sql`

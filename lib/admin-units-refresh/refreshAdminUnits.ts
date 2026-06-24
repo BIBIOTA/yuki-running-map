@@ -75,6 +75,45 @@ async function fetchCollection(
   }
 }
 
+function readProp(props: Record<string, unknown>, key: string): string | undefined {
+  const v = props[key];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
+
+/**
+ * g0v townships ship with `COUNTYNAME` (the parent county's human-readable
+ * name) but not `COUNTYSN` / `COUNTYCODE`. `normalizeAdminUnits` expects a
+ * parent code, so we resolve `COUNTYNAME → COUNTYSN` using the county pass
+ * and inject `COUNTYSN` onto each township before normalisation. Townships
+ * whose `COUNTYNAME` is not in the map are left as-is (the normaliser will
+ * throw a clear "missing parent" error if any slip through).
+ */
+function injectCountySn(
+  townships: RawFeatureCollection["features"],
+  counties: RawFeatureCollection["features"],
+): void {
+  const nameToSn = new Map<string, string>();
+  for (const county of counties) {
+    const name = readProp(county.properties, "COUNTYNAME");
+    const sn = readProp(county.properties, "COUNTYSN");
+    if (name && sn) nameToSn.set(name, sn);
+  }
+  for (const township of townships) {
+    if (
+      readProp(township.properties, "COUNTYSN") ||
+      readProp(township.properties, "COUNTYCODE")
+    ) {
+      continue; // already carries a parent code
+    }
+    const name = readProp(township.properties, "COUNTYNAME");
+    if (!name) continue;
+    const sn = nameToSn.get(name);
+    if (sn) {
+      township.properties.COUNTYSN = sn;
+    }
+  }
+}
+
 export async function refreshAdminUnits(
   deps: RefreshAdminUnitsDeps,
 ): Promise<void> {
@@ -88,6 +127,8 @@ export async function refreshAdminUnits(
       `note: expected ${EXPECTED_COUNTY_COUNT} counties, got ${counties.features.length}\n`,
     );
   }
+
+  injectCountySn(towns.features, counties.features);
 
   const merged: RawFeatureCollection = {
     type: "FeatureCollection",

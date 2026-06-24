@@ -24,3 +24,13 @@
   - Tests: `pnpm vitest run lib/admin-units-refresh/__tests__/refreshAdminUnits.test.ts` → 4 passed (4)
   - Typecheck: `pnpm typecheck` exit 0
 - Next action: Run `pnpm refresh:admin-units` to generate the real seed file (Task 3.1).
+
+## Session 4 — 2026-06-24 23:55
+- Stage: TDD
+- Task: 3.1 + amendment to refreshAdminUnits (g0v COUNTYSN synthesis)
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: cee5dd8 test: red - refreshAdminUnits synthesises COUNTYSN onto g0v townships; (green commit follows)
+  - Tests: `pnpm vitest run lib/admin-units-refresh/__tests__/refreshAdminUnits.test.ts` → 5 passed (5)
+  - Real run: `pnpm refresh:admin-units` → `Wrote 399 features ...` (22 counties + 377 townships); `瑞芳區` present with `parent_code = 10001001 (新北市)`.
+- Next action: Write migration 0010 — inline the 68 MB seed as a jsonb literal, TRUNCATE admin_units CASCADE, INSERT with ST_MakeValid, then INSERT route_admin_units via ST_Intersects.

@@ -20,11 +20,15 @@ import {
   refreshAdminUnits,
 } from "../lib/admin-units-refresh/refreshAdminUnits";
 
-await refreshAdminUnits({
-  fetchImpl: (url) => fetch(url),
-  writeFile: (path, body) => writeFile(path, body, "utf-8"),
-  stdout: (line) => process.stdout.write(line),
-  stderr: (line) => process.stderr.write(line),
-  processExit: (code) => process.exit(code),
-  seedPath: resolve(DEFAULT_SEED_PATH),
-});
+async function main(): Promise<void> {
+  await refreshAdminUnits({
+    fetchImpl: (url) => fetch(url),
+    writeFile: (path, body) => writeFile(path, body, "utf-8"),
+    stdout: (line) => process.stdout.write(line),
+    stderr: (line) => process.stderr.write(line),
+    processExit: (code) => process.exit(code),
+    seedPath: resolve(DEFAULT_SEED_PATH),
+  });
+}
+
+main();
