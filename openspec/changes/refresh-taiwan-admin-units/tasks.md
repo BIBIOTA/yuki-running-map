@@ -5,7 +5,7 @@
   - Acceptance: WHEN `normalizeAdminUnits` receives a feature whose `properties.COUNTYCODE` is absent but `properties.COUNTYSN` is present THEN it MUST use `COUNTYSN` as the county `code`; WHEN `properties.TOWNCODE` is absent but `properties.TOWNSN` is present THEN it MUST use `TOWNSN` as the township `code` AND it MUST use `COUNTYSN` as the township's `parent_code`; existing `COUNTYCODE` / `TOWNCODE` inputs MUST keep working unchanged.
   - Depends on: -
   - Independence: independent
-  - status: not_started
+  - status: in_progress
 - [ ] 1.2 Cover the fallback with unit tests in `lib/regions/__tests__/normalizeAdminUnits.test.ts`
   - Acceptance: WHEN vitest runs THEN at least two new tests pass: (a) county with `COUNTYSN`+`COUNTYNAME` (no `COUNTYCODE`) normalises to `{ code: "<COUNTYSN>", level: "county", name: "<COUNTYNAME>", parent_code: null }`; (b) township with `TOWNSN`+`TOWNNAME`+`COUNTYSN` (no `TOWNCODE`/`COUNTYCODE`) normalises to `{ code: "<TOWNSN>", level: "township", name: "<TOWNNAME>", parent_code: "<COUNTYSN>" }`.
   - Depends on: 1.1

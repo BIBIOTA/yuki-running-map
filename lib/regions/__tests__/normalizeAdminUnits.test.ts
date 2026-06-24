@@ -206,4 +206,116 @@ describe("normalizeAdminUnits", () => {
       ).toThrow(/parent/i);
     });
   });
+
+  /**
+   * g0v fallback contract — refresh-taiwan-admin-units.
+   *
+   * Spec: openspec/changes/refresh-taiwan-admin-units/specs/route-administrative-regions/spec.md
+   *       MODIFIED Requirement "normalizeAdminUnits maps raw 內政部 / g0v properties into the seed shape"
+   *
+   * g0v's twgeojson mirror ships counties as COUNTYSN (not COUNTYCODE) and
+   * townships as TOWNSN (not TOWNCODE), with the parent county encoded in
+   * COUNTYSN on the township feature. The normaliser accepts either source
+   * so both 內政部 SHP-derived files and g0v's GeoJSON mirror work.
+   */
+  describe("g0v COUNTYSN / TOWNSN fallback", () => {
+    it("County feature falls back to COUNTYSN when COUNTYCODE is absent", () => {
+      const out = normalizeAdminUnits({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { COUNTYSN: "10014001", COUNTYNAME: "台東縣" },
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [121.0, 22.5],
+                  [121.5, 22.5],
+                  [121.5, 23.0],
+                  [121.0, 23.0],
+                  [121.0, 22.5],
+                ],
+              ],
+            },
+          },
+        ],
+      });
+      expect(out.features).toHaveLength(1);
+      expect(out.features[0]!.properties).toEqual({
+        code: "10014001",
+        level: "county",
+        name: "台東縣",
+        parent_code: null,
+      });
+    });
+
+    it("Township feature falls back to TOWNSN + COUNTYSN", () => {
+      const out = normalizeAdminUnits({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              TOWNSN: "10014001001",
+              TOWNNAME: "瑞芳區",
+              COUNTYSN: "10014001",
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [121.8, 25.1],
+                  [121.9, 25.1],
+                  [121.9, 25.2],
+                  [121.8, 25.2],
+                  [121.8, 25.1],
+                ],
+              ],
+            },
+          },
+        ],
+      });
+      expect(out.features).toHaveLength(1);
+      expect(out.features[0]!.properties).toEqual({
+        code: "10014001001",
+        level: "township",
+        name: "瑞芳區",
+        parent_code: "10014001",
+      });
+    });
+
+    it("Existing 內政部 COUNTYCODE / TOWNCODE inputs keep working", () => {
+      const out = normalizeAdminUnits({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              TOWNCODE: "63000010",
+              TOWNNAME: "中正區",
+              COUNTYCODE: "63000",
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [121.5, 25.04],
+                  [121.52, 25.04],
+                  [121.52, 25.05],
+                  [121.5, 25.04],
+                ],
+              ],
+            },
+          },
+        ],
+      });
+      expect(out.features[0]!.properties).toEqual({
+        code: "63000010",
+        level: "township",
+        name: "中正區",
+        parent_code: "63000",
+      });
+    });
+  });
 });
