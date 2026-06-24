@@ -180,6 +180,69 @@ describe("refreshAdminUnits", () => {
     );
   });
 
+  it("Township parent_code is resolved from county COUNTYNAME (g0v quirk)", async () => {
+    // g0v townships carry COUNTYNAME (人類可讀) but not COUNTYSN. The
+    // helper must build a name → SN map from the county pass and inject
+    // COUNTYSN on every township before handing off to normalizeAdminUnits.
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const stdout = vi.fn();
+    const stderr = vi.fn();
+    const processExit = vi.fn();
+
+    const counties = makeCountyCollection([
+      makeCountyFeature("10021000", "台南市"),
+    ]);
+    const towns = makeCountyCollection([
+      {
+        type: "Feature",
+        properties: {
+          TOWNSN: "10021005",
+          TOWNNAME: "安平區",
+          COUNTYNAME: "台南市",
+        },
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [120, 23],
+              [120.1, 23],
+              [120.1, 23.1],
+              [120, 23.1],
+              [120, 23],
+            ],
+          ],
+        },
+      },
+    ]);
+    const fetchImpl = vi.fn(async (url: string) =>
+      jsonResponse(url === COUNTY_URL ? counties : towns),
+    );
+
+    await refreshAdminUnits({
+      fetchImpl,
+      writeFile,
+      stdout,
+      stderr,
+      processExit,
+      seedPath: "/tmp/seed-name-resolve.geojson",
+    });
+
+    expect(processExit).not.toHaveBeenCalled();
+    const body = writeFile.mock.calls[0]![1] as string;
+    const parsed = JSON.parse(body);
+    expect(parsed.features).toHaveLength(2);
+    const township = parsed.features.find(
+      (f: { properties: { code: string } }) => f.properties.code === "10021005",
+    );
+    expect(township).toBeDefined();
+    expect(township.properties).toEqual({
+      code: "10021005",
+      level: "township",
+      name: "安平區",
+      parent_code: "10021000",
+    });
+  });
+
   it("Unexpected county count emits a non-fatal warning", async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const stdout = vi.fn();

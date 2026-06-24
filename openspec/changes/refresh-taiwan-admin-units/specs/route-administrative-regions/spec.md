@@ -47,6 +47,13 @@ The system SHALL provide `scripts/refresh-admin-units.ts`, executable via `pnpm 
 - **THEN** the script SHALL exit 1
 - **AND** print `g0v response was not valid JSON; got first 200 chars: ...` on stderr
 
+#### Scenario: Township parent_code is resolved from county COUNTYNAME
+
+- **WHEN** the fetched township feature carries `properties.COUNTYNAME` but no `properties.COUNTYSN` and no `properties.COUNTYCODE` (this is the actual g0v shape)
+- **AND** the same `COUNTYNAME` matches a county feature whose code is `properties.COUNTYSN = "10021000"`
+- **THEN** the script SHALL inject `properties.COUNTYSN = "10021000"` onto the township feature before calling `normalizeAdminUnits`
+- **AND** the normalised township SHALL carry `parent_code = "10021000"`
+
 #### Scenario: Unexpected county count emits a non-fatal warning
 
 - **WHEN** the merged FeatureCollection's county-level feature count is not 22
