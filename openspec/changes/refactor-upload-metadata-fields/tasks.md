@@ -59,7 +59,7 @@
   - Depends on: -
   - Independence: independent
   - Figma: designs/figma.md AC-3 + Implementation note
-  - status: not_started
+  - status: in_progress
 
 ## 4. `RouteMetadataForm` + form-state cleanup (drop tags)
 - [ ] 4.1 Remove 「標籤」 `<Field>` and `<TagsInput>` from `RouteMetadataForm`
