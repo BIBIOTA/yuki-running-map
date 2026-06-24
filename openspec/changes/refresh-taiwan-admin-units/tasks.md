@@ -76,12 +76,12 @@
   - status: passing
 
 ## 7. Smoke verification
-- [ ] 7.1 Re-upload `Afternoon_Run.gpx` on `/admin/upload`
+- [x] 7.1 Re-upload `Afternoon_Run.gpx` on `/admin/upload`
   - Acceptance: WHEN the GPX is dropped on the running dev server THEN the regions slot transitions from `data-state="loading"` to `data-state="ready"` AND renders the paragraph `新北市 — 瑞芳區` (county green-bold + em-dash + township ink).
+  - Verification: user-confirmed smoke against the running dev server (port 3001) — the regions slot rendered the expected paragraph.
   - Depends on: 5.2, 6.1
   - Independence: serial
-  - verification-pending: integration (manual browser smoke — user-driven)
-  - status: not_started
+  - status: passing
 
 ## 8. (Optional) DB-gated integration test
 - [x] 8.1 Add `lib/admin-routes/__tests__/previewRegions.integration.test.ts`
