@@ -69,11 +69,11 @@
   - status: passing
 
 ## 6. Runbook update
-- [ ] 6.1 Update `docs/runbooks/admin-units-refresh.md`
+- [x] 6.1 Update `docs/runbooks/admin-units-refresh.md`
   - Acceptance: WHEN the runbook is read THEN (a) the primary source is documented as `g0v/twgeojson` with the two raw.githubusercontent URLs and a note that `pnpm refresh:admin-units` automates steps 1-2; (b) the GDAL / 內政部 SHP path is preserved as an alternate section labelled `Alternate: latest 內政部 vintage (requires brew install gdal)`; (c) a short note explains that g0v vintage is 2010/1982 but county boundaries are highly stable and 個別 township edits 不頻繁; (d) the rollback + 「only run against local Supabase」 reminders from the existing runbook remain intact.
   - Depends on: -
   - Independence: independent
-  - status: not_started
+  - status: passing
 
 ## 7. Smoke verification
 - [ ] 7.1 Re-upload `Afternoon_Run.gpx` on `/admin/upload`
