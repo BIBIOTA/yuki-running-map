@@ -42,7 +42,7 @@
   - Acceptance: WHEN the migration file is loaded THEN it MUST contain (in order): (1) `TRUNCATE TABLE "admin_units" CASCADE`; (2) a `WITH seed_data AS (SELECT '<inlined seed FeatureCollection>'::jsonb AS data)` CTE plus `INSERT INTO "admin_units" ("code", "level", "name", "parent_code", "geom") SELECT ... FROM seed_data, jsonb_array_elements(...)` that calls `ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(...), 4326))::geometry(MultiPolygon, 4326)`; (3) `INSERT INTO "route_admin_units" ("route_id", "admin_unit_id") SELECT r.id, a.id FROM "routes" r JOIN "admin_units" a ON ST_Intersects(a.geom, ST_SetSRID(ST_GeomFromGeoJSON(r.geojson->>'geometry'), 4326))`.
   - Depends on: 3.1
   - Independence: serial
-  - status: not_started
+  - status: in_progress
 - [ ] 4.2 Register migration 0010 in `lib/db/migrations/meta/_journal.json`
   - Acceptance: WHEN the journal is read THEN it MUST contain an entry with `idx: 9`, `version: "7"`, monotonically-increasing `when` timestamp greater than the 0009 entry, `tag: "0010_refresh_taiwan_admin_units"`, `breakpoints: true`.
   - Depends on: 4.1
