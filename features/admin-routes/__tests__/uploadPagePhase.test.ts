@@ -23,6 +23,7 @@ import {
   applyPreviewRegionsResult,
   isSubmitEnabledForPhase,
 } from "../uploadPagePhase";
+import type { RegionsState } from "../uploadPagePhase";
 import type { Region } from "@/lib/regions/types";
 
 const SAMPLE_GEOJSON = {
@@ -111,7 +112,7 @@ describe("UploadPageClient Phase machine", () => {
   });
 
   it("submit is enabled in all three loaded states (loading / ready / ready-empty)", () => {
-    const make = (regionsState: import("../uploadPagePhase").RegionsState) => ({
+    const make = (regionsState: RegionsState) => ({
       kind: "loaded" as const,
       file: SAMPLE_FILE,
       geojson: SAMPLE_GEOJSON,

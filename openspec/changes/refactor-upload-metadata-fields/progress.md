@@ -70,3 +70,16 @@
   - `grep -rn 'tags\|TagsInput' e2e/` → 0 matches.
   - `pnpm typecheck` → exit code 0.
 - Next action: Final verification — run `pnpm lint` + `pnpm format:check` + `pnpm test` + `openspec validate --strict refactor-upload-metadata-fields`. Then invoke `spec-driven-dev:verification-before-completion`.
+
+## Session 9 — 2026-06-24 23:15
+- Stage: TDD
+- Task: 11.1, 11.2, 11.4, 11.6 (verification gates that don't need a live DB / browser)
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - 11.1 `pnpm typecheck` → exit 0
+  - 11.2 `pnpm lint` → exit 0, 0 warnings (rewrote inline `import()` annotations as named type imports)
+  - 11.4 `pnpm test` → 233 passed | 11 skipped
+  - 11.6 `openspec validate refactor-upload-metadata-fields --strict` → valid
+- Blockers (11.3): Prettier reports 72 pre-existing unformatted files repo-wide (also fails on main). Running `pnpm format` would touch unrelated files and pollute the diff. Decision deferred to verification-before-completion.
+- Not-started (11.5): `pnpm test:e2e` requires `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `ADMIN_GITHUB_USERNAME` / `DATABASE_URL` set in `.env.local` plus migration 0009 applied. Deferred to verification-before-completion.
+- Next action: Invoke `spec-driven-dev:verification-before-completion` to run the five staged checks and produce the verification report.

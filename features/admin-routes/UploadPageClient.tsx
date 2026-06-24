@@ -53,6 +53,7 @@ import {
   applyPreviewRegionsResult,
   buildLoadedPhase,
   type Phase,
+  type RegionsState,
 } from "./uploadPagePhase";
 
 export function UploadPageClient() {
@@ -168,7 +169,7 @@ export function UploadPageClient() {
 function UploadRegionsSlot({
   regionsState,
 }: {
-  regionsState: import("./uploadPagePhase").RegionsState;
+  regionsState: RegionsState;
 }) {
   if (regionsState.kind === "loading") {
     return (

@@ -203,36 +203,43 @@
   - status: passing
 
 ## 11. Verification
-- [ ] 11.1 `pnpm typecheck`
+- [x] 11.1 `pnpm typecheck`
   - Acceptance: WHEN run on the working tree THEN exit code 0 AND no orphan `tags` references anywhere.
+  - Verification: `pnpm typecheck` exited 0.
   - Depends on: all preceding tasks
   - Independence: serial
-  - status: not_started
-- [ ] 11.2 `pnpm lint`
+  - status: passing
+- [x] 11.2 `pnpm lint`
   - Acceptance: WHEN run THEN exit code 0.
+  - Verification: `pnpm lint` exited 0 with 0 warnings after the two `import()` type-annotation usages were rewritten as named type imports.
   - Depends on: 11.1
   - Independence: serial
-  - status: not_started
+  - status: passing
 - [ ] 11.3 `pnpm format:check`
   - Acceptance: WHEN run THEN exit code 0.
+  - Status: Prettier reports 72 unformatted files; the vast majority pre-date this branch (the format check fails on main as well). Running `pnpm format` would reformat unrelated files and pollute the diff.
+  - verification-pending: human decision — either accept that the formatter has drifted across the repo and run a one-off `pnpm format` cleanup as a separate change, or fix only the files touched by this change here.
   - Depends on: 11.1
   - Independence: serial
-  - status: not_started
-- [ ] 11.4 `pnpm test`
+  - status: blocked
+- [x] 11.4 `pnpm test`
   - Acceptance: WHEN run THEN all vitest specs pass AND no `tags` assertions remain.
+  - Verification: `pnpm test` → Test Files 37 passed (37); Tests 233 passed | 11 skipped (244). `grep -rn 'tags' features/admin-routes lib/admin-routes` returns 0 production-code matches.
   - Depends on: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 2.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 - [ ] 11.5 `pnpm test:e2e`
   - Acceptance: WHEN run against a freshly migrated local DB + seeded admin_units THEN all 5 specs pass.
+  - verification-pending: integration (Playwright run against a live Supabase + seeded DB)
   - Depends on: 10.1, 10.2, 10.3, 11.4
   - Independence: serial
   - status: not_started
-- [ ] 11.6 `openspec validate --strict refactor-upload-metadata-fields`
+- [x] 11.6 `openspec validate --strict refactor-upload-metadata-fields`
   - Acceptance: WHEN run THEN exit code 0.
+  - Verification: `openspec validate refactor-upload-metadata-fields --strict` → "Change 'refactor-upload-metadata-fields' is valid".
   - Depends on: writing-spec output exists
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## Optional artifacts
 - [ ] PlantUML diagrams (spec-driven-dev:writing-uml) — not selected
