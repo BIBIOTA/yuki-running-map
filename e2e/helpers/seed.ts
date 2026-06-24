@@ -21,7 +21,7 @@
  * The default values satisfy every `NOT NULL` column without a default
  * (slug / title / distance_m / elevation_gain_m / recorded_at /
  * gpx_path / geojson / bbox / start_point). Defaults take care of
- * `id` (gen_random_uuid), `published` (false), `tags` ('{}'),
+ * `id` (gen_random_uuid), `published` (false),
  * `created_at`, `updated_at`. Legacy difficulty / duration_s columns
  * are dropped by migration 0004.
  *
@@ -104,7 +104,6 @@ export interface SeedRouteOverrides {
   distanceM?: number;
   elevationGainM?: number;
   recordedAt?: Date;
-  tags?: string[];
   gpxPath?: string;
   published?: boolean;
   description?: string | null;
@@ -137,7 +136,6 @@ export async function seedRoute(
   const distanceM = overrides.distanceM ?? 5000;
   const elevationGainM = overrides.elevationGainM ?? 100;
   const recordedAt = overrides.recordedAt ?? new Date();
-  const tags = overrides.tags ?? ["河濱"];
   const gpxPath = overrides.gpxPath ?? "gpx/2026/seed.gpx";
   const published = overrides.published ?? false;
   const description = overrides.description ?? null;
@@ -157,7 +155,6 @@ export async function seedRoute(
         elevation_gain_m,
         recorded_at,
         location_name,
-        tags,
         gpx_path,
         geojson,
         bbox,
@@ -171,7 +168,6 @@ export async function seedRoute(
         ${elevationGainM},
         ${recordedAt.toISOString()},
         ${locationName},
-        ${sql.array(tags, 1009)},
         ${gpxPath},
         ${'{"type":"Feature","geometry":{"type":"LineString","coordinates":[[121.5,25.0],[121.51,25.01]]},"properties":{}}'}::jsonb,
         ST_GeomFromText('POLYGON((121.5 25, 121.51 25, 121.51 25.01, 121.5 25.01, 121.5 25))', 4326),

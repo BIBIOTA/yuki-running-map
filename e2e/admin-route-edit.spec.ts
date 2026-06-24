@@ -1,16 +1,17 @@
 /**
  * Admin route edit happy-path e2e.
  *
- * Spec: openspec/changes/feat-admin-gpx-upload/tasks.md §5.2
+ * Spec: openspec/changes/refactor-upload-metadata-fields/specs/admin-routes-crud/spec.md
+ *       MODIFIED Requirement "/admin/routes/[id] renders the metadata edit form"
  *
  * Coverage:
  *   seed a single `routes` row via the shared `seedRoute()` helper →
  *   admin OAuth-mock fixture → /admin/routes (table renders the seeded
  *   row) → click 「編輯」 link → expect URL /admin/routes/{id} →
- *   edit 「標題」 + add a tag via TagsInput → click 「儲存」 →
- *   assert sonner toast 「已儲存」 + still on /admin/routes/{id} +
- *   the new title is visible in the form. Then reload and confirm both
- *   the title and the newly-added tag persist (proving the DB was
+ *   assert ElevationProfile is visible + 標籤 field is gone → edit
+ *   「標題」 → click 「儲存」 → assert sonner toast 「已儲存」 + still
+ *   on /admin/routes/{id} + the new title is visible in the form.
+ *   Then reload and confirm the new title persists (proving the DB was
  *   actually written, not just the React state).
  *
  * Each test truncates the `routes` table and clears the `gpx` Storage
@@ -22,8 +23,7 @@
  * green on machines without a live Supabase. The spec is fully authored
  * + committed so a future environment with the secrets populated can
  * run it without changes — verification of actual pass status is
- * therefore VERIFICATION-PENDING (see
- * openspec/changes/feat-admin-gpx-upload/tasks.md §5.2).
+ * therefore VERIFICATION-PENDING.
  */
 
 import { expect, test } from "@playwright/test";
@@ -59,7 +59,6 @@ test.describe("admin route edit flow", () => {
     const seeded = await seedRoute({
       slug: "edit-test",
       title: "Edit Test Route",
-      tags: ["河濱", "LSD"],
     });
 
     // 2. Sign in as admin via the shared OAuth-mock fixture.
@@ -81,39 +80,45 @@ test.describe("admin route edit flow", () => {
       .click();
     await expect(page).toHaveURL(new RegExp(`/admin/routes/${seeded.id}$`));
 
-    // 5. Edit 標題. `getByLabel('標題')` resolves to the
+    // 5. The edit page renders an ElevationProfile section. The seeded
+    //    row carries an empty elevation profile (helper default), so
+    //    the empty hint is the expected branch.
+    const elevationSvg = page.getByTestId("elevation-profile");
+    const elevationEmpty = page.getByTestId("elevation-empty");
+    await expect(elevationSvg.or(elevationEmpty)).toBeVisible({
+      timeout: 5000,
+    });
+
+    // 6. The 標籤 field has been removed by
+    //    refactor-upload-metadata-fields; the form must not render it.
+    await expect(page.getByLabel("標籤")).toHaveCount(0);
+
+    // 7. Edit 標題. `getByLabel('標題')` resolves to the
     //    `<Input id="title">` inside `<RouteMetadataForm>`.
     await page.getByLabel("標題").fill("Edited Route Title");
 
-    // 6. Add a new tag via `<TagsInput>`. The component renders a
-    //    native `<input aria-label="標籤">`; we commit via Enter
-    //    (same code path as the production UX).
-    const tagsInput = page.getByRole("textbox", { name: "標籤" });
-    await tagsInput.fill("夜跑");
-    await tagsInput.press("Enter");
-
-    // 7. Save. `<RouteMetadataForm>`'s submit button stays on the page
+    // 8. Save. `<RouteMetadataForm>`'s submit button stays on the page
     //    on success and surfaces a sonner toast 「已儲存」.
     await page.getByRole("button", { name: "儲存" }).click();
 
-    // 8. Assert: toast visible + still on /admin/routes/{id} + new
+    // 9. Assert: toast visible + still on /admin/routes/{id} + new
     //    title value persisted in the form's controlled <input>.
     await expect(page.getByText("已儲存")).toBeVisible({ timeout: 5000 });
     await expect(page).toHaveURL(new RegExp(`/admin/routes/${seeded.id}$`));
     await expect(page.getByLabel("標題")).toHaveValue("Edited Route Title");
 
-    // 9. Reload and confirm DB persistence. The SSR Server Component
-    //    refetches the row from Postgres, so seeing the new title +
-    //    tag here proves the UPDATE actually committed.
+    // 10. Reload and confirm DB persistence. The SSR Server Component
+    //     refetches the row from Postgres, so seeing the new title here
+    //     proves the UPDATE actually committed.
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByLabel("標題")).toHaveValue("Edited Route Title");
-    // The new tag chip is rendered as a `<span>` by `<TagsInput>`.
-    await expect(page.getByText("夜跑", { exact: true })).toBeVisible();
 
-    // 10. The legacy region / difficulty / duration_s inputs are gone
-    //     entirely; the form must not render any of them.
+    // 11. The legacy region / difficulty / duration_s inputs and the
+    //     removed 標籤 input are all gone; the form must not render
+    //     any of them.
     await expect(page.locator("#region")).toHaveCount(0);
     await expect(page.locator("#difficulty")).toHaveCount(0);
     await expect(page.locator("#duration_s")).toHaveCount(0);
+    await expect(page.getByLabel("標籤")).toHaveCount(0);
   });
 });

@@ -75,11 +75,34 @@ test.describe("admin upload flow", () => {
     });
     await expect(page.getByRole("form", { name: "路線資料表單" })).toBeVisible();
 
+    // 4a. The new upload preview surfaces an elevation section AND a
+    //     regions slot. Either the SVG profile (with <ele>) or the
+    //     empty hint is acceptable; the slot transitions from loading
+    //     to ready / ready-empty before submit.
+    const uploadElevationSvg = page.getByTestId("elevation-profile");
+    const uploadElevationEmpty = page.getByTestId("elevation-empty");
+    await expect(
+      uploadElevationSvg.or(uploadElevationEmpty),
+    ).toBeVisible({ timeout: 5000 });
+
+    const regionsSlot = page.getByTestId("upload-regions-state");
+    await expect(regionsSlot).toHaveAttribute("data-state", "loading", {
+      timeout: 5000,
+    });
+    await expect(regionsSlot).toHaveAttribute(
+      "data-state",
+      /^(ready|ready-empty)$/,
+      { timeout: 10000 },
+    );
+
     // 5. Fill metadata. Labels are 繁體中文 and load-bearing — they
-    //    must stay in sync with RouteMetadataForm.tsx.
+    //    must stay in sync with RouteMetadataForm.tsx. The 標籤 field
+    //    has been removed by refactor-upload-metadata-fields; the
+    //    deprecated difficulty / duration_s / region inputs were
+    //    removed earlier.
     await page.getByLabel("標題").fill("E2E Route");
     await page.getByLabel("網址代稱（slug）").fill("e2e-route");
-    // Ensure deprecated fields really are gone from the form.
+    await expect(page.getByLabel("標籤")).toHaveCount(0);
     await expect(page.locator("#difficulty")).toHaveCount(0);
     await expect(page.locator("#duration_s")).toHaveCount(0);
     await expect(page.locator("#region")).toHaveCount(0);

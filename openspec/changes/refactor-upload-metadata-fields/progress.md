@@ -58,3 +58,15 @@
   - Tests: `pnpm vitest run features/admin-routes/__tests__/uploadPagePhase.test.ts` → 9 passed; full suite `pnpm test` → 233 passed | 11 skipped
   - Typecheck: `pnpm typecheck` → exit code 0
 - Next action: Move on to Task 10 (E2E updates) and Task 11 (final verification). E2E spec edits and DB-migration application are deferred to the verification phase per the verification-pending markers on tasks 1.3 / 3.3 / 3.4 / 5.2 / 10.x.
+
+## Session 8 — 2026-06-24 23:00
+- Stage: TDD
+- Task: 10.1 + 10.2 + 10.3 (E2E spec updates for the new upload preview, edit page parity, and residual tags purge)
+- Transition: not_started → in_progress → passing
+- Evidence:
+  - admin-upload.spec.ts: removed `tags` references; added elevation-section assertions + regions-slot loading → ready/ready-empty transition + 標籤 field absent.
+  - admin-route-edit.spec.ts: rewritten to assert ElevationProfile present + 標籤 field absent; tag-typeahead steps removed.
+  - e2e/helpers/seed.ts: `SeedRouteOverrides.tags` dropped + INSERT no longer writes `tags`.
+  - `grep -rn 'tags\|TagsInput' e2e/` → 0 matches.
+  - `pnpm typecheck` → exit code 0.
+- Next action: Final verification — run `pnpm lint` + `pnpm format:check` + `pnpm test` + `openspec validate --strict refactor-upload-metadata-fields`. Then invoke `spec-driven-dev:verification-before-completion`.

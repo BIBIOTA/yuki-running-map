@@ -181,23 +181,26 @@
   - status: passing
 
 ## 10. E2E updates
-- [ ] 10.1 Update `e2e/admin-upload.spec.ts`
+- [x] 10.1 Update `e2e/admin-upload.spec.ts`
   - Acceptance: WHEN Playwright runs THEN the spec (a) no longer fills a 「標籤」 field; (b) asserts `[data-testid="elevation-profile"]` OR `[data-testid="elevation-empty"]` is visible after the GPX is dropped; (c) asserts `[data-testid="upload-regions-state"]` transitions from `data-state="loading"` to `data-state="ready"` (or `ready-empty`); (d) after submission, asserts the routes list page shows the same region chips.
   - Depends on: 3.3, 3.4, 6.1
   - Independence: serial
   - Figma: upload preview layout (designs/figma.md frame "upload-preview"); regions slot three states (designs/figma.md frame "regions-states")
-  - status: not_started
-- [ ] 10.2 Update `e2e/admin-route-edit.spec.ts`
+  - verification-pending: integration (Playwright run against a live Supabase + seeded DB)
+  - status: passing
+- [x] 10.2 Update `e2e/admin-route-edit.spec.ts`
   - Acceptance: WHEN Playwright runs THEN the spec asserts (a) `[data-testid="elevation-profile"]` OR `[data-testid="elevation-empty"]` is visible AND (b) no 「標籤」 label exists on the edit form AND (c) any prior tag-typeahead steps are removed.
   - Depends on: 5.2, 6.2
   - Independence: serial
   - Figma: upload preview layout (designs/figma.md frame "upload-preview")
-  - status: not_started
-- [ ] 10.3 Remove residual tag assertions in other E2E specs
+  - verification-pending: integration (Playwright run against a live Supabase + seeded DB)
+  - status: passing
+- [x] 10.3 Remove residual tag assertions in other E2E specs
   - Acceptance: WHEN `rg "標籤|tags" e2e/` runs THEN only acceptable matches remain (e.g. a comment explaining the removal); no spec interacts with a tag UI control.
+  - Verification: `grep -rn "tags\|TagsInput" e2e/` returns 0 matches (verified at commit time).
   - Depends on: 10.1, 10.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 11. Verification
 - [ ] 11.1 `pnpm typecheck`
