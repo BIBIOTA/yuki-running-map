@@ -118,5 +118,5 @@
   - status: passing
 
 ## Optional artifacts
-- [ ] PlantUML diagrams (spec-driven-dev:writing-uml) — not selected (design §9: data flow is simple enough to express in ASCII pipeline; no state machine; no cross-component interactions)
-- [ ] Figma designs (spec-driven-dev:writing-figma) — not selected (design §9: pure data-layer refresh; UI completely unchanged; regions slot visual specification was finalised in refactor-upload-metadata-fields/designs/figma.md)
+- [x] PlantUML diagrams (spec-driven-dev:writing-uml) — decision: not selected (design §9: data flow is simple enough to express in ASCII pipeline; no state machine; no cross-component interactions)
+- [x] Figma designs (spec-driven-dev:writing-figma) — decision: not selected (design §9: pure data-layer refresh; UI completely unchanged; regions slot visual specification was finalised in refactor-upload-metadata-fields/designs/figma.md)
