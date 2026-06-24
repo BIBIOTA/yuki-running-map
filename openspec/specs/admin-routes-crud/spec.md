@@ -5,19 +5,16 @@ TBD - created by archiving change feat-admin-gpx-upload. Update Purpose after ar
 ## Requirements
 ### Requirement: /admin/upload renders the real GPX upload UI
 
-The system SHALL serve `/admin/upload` to authenticated admin as a Server-rendered Node-runtime page that prefetches existing tags via `listExistingTags(db)` and renders `<UploadPageClient existingTags={...} />`. The page SHALL replace the previous "Coming soon · GPX 上傳開發中" placeholder. Unauthenticated or non-admin clients SHALL continue to be intercepted by the existing admin middleware (`middleware.ts`) as defined in the `data-and-auth-infrastructure` capability.
+The system SHALL serve `/admin/upload` to authenticated admin as a Server-rendered Node-runtime page that renders `<UploadPageClient />`. The page SHALL NOT prefetch tags (the 標籤 欄位 has been removed). Unauthenticated or non-admin clients SHALL continue to be intercepted by the existing admin middleware (`middleware.ts`) as defined in the `data-and-auth-infrastructure` capability.
 
-#### Scenario: Authenticated admin sees the real upload UI
+#### Scenario: Authenticated admin sees the real upload UI without a tags prop
+
 - **WHEN** an authenticated admin sends GET `/admin/upload`
 - **THEN** the response status is 200
 - **AND** the page renders the admin top nav with `上傳` link styled as active
-- **AND** the body renders the `<UploadPageClient>` component containing `<GpxDropzone>` in its empty state
-- **AND** the rendered HTML does NOT contain the text "Coming soon · GPX 上傳開發中"
-
-#### Scenario: Existing tags are prefetched
-- **WHEN** an authenticated admin sends GET `/admin/upload`
-- **THEN** the page server-side calls `listExistingTags(db)` and passes the result into `<UploadPageClient existingTags={...} />`
-- **AND** the tag list is available to `<TagsInput>` for typeahead suggestions without an additional client round-trip
+- **AND** the body renders `<UploadPageClient />` containing `<GpxDropzone>` in its empty state
+- **AND** the rendered Server Component does NOT import `listExistingTags`
+- **AND** `<UploadPageClient>` does NOT receive an `existingTags` prop
 
 > See: ../../designs/figma.md
 
@@ -43,84 +40,57 @@ The system SHALL serve `/admin/routes` to authenticated admin as a Server-render
 
 ### Requirement: /admin/routes/[id] renders the metadata edit form
 
-The system SHALL serve `/admin/routes/[id]` to authenticated admin as a Server-rendered Node-runtime page that selects the route by id (admin RLS), prefetches existing tags via `listExistingTags(db)`, and renders `<EditPageClient initial={route} existingTags={...} />`. If the id does not match any row the page SHALL call `notFound()` and return 404. The edit form SHALL expose only metadata fields and SHALL NOT render GPX-derived fields (`gpx_path` / `geojson` / `bbox` / `start_point` / `distance_m` / `elevation_gain_m` / `recorded_at` / `id` / `created_at`); those values SHALL appear in a separate READ-ONLY card on the page.
+The system SHALL serve `/admin/routes/[id]` to authenticated admin as a Server-rendered Node-runtime page that selects the route by id (admin RLS) and renders `<EditPageClient initial={route} routeRegions={regions} />`. If the id does not match any row the page SHALL call `notFound()` and return 404. The edit form SHALL expose only metadata fields and SHALL NOT render GPX-derived fields. The page SHALL render `<RouteRegionsSection>` (shared chrome) and `<ElevationProfile>` (shared component) beside the form so the read-only GPX-derived surfaces match the public `/routes/[slug]` chrome.
 
 #### Scenario: Admin opens edit page for existing route
+
 - **WHEN** an authenticated admin sends GET `/admin/routes/{existing-id}`
 - **THEN** the response status is 200
-- **AND** the page renders breadcrumb 「路線管理 / 編輯」 followed by hero 「編輯路線 · {title}」
-- **AND** the left column renders editable fields title / slug / description / region / tags / difficulty / duration / published toggle, prefilled with the route's current values
-- **AND** the right column renders a READ-ONLY card titled 「GPX 衍生（鎖定）」 containing 距離 / 累積爬升 / 軌跡點數 / 紀錄時間 / gpx_path
+- **AND** the editable fields rendered by `<RouteMetadataForm>` are exactly `標題 / 網址代稱 (slug) / 描述 / 已發佈`
+- **AND** the form does NOT render a 「標籤」 field
+- **AND** the page renders `<RouteRegionsSection regions={...} />` beside the form (chrome shared with `/routes/[slug]`)
+- **AND** the page renders `<ElevationProfile profile={route.elevationProfile} />` below the map preview
+- **AND** the Server Component does NOT import `listExistingTags`
+
+> See: ../../designs/figma.md
 
 #### Scenario: Edit page for unknown id returns 404
+
 - **WHEN** an authenticated admin sends GET `/admin/routes/{nonexistent-id}`
 - **THEN** the response status is 404
 - **AND** the page invokes Next.js `notFound()`
 
-> See: ../../designs/figma.md
-
 ### Requirement: createRoute Server Action persists the new route with rollback
 
-The system SHALL expose a Node-runtime Server Action `createRoute(formData)` under `features/admin-routes/actions/createRoute.ts`. The Action SHALL validate metadata via `validateRouteMetadata`, server-side parse the GPX via `parseGpx(buffer)`, upload the buffer to `gpx/{yyyy}/{uuid}.gpx` in the `gpx` Storage bucket, INSERT into `routes`, and call `revalidatePath('/routes')` + `revalidatePath('/routes/' + slug)` + `revalidatePath('/admin/routes')` before returning. On any failure between Storage upload and INSERT completion the Action SHALL invoke `supabase.storage.from('gpx').remove([path])` to rollback. The Action SHALL return a discriminated union `{ ok: true, id, slug } | { ok: false, fieldErrors }` and SHALL NOT throw across the client boundary; client metadata SHALL NOT be trusted for GPX-derived columns (all GPX-derived values come from the server-side `parseGpx` result).
+The system SHALL provide a `createRoute(formData: FormData)` Server Action that validates the metadata (title / slug / description / published only), parses the uploaded GPX server-side, uploads the buffer to Supabase Storage, and INSERTs a single `routes` row inside a Drizzle transaction. The Action SHALL NOT read or persist a `tags` field — neither the FormData parse step, nor `validateRouteMetadata`, nor the INSERT payload SHALL reference `tags`. All other behaviour from the existing requirement (storage rollback on transaction failure, slug-unique handling, region detection, revalidatePath) remains intact.
 
-#### Scenario: Happy path creates row and Storage object
-- **WHEN** an authenticated admin calls `createRoute(formData)` with a valid GPX file and complete metadata
-- **THEN** the GPX buffer is uploaded to `gpx/{yyyy}/{uuid}.gpx`
-- **AND** a new row is INSERTed into `routes` with `gpx_path` matching the upload path and `distance_m` / `elevation_gain_m` / `bbox` / `start_point` / `geojson` / `recorded_at` derived from the server-side `parseGpx(buffer)` call
-- **AND** `revalidatePath('/routes')`, `revalidatePath('/routes/' + slug)`, and `revalidatePath('/admin/routes')` are called
-- **AND** the Action returns `{ ok: true, id, slug }`
+#### Scenario: Action persists exactly the canonical metadata columns
 
-#### Scenario: Metadata validation failure rejects without writes
-- **WHEN** `createRoute(formData)` receives input that fails `validateRouteMetadata`
-- **THEN** no Storage upload occurs
-- **AND** no INSERT occurs
-- **AND** the Action returns `{ ok: false, fieldErrors }` whose keys identify the failed fields
+- **WHEN** a valid `createRoute(formData)` call succeeds
+- **THEN** the INSERT payload contains the columns `slug / title / description / distance_m / elevation_gain_m / elevation_profile / recorded_at / gpx_path / geojson / bbox / start_point / published`
+- **AND** the INSERT payload does NOT contain a `tags` column
+- **AND** the action returns `{ ok: true, id, slug }`
 
-#### Scenario: Server-side parseGpx failure rejects without Storage write
-- **WHEN** `createRoute(formData)` receives a file that throws from `parseGpx` (no trackpoints, invalid XML)
-- **THEN** no Storage upload occurs
-- **AND** the Action returns `{ ok: false, fieldErrors: { gpxFile: 'GPX 解析失敗（無有效軌跡點？）' } }`
+#### Scenario: Malformed metadata is rejected without touching Storage or DB
 
-#### Scenario: Storage upload failure surfaces _form error without DB write
-- **WHEN** `createRoute(formData)` receives a valid file and metadata but `storage.upload` throws
-- **THEN** no INSERT occurs
-- **AND** the Action returns `{ ok: false, fieldErrors: { _form: 'Storage 上傳失敗，請重試' } }`
+- **WHEN** `createRoute(formData)` runs with a missing `title`
+- **THEN** the action returns `{ ok: false, fieldErrors: { title: <validation message> } }`
+- **AND** no Supabase Storage upload occurs
+- **AND** no Drizzle INSERT occurs
 
-#### Scenario: Slug UNIQUE conflict rolls back Storage upload
-- **WHEN** `createRoute(formData)` succeeds at Storage upload but the subsequent INSERT throws a `postgres` error with code `23505` matching constraint `routes_slug_unique`
-- **THEN** `storage.from('gpx').remove([path])` is invoked to delete the uploaded object
-- **AND** the Action returns `{ ok: false, fieldErrors: { slug: '此 slug 已被使用' } }`
-
-#### Scenario: Other INSERT failure rolls back Storage and reports _form
-- **WHEN** `createRoute(formData)` succeeds at Storage upload but the subsequent INSERT throws any other error
-- **THEN** `storage.from('gpx').remove([path])` is invoked
-- **AND** the Action returns `{ ok: false, fieldErrors: { _form: '寫入失敗：...' } }`
-- **AND** `console.error(e)` is called
-
-> See: ../../diagrams/01-sequence-create-route.puml
-> See: ../../diagrams/03-activity-action-result-handling.puml
+> See: ../../designs/figma.md
 
 ### Requirement: updateRoute Server Action mutates metadata only
 
-The system SHALL expose a Node-runtime Server Action `updateRoute({ id, ...meta })` under `features/admin-routes/actions/updateRoute.ts`. The Action SHALL validate metadata via `validateRouteMetadata`, fetch the current slug from the database (`SELECT slug FROM routes WHERE id=$1`), UPDATE the row's metadata columns with the validated input plus `updated_at = now()`, and call `revalidatePath` for `/routes`, the old slug path (if changed), the new slug path, and `/admin/routes` before returning. The Action SHALL strip the GPX-derived keys (`gpx_path` / `geojson` / `bbox` / `start_point` / `distance_m` / `elevation_gain_m` / `recorded_at` / `id` / `created_at`) from the input before UPDATE. Failures SHALL return a discriminated union `{ ok: true } | { ok: false, fieldErrors }`.
+The system SHALL provide an `updateRoute(id, payload)` Server Action whose `ACCEPTED_FIELDS` allow list is exactly `["title", "slug", "description", "published"]`. The Action SHALL NOT include `"tags"` in `ACCEPTED_FIELDS` and SHALL NOT UPDATE the `routes.tags` column.
 
-#### Scenario: Happy path updates metadata and revalidates both slug paths
-- **WHEN** `updateRoute({ id, ...validMeta })` is called with metadata that includes a slug different from the stored value
-- **THEN** the Action runs `SELECT slug FROM routes WHERE id=$1` to obtain `oldSlug`
-- **AND** the Action runs UPDATE with the validated metadata (GPX-derived keys stripped) plus `updated_at = now()`
-- **AND** the Action calls `revalidatePath('/routes')`, `revalidatePath('/routes/' + oldSlug)`, `revalidatePath('/routes/' + newSlug)`, and `revalidatePath('/admin/routes')`
-- **AND** the Action returns `{ ok: true }`
+#### Scenario: Update payload containing extraneous keys ignores them
 
-#### Scenario: GPX-derived keys sent by client are silently stripped
-- **WHEN** the client submits a form whose payload includes `gpx_path` or any other GPX-derived column
-- **THEN** the Action removes those keys from the input before UPDATE
-- **AND** the corresponding database columns retain their existing values
+- **WHEN** `updateRoute(id, { title: "新", tags: ["x"], published: true })` runs
+- **THEN** the UPDATE SET clause sets only `title` and `published`
+- **AND** the SET clause does NOT mention `tags`
 
-#### Scenario: Slug UNIQUE conflict surfaces fieldErrors.slug
-- **WHEN** `updateRoute({ id, ...meta })` triggers a `postgres` 23505 error on `routes_slug_unique`
-- **THEN** the Action returns `{ ok: false, fieldErrors: { slug: '此 slug 已被使用' } }`
-
-> See: ../../diagrams/03-activity-action-result-handling.puml
+> See: ../../designs/figma.md
 
 ### Requirement: deleteRoute Server Action hard-deletes row and GPX object
 
@@ -257,6 +227,56 @@ The system SHALL include Playwright specs covering the admin upload, edit, and d
 - **THEN** the admin clicks 「刪除」, confirms in the `AlertDialog`, and observes the row disappear plus a sonner toast 「已刪除」
 - **AND** a follow-up admin query confirms the row is no longer in the `routes` table
 - **AND** the corresponding Storage object under `gpx/` is no longer present
+
+> See: ../../designs/figma.md
+
+### Requirement: RouteMetadataForm exposes the canonical metadata fields
+
+The system SHALL render `<RouteMetadataForm>` with the field set `標題 / 網址代稱 (slug) / 描述 / 已發佈` only. The component SHALL NOT render a 「標籤」 field, SHALL NOT import `<TagsInput>`, SHALL NOT accept an `existingTags` prop, and SHALL NOT accept a `routeRegions` prop. The 「途經區域」 read-only surface is rendered by the parent (`UploadPageClient` / `EditPageClient`) via `<RouteRegionsSection>` as a sibling of the form (see route-administrative-regions capability).
+
+#### Scenario: Form renders only the canonical fields
+
+- **WHEN** `<RouteMetadataForm>` mounts in either `mode="create"` or `mode="edit"`
+- **THEN** the rendered DOM contains `<label>` elements for 標題 / 網址代稱 (slug) / 描述 / 已發佈
+- **AND** the rendered DOM contains NO `<label>` whose text is 「標籤」
+- **AND** the component's TypeScript props type contains no `existingTags` key and no `routeRegions` key
+
+> See: ../../designs/figma.md
+
+#### Scenario: Form FormData omits the tags entry
+
+- **WHEN** `buildCreateRouteFormData(values, file)` runs with valid `values`
+- **THEN** the resulting `FormData` keys are exactly `{title, slug, description, published, gpxFile}`
+- **AND** no `tags` entry is appended
+
+### Requirement: 0009 migration drops routes.tags and its GIN index
+
+The system SHALL provide migration `lib/db/migrations/0009_drop_routes_tags.sql` that executes `DROP INDEX IF EXISTS routes_tags_gin;` followed by `ALTER TABLE routes DROP COLUMN tags;`. The migration body SHALL contain no other DDL.
+
+#### Scenario: Migration drops index then column
+
+- **WHEN** `pnpm db:migrate` runs `0009_drop_routes_tags.sql`
+- **THEN** `\d routes` shows no `tags` column
+- **AND** `\d routes_tags_gin` returns "Did not find any relation"
+- **AND** the migration completes without affecting any other column or index
+
+### Requirement: UploadPageClient phase machine carries elevation + regions preview state
+
+The system SHALL extend `UploadPageClient`'s `Phase.loaded` discriminator to include `elevationProfile: Array<[number, number]>` (the value returned by `parseGpx`) and `regionsState: { kind: 'loading' } | { kind: 'ready'; regions: Region[] } | { kind: 'error'; message: string }`. `handleFile` SHALL seed `elevationProfile` from the parsed result, set `regionsState = { kind: 'loading' }`, then call the new `previewRegions(parsed.geojson)` Server Action (see route-administrative-regions capability) and write the discriminated result back into `regionsState`. A `previewRegions` failure SHALL NOT block submission; the submit button stays enabled.
+
+#### Scenario: Drop triggers elevation seed + previewRegions
+
+- **WHEN** the user drops a valid GPX file into `<GpxDropzone>`
+- **THEN** `handleFile(file, parsed)` calls `setPhase` with `kind: 'loaded'`, the parsed `geojson` / `bbox` / `elevationProfile`, and `regionsState: { kind: 'loading' }`
+- **AND** `previewRegions(parsed.geojson)` is awaited
+- **AND** the resolved result writes back into `regionsState` (`ready` on success, `error` on failure)
+
+#### Scenario: previewRegions failure does not block submit
+
+- **WHEN** `previewRegions` resolves with `{ ok: false, message: '行政區預覽暫時無法使用' }`
+- **THEN** `regionsState.kind === 'error'`
+- **AND** the form's 「儲存」 submit button remains enabled
+- **AND** the user can still submit the route, after which `createRoute` re-runs `detectRegions` server-side as the source of truth
 
 > See: ../../designs/figma.md
 

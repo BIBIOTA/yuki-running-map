@@ -1,17 +1,3 @@
-## REMOVED Requirements
-
-### Requirement: Existing tags are prefetched for the admin upload page
-
-**Reason**: 標籤欄位整條鏈（UI、validation、DB、index、test）拆除。`/admin/upload` 不再呼叫 `listExistingTags`，`<UploadPageClient>` 不再接收 `existingTags` prop。
-
-**Migration**: `app/(admin)/admin/upload/page.tsx` 移除 `import { listExistingTags }` 與 `existingTags={await listExistingTags(db)}` 傳遞。`<TagsInput>` 元件不再被引用 → 連同 `features/admin-routes/TagsInput.tsx`、`features/admin-routes/tags.ts`、`features/admin-routes/__tests__/tags.test.ts`、`lib/admin-routes/listExistingTags.ts`、`lib/admin-routes/__tests__/listExistingTags.integration.test.ts` 一併刪除。
-
-### Requirement: routes table stores tags as text array
-
-**Reason**: 此欄位已無使用者 surface，留著只會增加 schema、index 與測試成本。
-
-**Migration**: `lib/db/migrations/0009_drop_routes_tags.sql` 先 `DROP INDEX IF EXISTS routes_tags_gin;` 再 `ALTER TABLE routes DROP COLUMN tags;`。`lib/db/schema.ts` 同步移除 `tags: text("tags").array()...` 與 `index("routes_tags_gin").using("gin", t.tags)`。`validateRouteMetadata` 與 `createRoute` / `updateRoute` 隨之移除 `tags` 解析、驗證與寫入。
-
 ## MODIFIED Requirements
 
 ### Requirement: /admin/upload renders the real GPX upload UI
@@ -51,26 +37,7 @@ The system SHALL serve `/admin/routes/[id]` to authenticated admin as a Server-r
 - **THEN** the response status is 404
 - **AND** the page invokes Next.js `notFound()`
 
-### Requirement: RouteMetadataForm exposes the canonical metadata fields
-
-The system SHALL render `<RouteMetadataForm>` with the field set `標題 / 網址代稱 (slug) / 描述 / 已發佈` only. The component SHALL NOT render a 「標籤」 field, SHALL NOT import `<TagsInput>`, SHALL NOT accept an `existingTags` prop, and SHALL NOT accept a `routeRegions` prop. The 「途經區域」 read-only surface is rendered by the parent (`UploadPageClient` / `EditPageClient`) via `<RouteRegionsSection>` as a sibling of the form (see route-administrative-regions capability).
-
-#### Scenario: Form renders only the canonical fields
-
-- **WHEN** `<RouteMetadataForm>` mounts in either `mode="create"` or `mode="edit"`
-- **THEN** the rendered DOM contains `<label>` elements for 標題 / 網址代稱 (slug) / 描述 / 已發佈
-- **AND** the rendered DOM contains NO `<label>` whose text is 「標籤」
-- **AND** the component's TypeScript props type contains no `existingTags` key and no `routeRegions` key
-
-> See: ../../designs/figma.md
-
-#### Scenario: Form FormData omits the tags entry
-
-- **WHEN** `buildCreateRouteFormData(values, file)` runs with valid `values`
-- **THEN** the resulting `FormData` keys are exactly `{title, slug, description, published, gpxFile}`
-- **AND** no `tags` entry is appended
-
-### Requirement: createRoute Server Action persists metadata + GPX-derived columns
+### Requirement: createRoute Server Action persists the new route with rollback
 
 The system SHALL provide a `createRoute(formData: FormData)` Server Action that validates the metadata (title / slug / description / published only), parses the uploaded GPX server-side, uploads the buffer to Supabase Storage, and INSERTs a single `routes` row inside a Drizzle transaction. The Action SHALL NOT read or persist a `tags` field — neither the FormData parse step, nor `validateRouteMetadata`, nor the INSERT payload SHALL reference `tags`. All other behaviour from the existing requirement (storage rollback on transaction failure, slug-unique handling, region detection, revalidatePath) remains intact.
 
@@ -90,7 +57,7 @@ The system SHALL provide a `createRoute(formData: FormData)` Server Action that 
 
 > See: ../../designs/figma.md
 
-### Requirement: updateRoute Server Action updates allow-listed metadata fields
+### Requirement: updateRoute Server Action mutates metadata only
 
 The system SHALL provide an `updateRoute(id, payload)` Server Action whose `ACCEPTED_FIELDS` allow list is exactly `["title", "slug", "description", "published"]`. The Action SHALL NOT include `"tags"` in `ACCEPTED_FIELDS` and SHALL NOT UPDATE the `routes.tags` column.
 
@@ -103,6 +70,25 @@ The system SHALL provide an `updateRoute(id, payload)` Server Action whose `ACCE
 > See: ../../designs/figma.md
 
 ## ADDED Requirements
+
+### Requirement: RouteMetadataForm exposes the canonical metadata fields
+
+The system SHALL render `<RouteMetadataForm>` with the field set `標題 / 網址代稱 (slug) / 描述 / 已發佈` only. The component SHALL NOT render a 「標籤」 field, SHALL NOT import `<TagsInput>`, SHALL NOT accept an `existingTags` prop, and SHALL NOT accept a `routeRegions` prop. The 「途經區域」 read-only surface is rendered by the parent (`UploadPageClient` / `EditPageClient`) via `<RouteRegionsSection>` as a sibling of the form (see route-administrative-regions capability).
+
+#### Scenario: Form renders only the canonical fields
+
+- **WHEN** `<RouteMetadataForm>` mounts in either `mode="create"` or `mode="edit"`
+- **THEN** the rendered DOM contains `<label>` elements for 標題 / 網址代稱 (slug) / 描述 / 已發佈
+- **AND** the rendered DOM contains NO `<label>` whose text is 「標籤」
+- **AND** the component's TypeScript props type contains no `existingTags` key and no `routeRegions` key
+
+> See: ../../designs/figma.md
+
+#### Scenario: Form FormData omits the tags entry
+
+- **WHEN** `buildCreateRouteFormData(values, file)` runs with valid `values`
+- **THEN** the resulting `FormData` keys are exactly `{title, slug, description, published, gpxFile}`
+- **AND** no `tags` entry is appended
 
 ### Requirement: 0009 migration drops routes.tags and its GIN index
 

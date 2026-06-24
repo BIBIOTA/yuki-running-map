@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: normalizeAdminUnits maps raw 內政部 / g0v properties into the seed shape
 
@@ -18,8 +18,6 @@ The system SHALL provide `normalizeAdminUnits(raw: RawFeatureCollection)` in `li
 
 - **WHEN** `normalizeAdminUnits` receives a feature with `properties.TOWNCODE`, `properties.TOWNNAME`, and `properties.COUNTYCODE` (no `COUNTYSN` / `TOWNSN`)
 - **THEN** the normalised feature SHALL use `TOWNCODE` as `code` AND use `COUNTYCODE` as `parent_code`
-
-## ADDED Requirements
 
 ### Requirement: refresh-admin-units convenience wrapper script
 
