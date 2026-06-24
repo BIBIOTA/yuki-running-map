@@ -5,7 +5,7 @@
   - Acceptance: WHEN the migration file is loaded THEN it contains `DROP INDEX IF EXISTS routes_tags_gin;` followed by `ALTER TABLE routes DROP COLUMN tags;` AND no other DDL.
   - Depends on: -
   - Independence: independent
-  - status: not_started
+  - status: in_progress
 - [ ] 1.2 Remove `tags` column + `routes_tags_gin` index from `lib/db/schema.ts`
   - Acceptance: WHEN `pnpm typecheck` runs THEN `routes.tags` is no longer present on the inferred type AND the `routes_tags_gin` `.using('gin', t.tags)` line is gone.
   - Depends on: 1.1
