@@ -65,6 +65,7 @@ import { toast } from "sonner";
 
 import { RouteRegionsSection } from "@/components/RouteRegions";
 import { updateRoute } from "@/features/admin-routes/actions/updateRoute";
+import { ElevationProfile } from "@/features/route-detail/ElevationProfile";
 import type { Route } from "@/lib/db/schema";
 
 import {
@@ -118,6 +119,22 @@ export function EditPageClient({ initial, routeRegions }: Props) {
         編輯路線 · {initial.title}
       </h1>
       <RouteRegionsSection regions={routeRegions ?? []} />
+
+      <section
+        aria-labelledby="edit-elevation-heading"
+        className="space-y-2"
+      >
+        <h2
+          id="edit-elevation-heading"
+          className="font-mono text-xs tracking-widest text-muted-foreground uppercase"
+        >
+          海拔曲線
+        </h2>
+        <div className="rounded-md border border-border bg-card p-3">
+          <ElevationProfile profile={initial.elevationProfile} />
+        </div>
+      </section>
+
       <div className="grid gap-6 md:grid-cols-2">
         <RouteMetadataForm
           mode="edit"

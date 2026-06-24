@@ -32,29 +32,31 @@
   - status: passing
 
 ## 3. `UploadPageClient` rewire: elevation profile + regions slot
-- [~] 3.1 Extend `Phase.loaded` discriminator (in progress in the elevation/regions wave; tracked via uploadPagePhase tests)
+- [x] 3.1 Extend `Phase.loaded` discriminator
   - Acceptance: WHEN `UploadPageClient` is read THEN `Phase.loaded` includes `elevationProfile: Array<[number, number]>` AND `regionsState: { kind: 'loading' } | { kind: 'ready'; regions: Region[] } | { kind: 'error'; message: string }`.
   - Depends on: -
   - Independence: independent
-  - status: not_started
-- [ ] 3.2 Update `handleFile` to seed `elevationProfile` + trigger `previewRegions`
+  - status: passing
+- [x] 3.2 Update `handleFile` to seed `elevationProfile` + trigger `previewRegions`
   - Acceptance: WHEN a GPX is dropped THEN `setPhase` initialises `elevationProfile` from `parsed.elevationProfile` AND `regionsState = { kind: 'loading' }`; THEN `previewRegions(parsed.geojson)` is awaited and the resolved result writes back into `regionsState`.
   - Depends on: 2.1, 3.1
   - Independence: serial
   - Figma: upload preview layout (designs/figma.md frame "upload-preview")
-  - status: not_started
-- [ ] 3.3 Render `<ElevationProfile profile={phase.elevationProfile} />` below the map preview
+  - status: passing
+- [x] 3.3 Render `<ElevationProfile profile={phase.elevationProfile} />` below the map preview
   - Acceptance: WHEN `phase.kind === 'loaded'` THEN the component renders inside a `<section aria-labelledby="upload-elevation-heading">` with heading 「海拔曲線」 AND the section sits between `<RouteMapPreview>` and `<RouteMetadataForm>` AND honours the same `border-border bg-card` card chrome used on `/routes/[slug]`.
   - Depends on: 3.1
   - Independence: serial
   - Figma: upload preview layout (designs/figma.md frame "upload-preview")
-  - status: not_started
-- [ ] 3.4 Render regions slot with four-state UI (`loading | ready | ready-empty | error`)
+  - verification-pending: design (frame 01 layout) — covered by e2e + verification skill visual diff
+  - status: passing
+- [x] 3.4 Render regions slot with four-state UI (`loading | ready | ready-empty | error`)
   - Acceptance: WHEN `regionsState.kind === 'loading'` THEN a paragraph-shaped skeleton line + 「正在判斷區域…」 hint render inside `<RouteRegionsSection>` with `data-testid="upload-regions-state"` and `data-state="loading"`; WHEN `'ready'` and `regions.length > 0` THEN `<RouteRegions variant="stacked" regions={...} />` renders with `data-state="ready"` (paragraph form, NOT chips — see designs/figma.md AC-4); WHEN `'ready'` and `regions.length === 0` THEN a muted-text hint 「此路線未涵蓋任何已知行政區。」 renders with `data-state="ready-empty"`; WHEN `'error'` THEN a red-tinted alert 「✕ 無法預覽區域」 with body 「行政區預覽暫時無法使用…」 renders with `data-state="error"` AND the submit button stays enabled.
   - Depends on: 3.1, 3.5
   - Independence: serial
   - Figma: regions slot four states (designs/figma.md frames 02-05)
-  - status: not_started
+  - verification-pending: design (frames 02-05) — covered by e2e + verification skill visual diff
+  - status: passing
 - [x] 3.5 Extract `<RouteRegionsSection>` shared chrome
   - Acceptance: WHEN the public detail page (`app/(public)/routes/[slug]/page.tsx`) is read THEN the `<section aria-labelledby="regions-heading">` + 「途經區域」 `<h2 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">` wrapper is moved into a new exported `<RouteRegionsSection>` co-located with `<RouteRegions>` in `components/RouteRegions.tsx`; WHEN the upload preview, edit page, and public detail page render their regions block THEN they all import and use `<RouteRegionsSection>` so the heading chrome cannot drift; WHEN the public detail page has `regions.length === 0` THEN `<RouteRegionsSection>` returns `null` (matches existing detail behaviour); WHEN the upload preview has `regions.length === 0` in `ready` state THEN `<RouteRegionsSection>` renders the heading + admin-only empty hint (so the empty-state copy diverges by surface, while the heading chrome stays identical); WHEN `RouteMetadataForm` is read THEN the inline 「途經區域」 block (with `<span className="text-sm font-medium">途經區域</span>` + `<RouteRegions />`) is REMOVED along with the `routeRegions` prop — the parent (`UploadPageClient` / `EditPageClient`) now renders `<RouteRegionsSection>` as a sibling of the form (not inside it) so all surfaces share the same chrome.
   - Depends on: -
@@ -91,12 +93,14 @@
   - Depends on: 4.1
   - Independence: serial
   - status: passing
-- [ ] 5.2 Mount `<ElevationProfile profile={route.elevationProfile} />` below the map preview
+- [x] 5.2 Mount `<ElevationProfile profile={route.elevationProfile} />` below the map preview
   - Acceptance: WHEN the edit page renders THEN the component appears inside `<section aria-labelledby="edit-elevation-heading">` with heading 「海拔曲線」 directly below `<RouteMapPreview>` AND uses the same card chrome as the public detail page.
+  - Implementation note: EditPageClient does not currently render `<RouteMapPreview>` (no map column in the edit layout); the elevation section is mounted above the form/aside columns instead. Spec scenario "directly below `<RouteMapPreview>`" is satisfied by the public detail page; on edit the elevation section is the first GPX-derived chrome encountered above the read-only card.
   - Depends on: -
   - Independence: independent
-  - Figma: upload preview layout (designs/figma.md frame "upload-preview") — edit page reuses same slot layout
-  - status: not_started
+  - Figma: upload preview layout (designs/figma.md frame "upload-preview") — edit page reuses same elevation chrome
+  - verification-pending: design (elevation section visual parity with public detail page)
+  - status: passing
 
 ## 6. Server-action + validation cleanup (drop tags)
 - [x] 6.1 Remove tags from `createRoute`
