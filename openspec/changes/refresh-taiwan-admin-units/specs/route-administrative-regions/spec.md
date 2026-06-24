@@ -52,7 +52,14 @@ The system SHALL provide `scripts/refresh-admin-units.ts`, executable via `pnpm 
 - **WHEN** the fetched township feature carries `properties.COUNTYNAME` but no `properties.COUNTYSN` and no `properties.COUNTYCODE` (this is the actual g0v shape)
 - **AND** the same `COUNTYNAME` matches a county feature whose code is `properties.COUNTYSN = "10021000"`
 - **THEN** the script SHALL inject `properties.COUNTYSN = "10021000"` onto the township feature before calling `normalizeAdminUnits`
-- **AND** the normalised township SHALL carry `parent_code = "10021000"`
+- **AND** the written seed township SHALL carry `parent_code = "county:10021000"` (level-prefixed; see "Codes are prefixed with level" scenario below)
+
+#### Scenario: Codes are prefixed with level to avoid g0v SN collisions
+
+- **WHEN** the script writes the seed FeatureCollection
+- **THEN** every county feature SHALL have `properties.code = "county:<COUNTYSN>"` AND `properties.parent_code = null`
+- **AND** every township feature SHALL have `properties.code = "township:<TOWNSN>"` AND `properties.parent_code = "county:<COUNTYSN of its parent>"`
+- **AND** no two features in the written seed SHALL share the same `code` (the prefix disambiguates the otherwise-overlapping g0v COUNTYSN / TOWNSN spaces)
 
 #### Scenario: Unexpected county count emits a non-fatal warning
 
