@@ -80,7 +80,7 @@
   - Acceptance: WHEN the GPX is dropped on the running dev server THEN the regions slot transitions from `data-state="loading"` to `data-state="ready"` AND renders the paragraph `新北市 — 瑞芳區` (county green-bold + em-dash + township ink).
   - Depends on: 5.2, 6.1
   - Independence: serial
-  - verification-pending: integration (manual browser smoke)
+  - verification-pending: integration (manual browser smoke — user-driven)
   - status: not_started
 
 ## 8. (Optional) DB-gated integration test
@@ -92,26 +92,30 @@
   - status: passing
 
 ## 9. Verification gates
-- [ ] 9.1 `pnpm typecheck`
+- [x] 9.1 `pnpm typecheck`
   - Acceptance: WHEN run THEN exit 0.
+  - Verification: `pnpm typecheck` → exit 0.
   - Depends on: 1.1, 2.1, 4.1
   - Independence: serial
-  - status: not_started
-- [ ] 9.2 `pnpm lint`
+  - status: passing
+- [x] 9.2 `pnpm lint`
   - Acceptance: WHEN run THEN exit 0.
+  - Verification: `pnpm lint` → exit 0.
   - Depends on: 9.1
   - Independence: serial
-  - status: not_started
-- [ ] 9.3 `pnpm test`
+  - status: passing
+- [x] 9.3 `pnpm test`
   - Acceptance: WHEN run THEN all vitest specs pass AND new tests 1.2 + 4.3 are green.
+  - Verification: `pnpm test` → 256 passed | 12 skipped (268).
   - Depends on: 1.2, 4.3
   - Independence: serial
-  - status: not_started
-- [ ] 9.4 `openspec validate --strict refresh-taiwan-admin-units`
+  - status: passing
+- [x] 9.4 `openspec validate --strict refresh-taiwan-admin-units`
   - Acceptance: WHEN run THEN exit 0.
+  - Verification: `openspec validate refresh-taiwan-admin-units --strict` → "Change 'refresh-taiwan-admin-units' is valid".
   - Depends on: writing-spec output exists
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## Optional artifacts
 - [ ] PlantUML diagrams (spec-driven-dev:writing-uml) — not selected (design §9: data flow is simple enough to express in ASCII pipeline; no state machine; no cross-component interactions)

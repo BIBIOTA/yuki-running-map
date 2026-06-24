@@ -45,3 +45,17 @@
   - DB verify: 22 counties + 377 townships; `瑞芳區` (code `township:10001033`) present; PostGIS `ST_Intersects((121.82194, 25.10283))` returns 新北市 + 瑞芳區.
   - Tests: `pnpm vitest run lib/admin-units-refresh lib/db/__tests__/migration0010.test.ts lib/regions/__tests__/normalizeAdminUnits.test.ts` → all green.
 - Next action: Update the runbook (task 6.1), run smoke against the dev server (task 7.1), and the optional integration test (task 8.1).
+
+## Session 6 — 2026-06-25 06:30
+- Stage: TDD
+- Task: 6.1 + 8.1 + 9.1 + 9.2 + 9.3 + 9.4 (runbook update, optional integration test, verification gates that don't need a browser)
+- Transition: in_progress → passing
+- Evidence:
+  - 6.1 runbook updated with g0v primary source + drizzle-kit hang workaround + GDAL alternate section.
+  - 8.1 `node --env-file=.env.local ./node_modules/vitest/vitest.mjs run lib/admin-routes/__tests__/previewRegions.integration.test.ts` → 1 passed.
+  - 9.1 `pnpm typecheck` → exit 0.
+  - 9.2 `pnpm lint` → exit 0.
+  - 9.3 `pnpm test` → 256 passed | 12 skipped (268).
+  - 9.4 `openspec validate refresh-taiwan-admin-units --strict` → valid.
+- Not-started (7.1): manual browser smoke against the dev server — user-driven.
+- Next action: Invoke `spec-driven-dev:verification-before-completion` to produce the verification report.
