@@ -50,9 +50,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { RouteRegions } from "@/components/RouteRegions";
-import type { Region } from "@/lib/regions/types";
-
 import { TagsInput } from "./TagsInput";
 import { buildInitialValues } from "./routeMetadataFormState";
 import type { RouteMetadataValues } from "./types";
@@ -65,14 +62,6 @@ type Props = {
   fieldErrors?: Record<string, string>;
   submitLabel?: string;
   cancelHref?: string;
-  /**
-   * Read-only display of admin_units detected by the server during the
-   * `createRoute` transaction. Populated for `mode="edit"` by the edit
-   * page's server-side leftJoin (task 3.13). For `mode="create"` the
-   * caller passes nothing during the preview phase; the chip area only
-   * appears after the upload Server Action returns.
-   */
-  routeRegions?: Region[];
 };
 
 export function RouteMetadataForm({
@@ -83,7 +72,6 @@ export function RouteMetadataForm({
   fieldErrors,
   submitLabel = "儲存",
   cancelHref = "/admin/routes",
-  routeRegions,
 }: Props) {
   const [values, setValues] = useState<RouteMetadataValues>(() =>
     buildInitialValues(initial),
@@ -170,16 +158,6 @@ export function RouteMetadataForm({
             className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
           />
         </Field>
-
-        {routeRegions && routeRegions.length > 0 ? (
-          <div className="space-y-1" data-testid="form-route-regions">
-            <span className="text-sm font-medium">途經區域</span>
-            <RouteRegions regions={routeRegions} />
-            <p className="text-xs text-muted-foreground">
-              由 GPX 自動偵測，不可手動修改。
-            </p>
-          </div>
-        ) : null}
 
         <Field label="標籤" id="tags" error={fieldErrors?.tags}>
           <TagsInput

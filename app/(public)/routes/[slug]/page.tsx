@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { RouteRegions } from "@/components/RouteRegions";
+import { RouteRegionsSection } from "@/components/RouteRegions";
 import { Button } from "@/components/ui/button";
 import { ElevationProfile } from "@/features/route-detail/ElevationProfile";
 import { getDb } from "@/lib/db/client";
@@ -120,17 +120,7 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
         </div>
       </dl>
 
-      {row.regions.length > 0 ? (
-        <section aria-labelledby="regions-heading" className="space-y-2">
-          <h2
-            id="regions-heading"
-            className="font-mono text-xs tracking-widest text-muted-foreground uppercase"
-          >
-            途經區域
-          </h2>
-          <RouteRegions regions={row.regions} />
-        </section>
-      ) : null}
+      <RouteRegionsSection regions={row.regions} />
 
       <section aria-labelledby="elevation-heading" className="space-y-3">
         <h2

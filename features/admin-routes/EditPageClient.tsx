@@ -63,6 +63,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { RouteRegionsSection } from "@/components/RouteRegions";
 import { updateRoute } from "@/features/admin-routes/actions/updateRoute";
 import type { Route } from "@/lib/db/schema";
 
@@ -83,7 +84,9 @@ type Props = {
   existingTags: string[];
   /**
    * Detected admin_units for this route, joined server-side by the page
-   * (task 3.13). Rendered read-only inside `<RouteMetadataForm>`.
+   * (task 3.13). Rendered via the shared `<RouteRegionsSection>` chrome
+   * alongside the form (NOT inside it — see refactor-upload-metadata-fields
+   * AC-3).
    */
   routeRegions?: Region[];
 };
@@ -116,6 +119,7 @@ export function EditPageClient({ initial, existingTags, routeRegions }: Props) {
       <h1 className="font-display text-3xl font-semibold">
         編輯路線 · {initial.title}
       </h1>
+      <RouteRegionsSection regions={routeRegions ?? []} />
       <div className="grid gap-6 md:grid-cols-2">
         <RouteMetadataForm
           mode="edit"
@@ -124,7 +128,6 @@ export function EditPageClient({ initial, existingTags, routeRegions }: Props) {
           initial={buildFormInitialFromRoute(initial)}
           fieldErrors={fieldErrors}
           cancelHref="/admin/routes"
-          routeRegions={routeRegions}
         />
         <aside className="space-y-4 rounded-md border border-border bg-muted/30 p-6">
           <h2 className="text-sm font-medium text-muted-foreground">

@@ -15,9 +15,26 @@
  *   render "—" for inline, or the component returns null entirely for
  *   stacked (so the caller hides the section heading too).
  *
+ * `<RouteRegionsSection />` — shared chrome wrapper used by EVERY surface
+ * that needs to show 「途經區域」: the public detail page, the admin upload
+ * preview, and the admin edit page. It owns the `<section>` + `<h2>` so
+ * the heading style cannot drift between surfaces.
+ *
+ * Two call shapes:
+ *   1. `<RouteRegionsSection regions={...} />` — convenience for surfaces
+ *      that just want the heading + the paragraph body. Returns `null`
+ *      when `regions.length === 0` so the calling page renders nothing
+ *      (matches the existing public detail page behaviour).
+ *   2. `<RouteRegionsSection>{custom body}</RouteRegionsSection>` — slot
+ *      form for surfaces that need to render a non-paragraph body
+ *      (e.g. the admin upload page's loading skeleton, ready-empty hint,
+ *      or error alert). The heading always renders in this form.
+ *
  * Spec: openspec/changes/feat-gpx-driven-route-metadata/specs/route-administrative-regions/spec.md
- *       Requirement "RouteRegions renders per-county text paragraphs across surfaces"
+ *       openspec/changes/refactor-upload-metadata-fields/specs/route-administrative-regions/spec.md
  */
+
+import type { ReactNode } from "react";
 
 import { groupRegionsByCounty, toInlineSummary } from "@/lib/regions/routeRegionsView";
 import type { Region } from "@/lib/regions/types";
@@ -60,5 +77,42 @@ export function RouteRegions({ regions, variant = "stacked" }: RouteRegionsProps
         </p>
       ))}
     </div>
+  );
+}
+
+type RouteRegionsSectionProps =
+  | { regions: Region[]; children?: undefined }
+  | { regions?: undefined; children: ReactNode };
+
+export function RouteRegionsSection(props: RouteRegionsSectionProps) {
+  // Convenience form: caller passed regions only. Hide entirely when empty
+  // so the public detail page doesn't render a dangling heading.
+  if ("regions" in props && props.regions !== undefined) {
+    if (props.regions.length === 0) return null;
+    return (
+      <section aria-labelledby="regions-heading" className="space-y-2">
+        <h2
+          id="regions-heading"
+          className="font-mono text-xs tracking-widest text-muted-foreground uppercase"
+        >
+          途經區域
+        </h2>
+        <RouteRegions regions={props.regions} />
+      </section>
+    );
+  }
+  // Slot form: heading + caller-provided body (loading skeleton / hint /
+  // alert / etc.). Heading always renders so admin surfaces can show
+  // surface-specific empty / error copy under the same chrome.
+  return (
+    <section aria-labelledby="regions-heading" className="space-y-2">
+      <h2
+        id="regions-heading"
+        className="font-mono text-xs tracking-widest text-muted-foreground uppercase"
+      >
+        途經區域
+      </h2>
+      {props.children}
+    </section>
   );
 }

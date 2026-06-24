@@ -29,3 +29,12 @@
   - Commits: 2104594 test: red - previewRegions Server Action (3 spec scenarios); (green commit follows this Session entry)
   - Tests: `pnpm vitest run features/admin-routes/actions/__tests__/previewRegions.test.ts` → Tests 3 passed (3)
 - Next action: Start Task 3.5 (extract `<RouteRegionsSection>` shared chrome) — write a failing test asserting the section component exists, returns null when regions empty for public detail page, and supports admin-only empty hint slot.
+
+## Session 5 — 2026-06-24 22:25
+- Stage: TDD
+- Task: 3.5 Extract `<RouteRegionsSection>` shared chrome
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 401e73f test: red - RouteRegionsSection shared chrome (3 spec scenarios); (green commit follows this Session entry)
+  - Tests: `pnpm vitest run lib/regions/__tests__/routeRegionsSection.test.ts` → Tests 3 passed (3)
+- Next action: Start the "drop tags" batch (Tasks 1.2 + 4.x + 6.x + 7.x + 8.x + 9.x) — schema change + caller removal must land atomically for typecheck. Begin with Red commits adding test assertions for the post-state, then Green removes everything in one pass.

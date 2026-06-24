@@ -54,12 +54,13 @@
   - Independence: serial
   - Figma: regions slot four states (designs/figma.md frames 02-05)
   - status: not_started
-- [ ] 3.5 Extract `<RouteRegionsSection>` shared chrome
+- [x] 3.5 Extract `<RouteRegionsSection>` shared chrome
   - Acceptance: WHEN the public detail page (`app/(public)/routes/[slug]/page.tsx`) is read THEN the `<section aria-labelledby="regions-heading">` + 「途經區域」 `<h2 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">` wrapper is moved into a new exported `<RouteRegionsSection>` co-located with `<RouteRegions>` in `components/RouteRegions.tsx`; WHEN the upload preview, edit page, and public detail page render their regions block THEN they all import and use `<RouteRegionsSection>` so the heading chrome cannot drift; WHEN the public detail page has `regions.length === 0` THEN `<RouteRegionsSection>` returns `null` (matches existing detail behaviour); WHEN the upload preview has `regions.length === 0` in `ready` state THEN `<RouteRegionsSection>` renders the heading + admin-only empty hint (so the empty-state copy diverges by surface, while the heading chrome stays identical); WHEN `RouteMetadataForm` is read THEN the inline 「途經區域」 block (with `<span className="text-sm font-medium">途經區域</span>` + `<RouteRegions />`) is REMOVED along with the `routeRegions` prop — the parent (`UploadPageClient` / `EditPageClient`) now renders `<RouteRegionsSection>` as a sibling of the form (not inside it) so all surfaces share the same chrome.
   - Depends on: -
   - Independence: independent
   - Figma: designs/figma.md AC-3 + Implementation note
-  - status: in_progress
+  - verification-pending: design (frame 01 regions block layout) — covered by e2e task 10.x + verification skill visual diff
+  - status: passing
 
 ## 4. `RouteMetadataForm` + form-state cleanup (drop tags)
 - [ ] 4.1 Remove 「標籤」 `<Field>` and `<TagsInput>` from `RouteMetadataForm`
