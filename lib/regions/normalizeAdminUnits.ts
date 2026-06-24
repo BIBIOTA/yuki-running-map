@@ -68,9 +68,18 @@ function asMultiPolygon(
 }
 
 function normaliseFeature(feature: RawFeature): NormalisedFeature {
-  const townCode = readString(feature.properties, "TOWNCODE");
+  // 內政部 SHP-derived files expose COUNTYCODE / TOWNCODE; g0v's
+  // twgeojson mirror (https://github.com/g0v/twgeojson) exposes the
+  // same identifiers under COUNTYSN / TOWNSN. Either source is accepted
+  // by falling back from the official key to the g0v key.
+  // Spec: openspec/changes/refresh-taiwan-admin-units/specs/route-administrative-regions/spec.md
+  const townCode =
+    readString(feature.properties, "TOWNCODE") ??
+    readString(feature.properties, "TOWNSN");
   const townName = readString(feature.properties, "TOWNNAME");
-  const countyCode = readString(feature.properties, "COUNTYCODE");
+  const countyCode =
+    readString(feature.properties, "COUNTYCODE") ??
+    readString(feature.properties, "COUNTYSN");
   const countyName = readString(feature.properties, "COUNTYNAME");
 
   if (townCode && townName) {
