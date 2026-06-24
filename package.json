@@ -17,7 +17,8 @@
     "db:studio": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "PLAYWRIGHT_FORCE_ASYNC_LOADER=1 node --env-file-if-exists=.env.local ./node_modules/@playwright/test/cli.js test"
+    "test:e2e": "PLAYWRIGHT_FORCE_ASYNC_LOADER=1 node --env-file-if-exists=.env.local ./node_modules/@playwright/test/cli.js test",
+    "refresh:admin-units": "tsx scripts/refresh-admin-units.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.16",

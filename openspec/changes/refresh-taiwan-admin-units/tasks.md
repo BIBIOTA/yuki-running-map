@@ -13,21 +13,21 @@
   - status: passing
 
 ## 2. Convenience refresh wrapper
-- [ ] 2.1 Create `scripts/refresh-admin-units.ts`
+- [x] 2.1 Create `scripts/refresh-admin-units.ts`
   - Acceptance: WHEN `pnpm tsx scripts/refresh-admin-units.ts` runs AND g0v is reachable THEN the script (a) fetches `https://raw.githubusercontent.com/g0v/twgeojson/master/json/twCounty2010.geo.json` and `https://raw.githubusercontent.com/g0v/twgeojson/master/json/twTown1982.geo.json` to a temp dir; (b) merges them into one `FeatureCollection`; (c) calls `normalizeAdminUnits` on the merged collection; (d) writes the normalised result to `lib/db/migrations/seed/taiwan-admin-units.geojson`; (e) prints `Wrote N features to lib/db/migrations/seed/taiwan-admin-units.geojson` on stdout; (f) exits 0.
   - Depends on: 1.1
   - Independence: serial
-  - status: in_progress
-- [ ] 2.2 Wire `pnpm refresh:admin-units` script alias
+  - status: passing
+- [x] 2.2 Wire `pnpm refresh:admin-units` script alias
   - Acceptance: WHEN `pnpm refresh:admin-units` runs THEN it MUST execute `tsx scripts/refresh-admin-units.ts` (no positional args needed); WHEN `package.json` is inspected THEN the new `scripts.refresh:admin-units` entry MUST be present.
   - Depends on: 2.1
   - Independence: serial
-  - status: not_started
-- [ ] 2.3 Refresh script error handling
+  - status: passing
+- [x] 2.3 Refresh script error handling
   - Acceptance: WHEN a fetch returns non-2xx OR times out THEN the script MUST exit 1 with the stderr message `failed to fetch <url>: <reason>`; WHEN the response body fails `JSON.parse` THEN the script MUST exit 1 with `g0v response was not valid JSON; got first 200 chars: ...`; WHEN `normalizeAdminUnits` throws THEN the script MUST exit 1 propagating the error message; WHEN the county feature count is not 22 THEN the script MUST warn on stderr `note: expected 22 counties, got <N>` but MUST NOT exit non-zero.
   - Depends on: 2.1
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 3. Refresh + commit the seed
 - [ ] 3.1 Run `pnpm refresh:admin-units` and commit the resulting seed
