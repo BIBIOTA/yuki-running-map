@@ -139,6 +139,18 @@ export async function refreshAdminUnits(
   const normalised = normalizeAdminUnits(
     merged as unknown as Parameters<typeof normalizeAdminUnits>[0],
   );
+
+  // Prefix codes with level so the otherwise-overlapping g0v COUNTYSN /
+  // TOWNSN spaces (21+ collisions in real data) become globally unique
+  // when written to admin_units.code (UNIQUE NOT NULL). `Region.code` is
+  // opaque across the codebase, so prefixing is a safe normalisation.
+  for (const f of normalised.features) {
+    if (f.properties.parent_code !== null) {
+      f.properties.parent_code = `county:${f.properties.parent_code}`;
+    }
+    f.properties.code = `${f.properties.level}:${f.properties.code}`;
+  }
+
   await deps.writeFile(deps.seedPath, JSON.stringify(normalised, null, 2) + "\n");
   deps.stdout(
     `Wrote ${normalised.features.length} features to ${deps.seedPath}\n`,

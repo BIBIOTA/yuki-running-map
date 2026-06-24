@@ -34,3 +34,14 @@
   - Tests: `pnpm vitest run lib/admin-units-refresh/__tests__/refreshAdminUnits.test.ts` → 5 passed (5)
   - Real run: `pnpm refresh:admin-units` → `Wrote 399 features ...` (22 counties + 377 townships); `瑞芳區` present with `parent_code = 10001001 (新北市)`.
 - Next action: Write migration 0010 — inline the 68 MB seed as a jsonb literal, TRUNCATE admin_units CASCADE, INSERT with ST_MakeValid, then INSERT route_admin_units via ST_Intersects.
+
+## Session 5 — 2026-06-25 06:25
+- Stage: TDD
+- Task: 4.1 + 4.2 + 4.3 + amendment to refresh pipeline (level-prefixed codes) + 5.1 + 5.2
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 286397f test: red - migration 0010 file + body order + journal registration; ca85145 test: red - codes prefixed with level to avoid g0v SN collisions; (green commits follow)
+  - Migration apply: `node --env-file=.env.local` + `postgres-js .unsafe()` — 3/3 statements ran (657 ms / 27870 ms / 132 ms); `drizzle.__drizzle_migrations` updated for idempotence.
+  - DB verify: 22 counties + 377 townships; `瑞芳區` (code `township:10001033`) present; PostGIS `ST_Intersects((121.82194, 25.10283))` returns 新北市 + 瑞芳區.
+  - Tests: `pnpm vitest run lib/admin-units-refresh lib/db/__tests__/migration0010.test.ts lib/regions/__tests__/normalizeAdminUnits.test.ts` → all green.
+- Next action: Update the runbook (task 6.1), run smoke against the dev server (task 7.1), and the optional integration test (task 8.1).

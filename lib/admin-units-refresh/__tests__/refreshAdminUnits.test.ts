@@ -247,7 +247,8 @@ describe("refreshAdminUnits", () => {
     const parsed = JSON.parse(body);
     expect(parsed.features).toHaveLength(2);
     const township = parsed.features.find(
-      (f: { properties: { code: string } }) => f.properties.code === "10021005",
+      (f: { properties: { code: string } }) =>
+        f.properties.code === "township:10021005",
     );
     expect(township).toBeDefined();
     expect(township.properties).toEqual({
