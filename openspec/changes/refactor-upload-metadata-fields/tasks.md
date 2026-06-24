@@ -32,7 +32,7 @@
   - status: passing
 
 ## 3. `UploadPageClient` rewire: elevation profile + regions slot
-- [ ] 3.1 Extend `Phase.loaded` discriminator
+- [~] 3.1 Extend `Phase.loaded` discriminator (in progress in the elevation/regions wave; tracked via uploadPagePhase tests)
   - Acceptance: WHEN `UploadPageClient` is read THEN `Phase.loaded` includes `elevationProfile: Array<[number, number]>` AND `regionsState: { kind: 'loading' } | { kind: 'ready'; regions: Region[] } | { kind: 'error'; message: string }`.
   - Depends on: -
   - Independence: independent
