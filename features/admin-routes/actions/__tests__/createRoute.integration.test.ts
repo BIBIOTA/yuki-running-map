@@ -63,7 +63,6 @@ async function makeGpxFormData(
     title: string;
     slug: string;
     description: string;
-    tags: string[];
     published: string;
   }> = {},
 ): Promise<FormData> {
@@ -71,7 +70,6 @@ async function makeGpxFormData(
   fd.append("title", overrides.title ?? "Sample Route");
   fd.append("slug", overrides.slug ?? "sample-route");
   if (overrides.description !== undefined) fd.append("description", overrides.description);
-  fd.append("tags", JSON.stringify(overrides.tags ?? ["河濱"]));
   fd.append("published", overrides.published ?? "true");
 
   const file = new File([new Uint8Array(buffer)], "sample.gpx", {
@@ -89,8 +87,8 @@ describe("createRoute (parse-boundary)", () => {
     vi.mocked(revalidatePath).mockClear();
   });
 
-  describe("Scenario: Malformed tags JSON surfaces fieldErrors.tags without I/O", () => {
-    it("returns fieldErrors.tags, performs no Storage upload or DB write", async () => {
+  describe("Malformed metadata is rejected without touching Storage or DB", () => {
+    it("rejects missing title without Storage upload or DB write", async () => {
       vi.resetModules();
       const uploadSpy = vi.fn();
       const removeSpy = vi.fn();
@@ -109,9 +107,8 @@ describe("createRoute (parse-boundary)", () => {
       const { createRoute } = await import("../createRoute");
 
       const fd = new FormData();
-      fd.append("title", "Malformed Tags");
-      fd.append("slug", "malformed-tags");
-      fd.append("tags", "{broken"); // malformed JSON — not parseable
+      fd.append("title", ""); // invalid: empty title
+      fd.append("slug", "some-slug");
       fd.append("published", "true");
       const file = new File([new Uint8Array(Buffer.from("ignored"))], "sample.gpx", {
         type: "application/gpx+xml",
@@ -122,8 +119,7 @@ describe("createRoute (parse-boundary)", () => {
 
       expect(result.ok).toBe(false);
       if (result.ok) return;
-      expect(result.fieldErrors.tags).toBeTruthy();
-      expect(result.fieldErrors.tags?.length).toBeGreaterThan(0);
+      expect(result.fieldErrors.title).toBeTruthy();
 
       // No I/O: neither Storage nor DB nor cache revalidation.
       expect(uploadSpy).not.toHaveBeenCalled();

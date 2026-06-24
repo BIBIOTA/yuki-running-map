@@ -81,7 +81,6 @@ async function seedRoute(
       distanceM: 10000,
       elevationGainM: 30,
       recordedAt: new Date("2026-05-11T06:30:00.000Z"),
-      tags: [],
       gpxPath: "gpx/2026/seed.gpx",
       geojson: SEED_GEOJSON,
       bbox: SEED_BBOX,
@@ -131,6 +130,49 @@ describe("updateRoute (non-DB regression)", () => {
     });
   });
 
+  describe("Update payload containing extraneous keys ignores them", () => {
+    it("UPDATE SET clause sets only title and published when payload includes tags", async () => {
+      vi.resetModules();
+      const setSpy = vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      const updateChain = vi.fn().mockReturnValue({ set: setSpy });
+      const selectChain = {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ slug: "seeded-slug" }]),
+          }),
+        }),
+      };
+      vi.doMock("@/lib/db/client", () => ({
+        getDb: () => ({
+          select: vi.fn().mockReturnValue(selectChain),
+          update: updateChain,
+        }),
+      }));
+
+      const { updateRoute } = await import("../updateRoute");
+
+      const result = await updateRoute({
+        id: "00000000-0000-0000-0000-000000000099",
+        title: "新",
+        slug: "seeded-slug",
+        published: true,
+        tags: ["x"], // extraneous — must be silently dropped
+      });
+
+      expect(result.ok).toBe(true);
+      expect(setSpy).toHaveBeenCalledTimes(1);
+      const setArg = setSpy.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(setArg).toHaveProperty("title", "新");
+      expect(setArg).toHaveProperty("published", true);
+      expect(setArg).not.toHaveProperty("tags");
+
+      vi.doUnmock("@/lib/db/client");
+      vi.resetModules();
+    });
+  });
+
   describe("Scenario: GPX-derived keys sent by client are silently stripped", () => {
     it("never passes locked keys to db.update().set(...)", async () => {
       vi.resetModules();
@@ -159,7 +201,6 @@ describe("updateRoute (non-DB regression)", () => {
         title: "Updated title",
         slug: "updated-slug",
         description: null,
-        tags: ["foo"],
         published: true,
         // ── locked / GPX-derived keys the client tried to sneak in ──────
         gpx_path: "evil.gpx",
@@ -170,7 +211,8 @@ describe("updateRoute (non-DB regression)", () => {
         elevation_gain_m: 12345,
         recorded_at: new Date("2000-01-01T00:00:00.000Z"),
         created_at: new Date("2000-01-01T00:00:00.000Z"),
-        // ── legacy fields stripped by feat-gpx-driven-route-metadata ────
+        // ── legacy fields stripped by refactor-upload-metadata-fields ───
+        tags: ["foo"],
         difficulty: "medium",
         duration_s: 1800,
       });
@@ -180,7 +222,7 @@ describe("updateRoute (non-DB regression)", () => {
       const setArg = setSpy.mock.calls[0]?.[0] as Record<string, unknown>;
       expect(setArg).toBeDefined();
 
-      // Every one of the nine locked keys must be absent — both the snake_case
+      // Every locked / legacy key must be absent — both the snake_case
       // wire names and the Drizzle camelCase column names.
       const forbidden = [
         "gpx_path",
@@ -198,6 +240,13 @@ describe("updateRoute (non-DB regression)", () => {
         "id",
         "created_at",
         "createdAt",
+        // ── tags removed by refactor-upload-metadata-fields ──────────
+        "tags",
+        // ── legacy already stripped before this change ─────────────
+        "difficulty",
+        "duration_s",
+        "durationS",
+        "region",
       ];
       for (const k of forbidden) {
         expect(setArg).not.toHaveProperty(k);
@@ -243,7 +292,6 @@ describe.skipIf(!process.env.DATABASE_URL)("updateRoute (integration)", () => {
         title: "Renamed",
         slug: "new-slug",
         description: "新描述",
-        tags: ["河濱"],
         published: true,
       });
 

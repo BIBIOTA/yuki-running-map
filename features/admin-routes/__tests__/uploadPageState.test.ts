@@ -20,7 +20,6 @@ function makeValues(
     title: "河濱晨跑",
     slug: "riverside-morning",
     description: "晨跑路線。",
-    tags: ["河濱", "LSD"],
     published: true,
     ...overrides,
   };
@@ -42,13 +41,6 @@ describe("buildCreateRouteFormData", () => {
       expect(fd.get("description")).toBe("晨跑路線。");
     });
 
-    it("appends tags as a JSON-stringified array", () => {
-      const fd = buildCreateRouteFormData(makeValues(), makeFile());
-      const tagsRaw = fd.get("tags");
-      expect(typeof tagsRaw).toBe("string");
-      expect(JSON.parse(tagsRaw as string)).toEqual(["河濱", "LSD"]);
-    });
-
     it("appends published as the literal string 'true' when true", () => {
       const fd = buildCreateRouteFormData(
         makeValues({ published: true }),
@@ -65,12 +57,13 @@ describe("buildCreateRouteFormData", () => {
       expect(fd.get("published")).toBe("false");
     });
 
-    it("does NOT emit legacy difficulty / duration_s / region keys", () => {
+    it("does NOT emit legacy difficulty / duration_s / region / tags keys", () => {
       const fd = buildCreateRouteFormData(makeValues(), makeFile());
       expect(fd.has("difficulty")).toBe(false);
       expect(fd.has("duration_s")).toBe(false);
       expect(fd.has("durationS")).toBe(false);
       expect(fd.has("region")).toBe(false);
+      expect(fd.has("tags")).toBe(false);
     });
   });
 
@@ -82,26 +75,14 @@ describe("buildCreateRouteFormData", () => {
       );
       expect(fd.get("description")).toBe("");
     });
-
-    it("appends an empty tags array as the JSON literal '[]'", () => {
-      const fd = buildCreateRouteFormData(makeValues({ tags: [] }), makeFile());
-      expect(fd.get("tags")).toBe("[]");
-    });
   });
 
-  describe("Scenario: every contract key is present exactly once", () => {
-    it("emits the full key set with no duplicates", () => {
+  describe("Form FormData omits the tags entry", () => {
+    it("emits the full key set with no duplicates and no tags", () => {
       const fd = buildCreateRouteFormData(makeValues(), makeFile());
       const keys = Array.from(fd.entries()).map(([k]) => k);
       expect(keys.sort()).toEqual(
-        [
-          "description",
-          "gpxFile",
-          "published",
-          "slug",
-          "tags",
-          "title",
-        ].sort(),
+        ["description", "gpxFile", "published", "slug", "title"].sort(),
       );
     });
   });

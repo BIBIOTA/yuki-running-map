@@ -6,14 +6,13 @@ import {
 } from "../routeMetadataFormState";
 
 describe("buildInitialValues", () => {
-  describe("Scenario: no initial value yields defaults", () => {
+  describe("Form renders only the canonical fields", () => {
     it("returns all-default values when called without arguments", () => {
       const values = buildInitialValues();
       expect(values).toEqual({
         title: "",
         slug: "",
         description: "",
-        tags: [],
         published: false,
       });
     });
@@ -23,9 +22,12 @@ describe("buildInitialValues", () => {
         title: "",
         slug: "",
         description: "",
-        tags: [],
         published: false,
       });
+    });
+
+    it("never includes a tags key", () => {
+      expect("tags" in buildInitialValues()).toBe(false);
     });
   });
 
@@ -36,15 +38,8 @@ describe("buildInitialValues", () => {
         title: "foo",
         slug: "",
         description: "",
-        tags: [],
         published: true,
       });
-    });
-
-    it("respects an overridden tags array", () => {
-      const values = buildInitialValues({ tags: ["河濱"] });
-      expect(values.tags).toEqual(["河濱"]);
-      expect(values.title).toBe("");
     });
   });
 
@@ -54,14 +49,12 @@ describe("buildInitialValues", () => {
         title: "陽明山主峰",
         slug: "yangmingshan-main-peak",
         description: "高難度，總爬升 800m。",
-        tags: ["山徑", "高強度"],
         published: true,
       });
       expect(values).toEqual({
         title: "陽明山主峰",
         slug: "yangmingshan-main-peak",
         description: "高難度，總爬升 800m。",
-        tags: ["山徑", "高強度"],
         published: true,
       });
     });
@@ -72,10 +65,6 @@ describe("buildInitialValues", () => {
       const a = buildInitialValues();
       const b = buildInitialValues();
       expect(a).not.toBe(b);
-      // Mutating a's tags must not bleed into b's tags. Even though the
-      // shallow spread shares the empty-array reference from
-      // DEFAULT_VALUES, we never mutate it in production — the form
-      // always replaces values via `setField('tags', nextArray)`.
       expect(a).toEqual(b);
     });
   });

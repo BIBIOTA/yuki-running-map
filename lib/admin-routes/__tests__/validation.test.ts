@@ -3,14 +3,13 @@ import { describe, expect, it } from "vitest";
 import { validateRouteMetadata } from "../validation";
 
 /**
- * Spec: openspec/changes/feat-gpx-driven-route-metadata/specs/admin-routes-crud/spec.md
- *       MODIFIED Requirement: "validateRouteMetadata enforces field-level rules"
+ * Spec: openspec/changes/refactor-upload-metadata-fields/specs/admin-routes-crud/spec.md
+ *       MODIFIED Requirement "RouteMetadataForm exposes the canonical metadata fields"
+ *       MODIFIED Requirement "createRoute Server Action persists metadata + GPX-derived columns"
  *
- * Field-level rules after feat-gpx-driven-route-metadata: title (req), slug
- * (req, regex), description (opt, ≤5000), tags (array dedup ≤20 / each ≤30),
- * published (req bool). NO difficulty / duration_s / region (legacy keys are
- * silently ignored — design.md §2.1, spec.md "Legacy fields are silently
- * ignored" Scenario).
+ * Field-level rules after refactor-upload-metadata-fields: title (req), slug
+ * (req, regex), description (opt, ≤5000), published (req bool). NO tags /
+ * difficulty / duration_s / region (legacy keys are silently ignored).
  */
 
 /** Minimal valid base object; spread + override per test. */
@@ -29,7 +28,6 @@ describe("validateRouteMetadata", () => {
         title: "  淡水河左岸  ",
         slug: "tamsui",
         description: "  好跑的河濱路線  ",
-        tags: ["河濱", " 河濱 ", "", "LSD"],
         published: false,
       });
       expect(result).toEqual({
@@ -38,25 +36,24 @@ describe("validateRouteMetadata", () => {
           title: "淡水河左岸",
           slug: "tamsui",
           description: "好跑的河濱路線",
-          tags: ["河濱", "LSD"],
           published: false,
         },
       });
     });
 
-    it("maps omitted optional fields to null/empty defaults", () => {
+    it("maps omitted optional fields to null defaults", () => {
       const result = validateRouteMetadata(base());
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.value.description).toBeNull();
-        expect(result.value.tags).toEqual([]);
       }
     });
 
-    it("normalised value does NOT contain difficulty / duration_s / region", () => {
+    it("normalised value does NOT contain tags / difficulty / duration_s / region", () => {
       const result = validateRouteMetadata(base());
       expect(result.ok).toBe(true);
       if (result.ok) {
+        expect("tags" in result.value).toBe(false);
         expect("difficulty" in result.value).toBe(false);
         expect("duration_s" in result.value).toBe(false);
         expect("durationS" in result.value).toBe(false);
@@ -73,27 +70,18 @@ describe("validateRouteMetadata", () => {
     });
   });
 
-  describe("Scenario: Tag deduplication and trimming", () => {
-    it("trims, drops empty, and dedupes tags", () => {
-      const result = validateRouteMetadata({
-        ...base(),
-        tags: ["河濱", " 河濱 ", "", "LSD"],
-      });
-      expect(result.ok).toBe(true);
-      if (result.ok) expect(result.value.tags).toEqual(["河濱", "LSD"]);
-    });
-  });
-
   describe("Scenario: Legacy fields are silently ignored", () => {
-    it("ignores difficulty / duration_s / region from older client payload", () => {
+    it("ignores tags / difficulty / duration_s / region from older client payload", () => {
       const result = validateRouteMetadata({
         ...base(),
+        tags: ["river", "lsd"],
         difficulty: "easy",
         duration_s: 1800,
         region: "台北",
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
+        expect("tags" in result.value).toBe(false);
         expect("difficulty" in result.value).toBe(false);
         expect("duration_s" in result.value).toBe(false);
         expect("durationS" in result.value).toBe(false);
@@ -104,12 +92,14 @@ describe("validateRouteMetadata", () => {
     it("does NOT emit fieldErrors for legacy keys", () => {
       const result = validateRouteMetadata({
         ...base(),
+        tags: Array.from({ length: 999 }, (_, i) => `tag-${i}`),
         difficulty: "not-a-valid-level",
         duration_s: -5,
         region: "x".repeat(500),
       });
       expect(result.ok).toBe(true);
       if (!result.ok) {
+        expect(result.fieldErrors.tags).toBeUndefined();
         expect(result.fieldErrors.difficulty).toBeUndefined();
         expect(result.fieldErrors.duration_s).toBeUndefined();
         expect(result.fieldErrors.region).toBeUndefined();
@@ -117,8 +107,7 @@ describe("validateRouteMetadata", () => {
     });
   });
 
-  // ── Field-level rules retained (not in capability spec Scenarios directly,
-  //    but support the Scenario assertions and prevent regressions) ──────────
+  // ── Field-level rules retained ────────────────────────────────────────────
 
   describe("title rule", () => {
     it("accepts a trimmed non-empty title", () => {
@@ -183,27 +172,6 @@ describe("validateRouteMetadata", () => {
       const result = validateRouteMetadata({ ...base(), description: "x".repeat(5001) });
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.fieldErrors.description).toBeTruthy();
-    });
-  });
-
-  describe("tags rule", () => {
-    it("rejects more than 20 tags", () => {
-      const tags = Array.from({ length: 21 }, (_, i) => `tag-${i}`);
-      const result = validateRouteMetadata({ ...base(), tags });
-      expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.fieldErrors.tags).toBeTruthy();
-    });
-
-    it("rejects a tag longer than 30 chars", () => {
-      const result = validateRouteMetadata({ ...base(), tags: ["x".repeat(31)] });
-      expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.fieldErrors.tags).toBeTruthy();
-    });
-
-    it("rejects non-string tag elements", () => {
-      const result = validateRouteMetadata({ ...base(), tags: ["ok", 123] });
-      expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.fieldErrors.tags).toBeTruthy();
     });
   });
 

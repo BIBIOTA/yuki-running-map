@@ -24,7 +24,6 @@ function makeRoute(overrides: Partial<Route> = {}): Route {
     elevationProfile: [],
     recordedAt: new Date("2025-01-15T06:00:00Z"),
     locationName: null,
-    tags: ["河濱", "LSD"],
     gpxPath: "routes/abc.gpx",
     geojson: {
       type: "Feature",
@@ -48,7 +47,6 @@ function makeValues(
     title: "河濱晨跑",
     slug: "riverside-morning",
     description: "晨跑路線。",
-    tags: ["河濱", "LSD"],
     published: true,
     ...overrides,
   };
@@ -56,12 +54,15 @@ function makeValues(
 
 describe("buildFormInitialFromRoute", () => {
   describe("Scenario: full route row maps to form-state shape", () => {
-    it("preserves title / slug / tags / published verbatim", () => {
+    it("preserves title / slug / published verbatim", () => {
       const out = buildFormInitialFromRoute(makeRoute());
       expect(out.title).toBe("河濱晨跑");
       expect(out.slug).toBe("riverside-morning");
-      expect(out.tags).toEqual(["河濱", "LSD"]);
       expect(out.published).toBe(true);
+    });
+
+    it("never includes a tags key", () => {
+      expect("tags" in buildFormInitialFromRoute(makeRoute())).toBe(false);
     });
   });
 
@@ -89,7 +90,6 @@ describe("buildUpdateRoutePayload", () => {
         title: "河濱晨跑",
         slug: "riverside-morning",
         description: "晨跑路線。",
-        tags: ["河濱", "LSD"],
         published: true,
       });
     });
@@ -122,11 +122,6 @@ describe("buildUpdateRoutePayload", () => {
   });
 
   describe("Scenario: passthroughs", () => {
-    it("preserves an empty tags array", () => {
-      const out = buildUpdateRoutePayload("id-1", makeValues({ tags: [] }));
-      expect(out.tags).toEqual([]);
-    });
-
     it("preserves a false published flag", () => {
       const out = buildUpdateRoutePayload(
         "id-1",
@@ -137,12 +132,13 @@ describe("buildUpdateRoutePayload", () => {
   });
 
   describe("Scenario: legacy keys are not emitted", () => {
-    it("payload does NOT contain difficulty / duration_s / region", () => {
+    it("payload does NOT contain difficulty / duration_s / region / tags", () => {
       const out = buildUpdateRoutePayload("id-1", makeValues());
       expect("difficulty" in out).toBe(false);
       expect("duration_s" in out).toBe(false);
       expect("durationS" in out).toBe(false);
       expect("region" in out).toBe(false);
+      expect("tags" in out).toBe(false);
     });
   });
 });
