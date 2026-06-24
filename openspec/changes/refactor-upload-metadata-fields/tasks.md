@@ -18,17 +18,17 @@
   - status: not_started
 
 ## 2. `previewRegions` read-only Server Action
-- [ ] 2.1 Create `features/admin-routes/actions/previewRegions.ts`
+- [x] 2.1 Create `features/admin-routes/actions/previewRegions.ts`
   - Acceptance: WHEN the file is imported THEN it exports `previewRegions(geometry: { type: 'LineString'; coordinates: Array<[number, number]> }): Promise<PreviewRegionsResult>` with discriminated union `{ ok: true; regions: Region[] } | { ok: false; message: string }` AND uses `"use server"` directive AND calls `lib/admin-routes/detectRegions` with the geometry AND joins against `adminUnits` to return `Region[]` (code/level/name/parent_code).
   - Depends on: -
   - Independence: independent
   - Figma: regions slot three states (designs/figma.md frame "regions-states")
-  - status: in_progress
-- [ ] 2.2 Add unit test `features/admin-routes/actions/__tests__/previewRegions.test.ts`
+  - status: passing
+- [x] 2.2 Add unit test `features/admin-routes/actions/__tests__/previewRegions.test.ts`
   - Acceptance: WHEN vitest runs THEN tests cover (a) malformed LineString → `ok:false, message: '預覽參數錯誤'`; (b) mocked `detectRegions` throw → `ok:false, message: '行政區預覽暫時無法使用'`; (c) happy path returns `Region[]` matching DB rows.
   - Depends on: 2.1
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 3. `UploadPageClient` rewire: elevation profile + regions slot
 - [ ] 3.1 Extend `Phase.loaded` discriminator

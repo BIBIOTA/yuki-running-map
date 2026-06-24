@@ -20,3 +20,12 @@
 - Task: 2.1 + 2.2 Create `previewRegions` Server Action + tests (coupled red/green cycle — Task 2.2 IS the Red phase of Task 2.1)
 - Transition: not_started → in_progress (2.1)
 - Next action: Write failing unit tests in features/admin-routes/actions/__tests__/previewRegions.test.ts that cover the 3 spec scenarios (Valid LineString returns matching regions / detectRegions throwing surfaces as tagged error / Malformed geometry input is rejected) and commit red.
+
+## Session 4 — 2026-06-24 22:05
+- Stage: TDD
+- Task: 2.1 + 2.2 previewRegions Server Action
+- Transition: in_progress → passing
+- Evidence:
+  - Commits: 2104594 test: red - previewRegions Server Action (3 spec scenarios); (green commit follows this Session entry)
+  - Tests: `pnpm vitest run features/admin-routes/actions/__tests__/previewRegions.test.ts` → Tests 3 passed (3)
+- Next action: Start Task 3.5 (extract `<RouteRegionsSection>` shared chrome) — write a failing test asserting the section component exists, returns null when regions empty for public detail page, and supports admin-only empty hint slot.
