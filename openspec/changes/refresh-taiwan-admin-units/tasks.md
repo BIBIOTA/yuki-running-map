@@ -17,7 +17,7 @@
   - Acceptance: WHEN `pnpm tsx scripts/refresh-admin-units.ts` runs AND g0v is reachable THEN the script (a) fetches `https://raw.githubusercontent.com/g0v/twgeojson/master/json/twCounty2010.geo.json` and `https://raw.githubusercontent.com/g0v/twgeojson/master/json/twTown1982.geo.json` to a temp dir; (b) merges them into one `FeatureCollection`; (c) calls `normalizeAdminUnits` on the merged collection; (d) writes the normalised result to `lib/db/migrations/seed/taiwan-admin-units.geojson`; (e) prints `Wrote N features to lib/db/migrations/seed/taiwan-admin-units.geojson` on stdout; (f) exits 0.
   - Depends on: 1.1
   - Independence: serial
-  - status: not_started
+  - status: in_progress
 - [ ] 2.2 Wire `pnpm refresh:admin-units` script alias
   - Acceptance: WHEN `pnpm refresh:admin-units` runs THEN it MUST execute `tsx scripts/refresh-admin-units.ts` (no positional args needed); WHEN `package.json` is inspected THEN the new `scripts.refresh:admin-units` entry MUST be present.
   - Depends on: 2.1
