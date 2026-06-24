@@ -5,7 +5,7 @@
  * that can be unit-tested without mounting React live here, so the
  * vitest node runner (no React testing library; see CLAUDE.md re:
  * deps) can cover them. The DOM interaction is exercised end-to-end
- * by the admin upload Playwright spec (task 5.1).
+ * by the admin upload Playwright spec.
  */
 
 import type { RouteMetadataValues } from "./types";
@@ -17,7 +17,6 @@ const DEFAULT_VALUES: RouteMetadataValues = {
   title: "",
   slug: "",
   description: "",
-  tags: [],
   published: false,
 };
 

@@ -6,15 +6,16 @@
   - Depends on: -
   - Independence: independent
   - status: passing
-- [ ] 1.2 Remove `tags` column + `routes_tags_gin` index from `lib/db/schema.ts`
+- [x] 1.2 Remove `tags` column + `routes_tags_gin` index from `lib/db/schema.ts`
   - Acceptance: WHEN `pnpm typecheck` runs THEN `routes.tags` is no longer present on the inferred type AND the `routes_tags_gin` `.using('gin', t.tags)` line is gone.
   - Depends on: 1.1
   - Independence: serial
-  - status: not_started
+  - status: passing
 - [ ] 1.3 Apply migration locally via `pnpm db:migrate`
   - Acceptance: WHEN the local Supabase DB is migrated THEN `\d routes` shows no `tags` column AND no `routes_tags_gin` index.
   - Depends on: 1.1, 1.2
   - Independence: serial
+  - verification-pending: integration (run `pnpm db:migrate` against local Supabase + verify with `\d routes`)
   - status: not_started
 
 ## 2. `previewRegions` read-only Server Action
@@ -63,33 +64,33 @@
   - status: passing
 
 ## 4. `RouteMetadataForm` + form-state cleanup (drop tags)
-- [ ] 4.1 Remove 「標籤」 `<Field>` and `<TagsInput>` from `RouteMetadataForm`
+- [x] 4.1 Remove 「標籤」 `<Field>` and `<TagsInput>` from `RouteMetadataForm`
   - Acceptance: WHEN the component is rendered THEN there is no `<Field label="標籤" …>` AND no `import { TagsInput }` AND no `existingTags` prop in the `Props` type.
   - Depends on: -
   - Independence: independent
-  - status: not_started
-- [ ] 4.2 Drop `tags` from `RouteMetadataValues` and form initial state
+  - status: passing
+- [x] 4.2 Drop `tags` from `RouteMetadataValues` and form initial state
   - Acceptance: WHEN `features/admin-routes/types.ts` is read THEN `RouteMetadataValues` has keys `{ title, slug, description, published }` only; WHEN `buildInitialValues` runs THEN the returned object omits `tags`.
   - Depends on: 4.1
   - Independence: serial
-  - status: not_started
-- [ ] 4.3 Drop `tags` from `uploadPageState.buildCreateRouteFormData`
+  - status: passing
+- [x] 4.3 Drop `tags` from `uploadPageState.buildCreateRouteFormData`
   - Acceptance: WHEN the function is called THEN the resulting `FormData` keys are exactly `title`, `slug`, `description`, `published`, `gpxFile` AND no `tags` entry.
   - Depends on: 4.2
   - Independence: serial
-  - status: not_started
-- [ ] 4.4 Drop `tags` from `editPageState`
+  - status: passing
+- [x] 4.4 Drop `tags` from `editPageState`
   - Acceptance: WHEN `buildEditFormValues` runs on a `Route` row THEN the returned object has no `tags`; WHEN `buildPayload` runs THEN the payload sent to `updateRoute` has no `tags` key.
   - Depends on: 4.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 5. `EditPageClient`: drop tags wiring + add elevation profile
-- [ ] 5.1 Remove `existingTags` prop from `EditPageClient`
+- [x] 5.1 Remove `existingTags` prop from `EditPageClient`
   - Acceptance: WHEN the component is read THEN it no longer takes `existingTags` AND does not forward it to `RouteMetadataForm`.
   - Depends on: 4.1
   - Independence: serial
-  - status: not_started
+  - status: passing
 - [ ] 5.2 Mount `<ElevationProfile profile={route.elevationProfile} />` below the map preview
   - Acceptance: WHEN the edit page renders THEN the component appears inside `<section aria-labelledby="edit-elevation-heading">` with heading 「海拔曲線」 directly below `<RouteMapPreview>` AND uses the same card chrome as the public detail page.
   - Depends on: -
@@ -98,82 +99,82 @@
   - status: not_started
 
 ## 6. Server-action + validation cleanup (drop tags)
-- [ ] 6.1 Remove tags from `createRoute`
+- [x] 6.1 Remove tags from `createRoute`
   - Acceptance: WHEN `createRoute` runs THEN `parseMetadataFromFormData` no longer reads `tags` AND the INSERT values object omits `tags` AND no `fieldErrors.tags` branch exists.
   - Depends on: 1.2, 4.3
   - Independence: serial
-  - status: not_started
-- [ ] 6.2 Remove tags from `updateRoute`
+  - status: passing
+- [x] 6.2 Remove tags from `updateRoute`
   - Acceptance: WHEN `updateRoute` runs THEN `ACCEPTED_FIELDS` does not contain `"tags"` AND no `meta.tags` reference exists in the UPDATE payload.
   - Depends on: 1.2, 4.4
   - Independence: serial
-  - status: not_started
-- [ ] 6.3 Remove tags from `lib/admin-routes/validation.ts`
+  - status: passing
+- [x] 6.3 Remove tags from `lib/admin-routes/validation.ts`
   - Acceptance: WHEN `validateRouteMetadata` is read THEN `RouteMetadataInput` has no `tags` field AND no tags branch in the validation body AND `RouteMetadataValue` (the success-shape) has no `tags`.
   - Depends on: 4.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 7. Page-level cleanup
-- [ ] 7.1 `app/(admin)/admin/upload/page.tsx`: drop `listExistingTags`
+- [x] 7.1 `app/(admin)/admin/upload/page.tsx`: drop `listExistingTags`
   - Acceptance: WHEN the page is read THEN there is no `import { listExistingTags }` AND no `existingTags` prop is passed to `<UploadPageClient>`.
   - Depends on: 4.1
   - Independence: serial
-  - status: not_started
-- [ ] 7.2 `app/(admin)/admin/routes/[id]/page.tsx`: drop `listExistingTags`
+  - status: passing
+- [x] 7.2 `app/(admin)/admin/routes/[id]/page.tsx`: drop `listExistingTags`
   - Acceptance: WHEN the page is read THEN there is no `import { listExistingTags }`, no `Promise.all`-bundled call, and no `existingTags` prop on `<EditPageClient>`.
   - Depends on: 5.1
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 8. Deletions
-- [ ] 8.1 Delete `features/admin-routes/TagsInput.tsx`
+- [x] 8.1 Delete `features/admin-routes/TagsInput.tsx`
   - Acceptance: WHEN the repo is scanned THEN the file does not exist AND `pnpm typecheck` passes (no orphan imports).
   - Depends on: 4.1
   - Independence: serial
-  - status: not_started
-- [ ] 8.2 Delete `features/admin-routes/tags.ts` + `__tests__/tags.test.ts`
+  - status: passing
+- [x] 8.2 Delete `features/admin-routes/tags.ts` + `__tests__/tags.test.ts`
   - Acceptance: WHEN the repo is scanned THEN both files are absent AND no other file imports `addTag`, `removeTagAt`, or `filterSuggestions`.
   - Depends on: 4.1, 8.1
   - Independence: serial
-  - status: not_started
-- [ ] 8.3 Delete `lib/admin-routes/listExistingTags.ts` + `__tests__/listExistingTags.integration.test.ts`
+  - status: passing
+- [x] 8.3 Delete `lib/admin-routes/listExistingTags.ts` + `__tests__/listExistingTags.integration.test.ts`
   - Acceptance: WHEN the repo is scanned THEN both files are absent AND no caller imports `listExistingTags`.
   - Depends on: 7.1, 7.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 9. Test updates
-- [ ] 9.1 Update `features/admin-routes/__tests__/uploadPageState.test.ts`
+- [x] 9.1 Update `features/admin-routes/__tests__/uploadPageState.test.ts`
   - Acceptance: WHEN vitest runs THEN no test references `tags` AND a new assertion verifies the FormData keys set is exactly `{ title, slug, description, published, gpxFile }`.
   - Depends on: 4.3
   - Independence: serial
-  - status: not_started
-- [ ] 9.2 Update `features/admin-routes/__tests__/routeMetadataFormState.test.ts`
+  - status: passing
+- [x] 9.2 Update `features/admin-routes/__tests__/routeMetadataFormState.test.ts`
   - Acceptance: WHEN vitest runs THEN no test references `tags` AND `buildInitialValues` cases assert the new minimal shape.
   - Depends on: 4.2
   - Independence: serial
-  - status: not_started
-- [ ] 9.3 Update `features/admin-routes/__tests__/editPageState.test.ts`
+  - status: passing
+- [x] 9.3 Update `features/admin-routes/__tests__/editPageState.test.ts`
   - Acceptance: WHEN vitest runs THEN no test references `tags`.
   - Depends on: 4.4
   - Independence: serial
-  - status: not_started
-- [ ] 9.4 Update `lib/admin-routes/__tests__/validation.test.ts`
+  - status: passing
+- [x] 9.4 Update `lib/admin-routes/__tests__/validation.test.ts`
   - Acceptance: WHEN vitest runs THEN no test references `tags` AND coverage for title / slug / description / published remains green.
   - Depends on: 6.3
   - Independence: serial
-  - status: not_started
-- [ ] 9.5 Update `features/admin-routes/actions/__tests__/createRoute.integration.test.ts`
+  - status: passing
+- [x] 9.5 Update `features/admin-routes/actions/__tests__/createRoute.integration.test.ts`
   - Acceptance: WHEN vitest runs THEN no test references `tags`, the INSERT-row assertion lists no `tags` column, AND a schema-existence assertion confirms `routes.tags` and `routes_tags_gin` are absent.
   - Depends on: 1.3, 6.1
   - Independence: serial
-  - status: not_started
-- [ ] 9.6 Update `features/admin-routes/actions/__tests__/updateRoute.integration.test.ts`
+  - status: passing
+- [x] 9.6 Update `features/admin-routes/actions/__tests__/updateRoute.integration.test.ts`
   - Acceptance: WHEN vitest runs THEN no test references `tags` AND the `ACCEPTED_FIELDS` assertion lists `["title","slug","description","published"]` only.
   - Depends on: 1.3, 6.2
   - Independence: serial
-  - status: not_started
+  - status: passing
 
 ## 10. E2E updates
 - [ ] 10.1 Update `e2e/admin-upload.spec.ts`

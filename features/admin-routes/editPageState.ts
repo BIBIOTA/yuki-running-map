@@ -1,10 +1,9 @@
 /**
  * Pure helpers for `<EditPageClient>`.
  *
- * Spec:  openspec/changes/feat-gpx-driven-route-metadata/specs/admin-routes-crud/spec.md
+ * Spec:  openspec/changes/refactor-upload-metadata-fields/specs/admin-routes-crud/spec.md
  *        MODIFIED Requirement "/admin/routes/[id] renders the metadata edit form"
- *        MODIFIED Requirement "updateRoute Server Action mutates metadata only"
- * Tasks: openspec/changes/feat-gpx-driven-route-metadata/tasks.md §1.4
+ *        MODIFIED Requirement "updateRoute Server Action updates allow-listed metadata fields"
  *
  * Boundary translations performed here:
  *
@@ -14,15 +13,12 @@
  *     form round-trips empty strings).
  *   - `buildUpdateRoutePayload(id, values)` maps form-state →
  *     `updateRoute({ id, ...payload })` input shape:
- *     · `description`: trim; empty string → `null` (matches the
- *       validator's null/optional handling and keeps the eventual
- *       `routes.description` column NULL rather than '' for vacant
- *       submissions).
- *     · `tags` / `published` pass through verbatim.
+ *     · `description`: trim; empty string → `null`.
+ *     · `published` passes through verbatim.
  *
- * Legacy keys (`difficulty` / `duration_s` / `region`) were removed by
- * feat-gpx-driven-route-metadata; they are not part of either the row
- * mapping or the wire payload.
+ * Legacy keys (`tags` / `difficulty` / `duration_s` / `region`) were
+ * removed by refactor-upload-metadata-fields / feat-gpx-driven-route-metadata;
+ * they are not part of either the row mapping or the wire payload.
  */
 
 import type { Route } from "@/lib/db/schema";
@@ -37,14 +33,13 @@ export function buildFormInitialFromRoute(
     title: route.title,
     slug: route.slug,
     description: route.description ?? "",
-    tags: route.tags,
     published: route.published,
   };
 }
 
 /**
  * Build the structured payload passed to `updateRoute({ id, ...payload })`.
- * The accepted metadata keys are exactly title / slug / description / tags /
+ * The accepted metadata keys are exactly title / slug / description /
  * published — same allow-list `updateRoute` enforces server-side.
  */
 export function buildUpdateRoutePayload(
@@ -55,7 +50,6 @@ export function buildUpdateRoutePayload(
   title: string;
   slug: string;
   description: string | null;
-  tags: string[];
   published: boolean;
 } {
   const description = values.description.trim();
@@ -65,21 +59,12 @@ export function buildUpdateRoutePayload(
     title: values.title,
     slug: values.slug,
     description: description.length === 0 ? null : description,
-    tags: values.tags,
     published: values.published,
   };
 }
 
 /**
  * Format a distance in metres as `"{km} km"` with two decimal places.
- *
- * Used by the READ-ONLY GPX-derived card on the edit page (Figma
- * frame 03). The matching pattern on the public route page is owned
- * by `lib/format`; this helper is a local copy rather than an import
- * because the admin card uses a stricter two-decimal contract that
- * the public formatter does not guarantee. Keeping it here also lets
- * `editPageState.test.ts` cover the boundary cases without depending
- * on the public route format module.
  */
 export function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(2)} km`;
@@ -91,13 +76,8 @@ export function formatElevation(meters: number): string {
 }
 
 /**
- * Count trackpoints in a `Route` `geojson` column safely.
- *
- * `routes.geojson` is typed as `jsonb` and selected back as `unknown`
- * — we cannot assume any shape at compile time. We narrow defensively:
- * the GPX ingest writes a `Feature<LineString>` with `geometry.coordinates`,
- * and any other shape returns `0` so the UI can fall back to '—' without
- * crashing.
+ * Count trackpoints in a `Route` `geojson` column safely. Returns 0 for
+ * any unexpected shape so the UI can fall back to '—' without crashing.
  */
 export function countTrackpoints(geojson: unknown): number {
   if (geojson === null || typeof geojson !== "object") return 0;

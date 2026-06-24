@@ -21,7 +21,6 @@ describe("routes table schema", () => {
       "elevation_profile",
       "recorded_at",
       "location_name",
-      "tags",
       "gpx_path",
       "geojson",
       "bbox",
@@ -41,8 +40,10 @@ describe("routes table schema", () => {
     expect(columnByName.get("published")?.notNull).toBe(true);
   });
 
-  it("routes table no longer exposes difficulty / duration_s / region columns", () => {
-    // Removed by migrations 0004 (difficulty/duration_s) and 0008 (region).
+  it("routes table no longer exposes tags / difficulty / duration_s / region columns", () => {
+    // Removed by migrations 0004 (difficulty/duration_s), 0008 (region),
+    // and 0009 (tags + routes_tags_gin index).
+    expect(columnByName.has("tags")).toBe(false);
     expect(columnByName.has("difficulty")).toBe(false);
     expect(columnByName.has("duration_s")).toBe(false);
     expect(columnByName.has("region")).toBe(false);

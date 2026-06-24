@@ -35,10 +35,6 @@ export const routes = pgTable(
       .$type<Array<[number, number]>>(),
     recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
     locationName: text("location_name"),
-    tags: text("tags")
-      .array()
-      .notNull()
-      .default(sql`'{}'::text[]`),
     gpxPath: text("gpx_path").notNull(),
     geojson: jsonb("geojson").notNull(),
     bbox: geometryPolygon4326("bbox").notNull(),
@@ -56,7 +52,6 @@ export const routes = pgTable(
     index("routes_bbox_gist").using("gist", t.bbox),
     index("routes_start_point_gist").using("gist", t.startPoint),
     index("routes_recorded_at_desc").on(t.recordedAt.desc()),
-    index("routes_tags_gin").using("gin", t.tags),
   ],
 );
 

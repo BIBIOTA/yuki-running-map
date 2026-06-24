@@ -38,3 +38,13 @@
   - Commits: 401e73f test: red - RouteRegionsSection shared chrome (3 spec scenarios); (green commit follows this Session entry)
   - Tests: `pnpm vitest run lib/regions/__tests__/routeRegionsSection.test.ts` → Tests 3 passed (3)
 - Next action: Start the "drop tags" batch (Tasks 1.2 + 4.x + 6.x + 7.x + 8.x + 9.x) — schema change + caller removal must land atomically for typecheck. Begin with Red commits adding test assertions for the post-state, then Green removes everything in one pass.
+
+## Session 6 — 2026-06-24 22:35
+- Stage: TDD
+- Task: drop-tags wave (1.2 + 4.1-4.4 + 5.1 + 6.1-6.3 + 7.1-7.2 + 8.1-8.3 + 9.1-9.6) — single atomic Green
+- Transition: not_started → in_progress → passing (all 15 tasks)
+- Evidence:
+  - Commits: c9dec61 test: red - drop tags from RouteMetadataForm, server actions, validation; (green commit follows this Session entry)
+  - Tests: `pnpm test` → Test Files 36 passed (36); Tests 224 passed | 11 skipped (235)
+  - Typecheck: `pnpm typecheck` → exit code 0
+- Next action: Start Task 3.1 (Phase machine extension) and Task 3.2-3.4 (UploadPageClient rewire for elevation + regions slot) — write failing tests for the pure helpers / static assertions, then implement.

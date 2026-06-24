@@ -82,11 +82,7 @@ type Phase =
       bbox: BBox2D;
     };
 
-type Props = {
-  existingTags: string[];
-};
-
-export function UploadPageClient({ existingTags }: Props) {
+export function UploadPageClient() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>({ kind: "empty" });
   const [fieldErrors, setFieldErrors] = useState<
@@ -144,7 +140,6 @@ export function UploadPageClient({ existingTags }: Props) {
           <RouteMapPreview geojson={phase.geojson} bbox={phase.bbox} />
           <RouteMetadataForm
             mode="create"
-            existingTags={existingTags}
             onSubmit={handleSubmit}
             fieldErrors={fieldErrors}
           />

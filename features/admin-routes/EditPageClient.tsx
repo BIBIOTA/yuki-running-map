@@ -81,17 +81,15 @@ import type { Region } from "@/lib/regions/types";
 
 type Props = {
   initial: Route;
-  existingTags: string[];
   /**
-   * Detected admin_units for this route, joined server-side by the page
-   * (task 3.13). Rendered via the shared `<RouteRegionsSection>` chrome
-   * alongside the form (NOT inside it — see refactor-upload-metadata-fields
-   * AC-3).
+   * Detected admin_units for this route, joined server-side by the page.
+   * Rendered via the shared `<RouteRegionsSection>` chrome alongside the
+   * form (NOT inside it — see refactor-upload-metadata-fields AC-3).
    */
   routeRegions?: Region[];
 };
 
-export function EditPageClient({ initial, existingTags, routeRegions }: Props) {
+export function EditPageClient({ initial, routeRegions }: Props) {
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string> | undefined
   >(undefined);
@@ -123,7 +121,6 @@ export function EditPageClient({ initial, existingTags, routeRegions }: Props) {
       <div className="grid gap-6 md:grid-cols-2">
         <RouteMetadataForm
           mode="edit"
-          existingTags={existingTags}
           onSubmit={handleSubmit}
           initial={buildFormInitialFromRoute(initial)}
           fieldErrors={fieldErrors}

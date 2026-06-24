@@ -73,10 +73,6 @@ const METADATA_KEYS = [
   "title",
   "slug",
   "description",
-  "region",
-  "tags",
-  "difficulty",
-  "duration_s",
   "published",
 ] as const;
 
@@ -140,7 +136,6 @@ export async function updateRoute(
         title: meta.title,
         slug: meta.slug,
         description: meta.description,
-        tags: meta.tags,
         published: meta.published,
         updatedAt: new Date(),
       })

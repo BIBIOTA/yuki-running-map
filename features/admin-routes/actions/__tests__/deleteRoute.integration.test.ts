@@ -84,7 +84,6 @@ async function seedRoute(
       distanceM: 10000,
       elevationGainM: 30,
       recordedAt: new Date("2026-05-11T06:30:00.000Z"),
-      tags: [],
       gpxPath: overrides.gpxPath ?? "gpx/2026/delete-me.gpx",
       geojson: SEED_GEOJSON,
       bbox: SEED_BBOX,

@@ -15,7 +15,6 @@ export interface RouteMetadataInput {
   title: string;
   slug: string;
   description: string | null;
-  tags: string[];
   published: boolean;
 }
 
@@ -26,8 +25,6 @@ export type ValidateRouteMetadataResult =
 const TITLE_MAX = 200;
 const SLUG_MAX = 80;
 const DESCRIPTION_MAX = 5000;
-const TAG_MAX_LENGTH = 30;
-const TAGS_MAX_COUNT = 20;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -83,35 +80,11 @@ export function validateRouteMetadata(input: unknown): ValidateRouteMetadataResu
     }
   }
 
-  // tags — array; trim -> drop empty -> dedup; <= 20 items; each <= 30 chars
-  let tags: string[] = [];
-  if (input.tags !== undefined && input.tags !== null) {
-    if (!Array.isArray(input.tags)) {
-      fieldErrors.tags = "標籤格式不正確";
-    } else if (!input.tags.every((t): t is string => typeof t === "string")) {
-      fieldErrors.tags = "標籤格式不正確";
-    } else {
-      const normalised: string[] = [];
-      for (const raw of input.tags) {
-        const trimmed = raw.trim();
-        if (trimmed.length === 0) continue;
-        if (!normalised.includes(trimmed)) normalised.push(trimmed);
-      }
-      if (normalised.length > TAGS_MAX_COUNT) {
-        fieldErrors.tags = `標籤數量不可超過 ${TAGS_MAX_COUNT} 個`;
-      } else if (normalised.some((t) => t.length > TAG_MAX_LENGTH)) {
-        fieldErrors.tags = `每個標籤長度不可超過 ${TAG_MAX_LENGTH} 字`;
-      } else {
-        tags = normalised;
-      }
-    }
-  }
-
-  // Legacy keys (difficulty / duration_s / region) removed by
-  // feat-gpx-driven-route-metadata. Older clients that still send them are
-  // silently ignored at the property-pick step below; no validation runs and
-  // no fieldErrors entry is emitted, per the spec MODIFIED Requirement
-  // "Legacy fields are silently ignored".
+  // Legacy keys (tags / difficulty / duration_s / region) are silently
+  // ignored. They were removed by feat-gpx-driven-route-metadata and
+  // refactor-upload-metadata-fields respectively; an older client that
+  // still sends them produces no validation error and no field on the
+  // normalised output.
 
   // published — required boolean
   let published = false;
@@ -127,6 +100,6 @@ export function validateRouteMetadata(input: unknown): ValidateRouteMetadataResu
 
   return {
     ok: true,
-    value: { title, slug, description, tags, published },
+    value: { title, slug, description, published },
   };
 }

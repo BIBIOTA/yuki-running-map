@@ -4,44 +4,17 @@
  * `<RouteMetadataForm>` — shared metadata editor for the admin
  * `/admin/upload` (create) and `/admin/routes/[id]` (edit) flows.
  *
- * Spec: openspec/changes/feat-admin-gpx-upload/tasks.md §3.4
- *       openspec/changes/feat-admin-gpx-upload/design.md §6.2 (error sources)
- * Figma: openspec/changes/feat-admin-gpx-upload/designs/figma.md frames 03 + 05
- *        - `screenshots/03-routes-edit.png` — full field layout (title /
- *          slug / description / region / tags / difficulty + duration row /
- *          published toggle, outline-cancel + brand-save action row).
- *        - `screenshots/05-upload-error.png` — `_form` Alert + per-field
- *          red text under each invalid input.
+ * Spec: openspec/changes/refactor-upload-metadata-fields/specs/admin-routes-crud/spec.md
+ *       Requirement "RouteMetadataForm exposes the canonical metadata fields"
  *
  * Fields rendered (繁體中文 labels are load-bearing for E2E):
- *   標題 / 網址代稱（slug） / 描述 / 地區 / 標籤 / 難度 / 預計時長（秒） /
- *   已發佈.
+ *   標題 / 網址代稱（slug） / 描述 / 已發佈.
  *
  * GPX-derived fields (distance / elevation / bbox / start_point /
  * recorded_at / gpx_path) are DELIBERATELY NOT rendered here — those
  * are derived server-side from the uploaded GPX during the Server
- * Action (spec: admin-routes spec §"GPX 衍生欄位 server-derived only").
- *
- * Native-control choice (per CLAUDE.md "no new deps"): shadcn ships
- * `<Input>` and `<Button>` already, but the project does NOT have the
- * Radix-based `<Select>`, `<Switch>`, `<Alert>`, or `<Textarea>`
- * primitives installed. Rather than introduce `@radix-ui/react-*`
- * runtime deps for a single admin form, this component uses plain
- * HTML controls styled with the same Trail Vintage Tailwind aliases
- * (`border-input`, `bg-transparent`, `border-destructive`, etc.):
- *   - `<textarea>` for description (matches Input shape)
- *   - `<select>` for difficulty (native dropdown; one-line value picker)
- *   - `<input type="checkbox">` for published (semantic + accessible)
- *   - `<div role="alert">` for the `_form` banner
- * The `<TagsInput>` from task 3.1 owns the tags field.
- *
- * Testability note: the React DOM behaviour is not unit-tested here
- * because the project deliberately runs vitest in the node environment
- * with no React testing library (CLAUDE.md forbids adding deps without
- * approval). All pure transitions live in `./routeMetadataFormState.ts`
- * and are covered by `__tests__/routeMetadataFormState.test.ts`; the full
- * user-visible behaviour is exercised by the admin upload Playwright
- * spec (task 5.1).
+ * Action. The 「途經區域」 section is rendered by the parent surface via
+ * `<RouteRegionsSection>` (see refactor-upload-metadata-fields AC-3).
  */
 
 import type { FormEvent, ReactNode } from "react";
@@ -50,13 +23,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { TagsInput } from "./TagsInput";
 import { buildInitialValues } from "./routeMetadataFormState";
 import type { RouteMetadataValues } from "./types";
 
 type Props = {
   mode: "create" | "edit";
-  existingTags: string[];
   onSubmit: (values: RouteMetadataValues) => Promise<void> | void;
   initial?: Partial<RouteMetadataValues>;
   fieldErrors?: Record<string, string>;
@@ -66,7 +37,6 @@ type Props = {
 
 export function RouteMetadataForm({
   mode,
-  existingTags,
   onSubmit,
   initial,
   fieldErrors,
@@ -156,14 +126,6 @@ export function RouteMetadataForm({
             rows={4}
             aria-invalid={fieldErrors?.description ? true : undefined}
             className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
-          />
-        </Field>
-
-        <Field label="標籤" id="tags" error={fieldErrors?.tags}>
-          <TagsInput
-            value={values.tags}
-            onChange={(tags) => setField("tags", tags)}
-            existingTags={existingTags}
           />
         </Field>
 
