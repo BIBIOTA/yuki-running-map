@@ -84,12 +84,12 @@
   - status: not_started
 
 ## 8. (Optional) DB-gated integration test
-- [ ] 8.1 Add `lib/admin-routes/__tests__/previewRegions.integration.test.ts`
+- [x] 8.1 Add `lib/admin-routes/__tests__/previewRegions.integration.test.ts`
   - Acceptance: WHEN `DATABASE_URL` is set THEN vitest runs the suite AND a test named `previewRegions returns 新北市 + 瑞芳區 for the Afternoon_Run starting point` passes by asserting that `previewRegions({ type: 'LineString', coordinates: [[121.821940, 25.102832], [121.821967, 25.102839]] })` returns `{ ok: true }` with `regions` containing both a county-level row whose `name === '新北市'` and a township-level row whose `name === '瑞芳區'`; WHEN `DATABASE_URL` is absent THEN the suite is skipped via `describe.skipIf(!process.env.DATABASE_URL)`.
+  - Verification: `node --env-file=.env.local ./node_modules/vitest/vitest.mjs run lib/admin-routes/__tests__/previewRegions.integration.test.ts` → 1 passed.
   - Depends on: 5.1
   - Independence: serial
-  - status: not_started
-  - note: marked optional in design §8; can be omitted if 7.1 smoke is sufficient for the user.
+  - status: passing
 
 ## 9. Verification gates
 - [ ] 9.1 `pnpm typecheck`
