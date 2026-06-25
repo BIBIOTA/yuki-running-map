@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { profileToSvg } from "../elevationProfileView";
+import { niceElevationTicks, profileToSvg } from "../elevationProfileView";
 
 /**
  * Spec: openspec/changes/feat-gpx-driven-route-metadata/specs/route-elevation-profile/spec.md
@@ -64,5 +64,81 @@ describe("profileToSvg", () => {
       const commandCount = (result.d.match(/[ML]/g) ?? []).length;
       expect(commandCount).toBe(profile.length);
     });
+  });
+
+  describe("Scenario: filled view exposes plot bounds for gridline rendering", () => {
+    it("returns plotXStart < plotXEnd inside the SVG width", () => {
+      const result = profileToSvg([
+        [0, 0],
+        [100, 50],
+      ]);
+      if (result.kind === "empty") throw new Error("expected filled view");
+      expect(result.plotXStart).toBeGreaterThan(0);
+      expect(result.plotXEnd).toBeGreaterThan(result.plotXStart);
+      // Plot must sit inside the declared viewBox width.
+      const [, , widthStr] = result.viewBox.split(" ");
+      const width = Number(widthStr);
+      expect(result.plotXEnd).toBeLessThan(width);
+    });
+  });
+
+  describe("Scenario: yLabels align with horizontal gridlines on round elevations", () => {
+    it("emits 4-6 ticks on round metre values for a typical hike-scale span", () => {
+      // Span = 500m → step = 100m → ticks at 100, 200, 300, 400, 500.
+      const result = profileToSvg([
+        [0, 50],
+        [5_000, 550],
+      ]);
+      if (result.kind === "empty") throw new Error("expected filled view");
+      const values = result.yLabels.map((l) => l.value);
+      expect(values).toEqual([100, 200, 300, 400, 500]);
+      // Labels are formatted as integer metres.
+      expect(result.yLabels.map((l) => l.text)).toEqual([
+        "100m",
+        "200m",
+        "300m",
+        "400m",
+        "500m",
+      ]);
+    });
+
+    it("y-positions strictly increase with descending elevation (SVG y inverts)", () => {
+      const result = profileToSvg([
+        [0, 0],
+        [1_000, 400],
+      ]);
+      if (result.kind === "empty") throw new Error("expected filled view");
+      // Labels emitted in ascending-value order; higher value → smaller SVG y.
+      for (let i = 1; i < result.yLabels.length; i++) {
+        const prev = result.yLabels[i - 1]!;
+        const curr = result.yLabels[i]!;
+        expect(curr.value).toBeGreaterThan(prev.value);
+        expect(curr.position).toBeLessThan(prev.position);
+      }
+    });
+  });
+});
+
+describe("niceElevationTicks", () => {
+  it("snaps to multiples of 100 for a hike-scale span", () => {
+    expect(niceElevationTicks(50, 550)).toEqual([100, 200, 300, 400, 500]);
+  });
+
+  it("snaps to multiples of 50 for a mid-range climb", () => {
+    // Span = 180m → raw 45 → step 50.
+    expect(niceElevationTicks(20, 200)).toEqual([50, 100, 150, 200]);
+  });
+
+  it("collapses to a single tick when min === max", () => {
+    expect(niceElevationTicks(100, 100)).toEqual([100]);
+  });
+
+  it("keeps ticks within [min, max]", () => {
+    const ticks = niceElevationTicks(123, 678);
+    for (const t of ticks) {
+      expect(t).toBeGreaterThanOrEqual(123);
+      expect(t).toBeLessThanOrEqual(678);
+    }
+    expect(ticks.length).toBeGreaterThanOrEqual(3);
   });
 });

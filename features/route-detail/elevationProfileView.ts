@@ -17,6 +17,9 @@ const PADDING_Y = 20;
 const PLOT_WIDTH = SVG_WIDTH - PADDING_X * 2;
 const PLOT_HEIGHT = SVG_HEIGHT - PADDING_Y * 2;
 
+/** Target number of horizontal gridlines / elevation ticks. */
+const TARGET_Y_TICKS = 4;
+
 /** Coordinate of an axis label, already mapped to SVG user space. */
 export interface AxisLabel {
   /** Underlying data value (metres for y, metres for x). */
@@ -34,8 +37,41 @@ export type ProfileView =
       viewBox: string;
       xLabels: AxisLabel[];
       yLabels: AxisLabel[];
+      /** Horizontal extent of the plot area; gridlines span [plotXStart, plotXEnd]. */
+      plotXStart: number;
+      plotXEnd: number;
     }
   | { kind: "empty" };
+
+/**
+ * Snap a raw step value to the 1 / 2 / 5 / 10 "nice number" family so tick
+ * values land on rounded elevations. Returns ticks within [min, max].
+ */
+export function niceElevationTicks(
+  min: number,
+  max: number,
+  target = TARGET_Y_TICKS,
+): number[] {
+  if (max === min) return [min];
+  const span = max - min;
+  const raw = span / target;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(raw)));
+  const normalized = raw / magnitude;
+  let nice: number;
+  if (normalized <= 1.5) nice = 1;
+  else if (normalized <= 3) nice = 2;
+  else if (normalized <= 7) nice = 5;
+  else nice = 10;
+  const step = nice * magnitude;
+  const first = Math.ceil(min / step) * step;
+  const last = Math.floor(max / step) * step;
+  const ticks: number[] = [];
+  // Guard against FP drift so the last tick at exactly `max` isn't dropped.
+  for (let v = first; v <= last + step * 1e-9; v += step) {
+    ticks.push(Math.round(v * 1e6) / 1e6);
+  }
+  return ticks;
+}
 
 /**
  * Map a `[distance_m, elevation_m]` profile to an SVG-ready view model.
@@ -82,10 +118,12 @@ export function profileToSvg(
     },
   ];
 
-  const yLabels: AxisLabel[] = [
-    { value: maxE, position: mapY(maxE), text: `${Math.round(maxE)}m` },
-    { value: minE, position: mapY(minE), text: `${Math.round(minE)}m` },
-  ];
+  const ticks = niceElevationTicks(minE, maxE);
+  const yLabels: AxisLabel[] = ticks.map((v) => ({
+    value: v,
+    position: mapY(v),
+    text: `${Math.round(v)}m`,
+  }));
 
   return {
     kind: "filled",
@@ -93,5 +131,7 @@ export function profileToSvg(
     viewBox: `0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`,
     xLabels,
     yLabels,
+    plotXStart: PADDING_X,
+    plotXEnd: SVG_WIDTH - PADDING_X,
   };
 }

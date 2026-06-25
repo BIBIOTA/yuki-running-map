@@ -43,6 +43,20 @@ export function ElevationProfile({ profile }: ElevationProfileProps) {
       className="h-44 w-full"
       preserveAspectRatio="none"
     >
+      {/* Horizontal elevation gridlines — drawn first so the curve paints on top. */}
+      {view.yLabels.map((label) => (
+        <line
+          key={`grid-${label.value}`}
+          x1={view.plotXStart}
+          x2={view.plotXEnd}
+          y1={label.position}
+          y2={label.position}
+          stroke="currentColor"
+          strokeWidth={1}
+          strokeDasharray="2 3"
+          className="text-border"
+        />
+      ))}
       {/* Curve */}
       <path
         d={view.d}
